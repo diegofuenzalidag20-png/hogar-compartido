@@ -1014,6 +1014,55 @@
       text-overflow: ellipsis !important;
     }
 
+
+    /* --- Estilos para Análisis Desplegable de Tarjetas & Cofres --- */
+    .card-analysis-box {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-glass);
+      border-radius: 14px;
+      padding: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-analysis-box:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+    .card-analysis-badge-transfer {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-top: 0.25rem;
+    }
+    .card-metric-pill {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 0.4rem 0.6rem;
+      text-align: center;
+      flex: 1;
+    }
+    .card-metric-label {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .card-metric-val {
+      font-size: 0.95rem;
+      font-weight: 800;
+      font-family: monospace;
+      margin-top: 0.15rem;
+    }
 </style>
 </head>
 <body>
@@ -1825,6 +1874,62 @@
             <div style="position:relative; height:270px; display:flex; align-items:center; justify-content:center; margin-top:0.5rem;">
               <canvas id="chartMesCategoriasSoledad"></canvas>
             </div>
+          </div>
+
+        </div>
+      </div>
+
+            <!-- ============================================================== -->
+      <!-- SECCIÓN DESPLEGABLE: ANÁLISIS DE GASTOS & SALDOS POR TARJETA / COFRE -->
+      <!-- ============================================================== -->
+      <div class="card" style="margin-bottom: 1.5rem; border: 1px solid rgba(59, 130, 246, 0.35); background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(10, 15, 30, 0.75) 100%);">
+        
+        <!-- Encabezado con Botón Toggle para Desplegar/Ocultar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleCardAnalysisSection()">
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <span style="font-size:1.6rem; padding:0.5rem; background:rgba(59,130,246,0.15); border-radius:12px; border:1px solid rgba(59,130,246,0.3);">💳</span>
+            <div>
+              <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <strong style="font-size:1.15rem; color:var(--text-main);">Análisis de Gastos por Tarjeta / Cuenta</strong>
+                <span class="badge badge-purple" style="font-size:0.72rem;">Donas por Tarjeta & Transferencias</span>
+              </div>
+              <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem;">
+                Visualiza el saldo transferido a cada tarjeta, en qué se gastó (pasajes, súper, delivery...) y su saldo disponible restante.
+              </div>
+            </div>
+          </div>
+          <button type="button" id="btnToggleCardAnalysis" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.4); color:#93C5FD; border-radius:20px; padding:0.45rem 1rem; font-size:0.82rem; font-weight:700; display:flex; align-items:center; gap:0.5rem; cursor:pointer; transition:all 0.25s;">
+            <span id="iconToggleCardAnalysis" style="transition:transform 0.3s ease;">▼</span>
+            <span id="textToggleCardAnalysis">Ver Análisis por Tarjeta</span>
+          </button>
+        </div>
+
+        <!-- Contenedor Desplegable (Oculto por defecto para optimizar espacio vertical) -->
+        <div id="containerCardAnalysisContent" style="display:none; margin-top:1.25rem; border-top:1px solid var(--border-color); padding-top:1.25rem;">
+          
+          <!-- Banner Explicativo de Transferencias Internas -->
+          <div style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.25); border-radius:10px; padding:0.75rem 1rem; margin-bottom:1.25rem; display:flex; align-items:center; gap:0.6rem; font-size:0.82rem; color:#93C5FD;">
+            <span style="font-size:1.2rem;">💡</span>
+            <div>
+              <strong>Lógica de Transferencias Internas:</strong> El monto asignado a cada cofre se descuenta de la cuenta principal (<strong>Cuenta Fan</strong> de Diego o <strong>Chequera</strong> de Soledad) y se carga en la tarjeta secundaria correspondiente. Cada gasto registrado se resta del saldo de esa tarjeta específica.
+            </div>
+          </div>
+
+          <!-- Selector de Filtro de Tarjetas -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.25rem;">
+            <div style="font-size:0.82rem; color:var(--text-muted); font-weight:600;">
+              Filtrar tarjetas por titular:
+            </div>
+            <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+              <button type="button" class="chip-btn active" id="btnFilterCardAll" onclick="filterCardAnalysis('all', this)">👥 Todas las Tarjetas</button>
+              <button type="button" class="chip-btn" id="btnFilterCardDiego" onclick="filterCardAnalysis('diego', this)">🔵 Tarjetas Diego</button>
+              <button type="button" class="chip-btn" id="btnFilterCardSoledad" onclick="filterCardAnalysis('soledad', this)">🟣 Tarjetas Soledad</button>
+            </div>
+          </div>
+
+          <!-- Cuadrícula de Tarjetas / Donas -->
+          <div id="gridCardDoughnuts" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1.25rem;">
+            <!-- Generado dinámicamente por renderCardAnalysis() -->
           </div>
 
         </div>
@@ -3255,7 +3360,7 @@
 
       const elDesc = document.getElementById('diegoFanFormulaDesc');
       if (elDesc) {
-        elDesc.innerHTML = `💡 Remanente en Cuenta Fan: <strong style="color:#60A5FA;">${formatCLP(remanenteFan)}</strong> <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(${formatCLP(salary)} sueldo − ${formatCLP(totalTransferencias)} a cofres)</span>`;
+        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, Mach: ${formatCLP(mach)}, MP: ${formatCLP(mp)})<br>💰 <strong>Saldo disponible restante en Cuenta Fan:</strong> <strong style="color:#60A5FA;">${formatCLP(remanenteFan)}</strong>`;
       }
 
       // De Cuenta Fan se pagan los gastos fijos de vivienda estimados (~$609.360):
@@ -3289,7 +3394,7 @@
 
       const elDesc = document.getElementById('soleChequeraFormulaDesc');
       if (elDesc) {
-        elDesc.innerHTML = `💡 Remanente en Chequera: <strong style="color:#C084FC;">${formatCLP(remanenteChequera)}</strong> <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(${formatCLP(salary)} sueldo − ${formatCLP(totalTransferencias)} a cofres)</span>`;
+        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, MP: ${formatCLP(mp)}, Reserva: ${formatCLP(banco)})<br>💰 <strong>Saldo disponible restante en Chequera:</strong> <strong style="color:#C084FC;">${formatCLP(remanenteChequera)}</strong>`;
       }
 
       // De Chequera se pagan las cuentas del hogar Limache (~$286.000):
@@ -5544,6 +5649,408 @@
     }
 
     // Helper reutilizable para renderizar Donas con Frosted Glass Tooltips
+    
+    // ==============================================================
+    // ANÁLISIS DE GASTOS POR TARJETA / COFRE CON TRANSFERENCIAS INTERNAS
+    // ==============================================================
+    let isCardAnalysisOpen = false;
+    let currentCardAnalysisFilter = 'all';
+    let cardDoughnutCharts = {};
+
+    function toggleCardAnalysisSection() {
+      const container = document.getElementById('containerCardAnalysisContent');
+      const btn = document.getElementById('btnToggleCardAnalysis');
+      const icon = document.getElementById('iconToggleCardAnalysis');
+      const text = document.getElementById('textToggleCardAnalysis');
+      if (!container) return;
+
+      isCardAnalysisOpen = !isCardAnalysisOpen;
+      if (isCardAnalysisOpen) {
+        container.style.display = 'block';
+        if (icon) icon.style.transform = 'rotate(180deg)';
+        if (text) text.textContent = 'Ocultar Análisis por Tarjeta';
+        if (btn) {
+          btn.style.background = 'rgba(239, 68, 68, 0.15)';
+          btn.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+          btn.style.color = '#FCA5A5';
+        }
+        setTimeout(() => {
+          renderCardAnalysis();
+        }, 50);
+      } else {
+        container.style.display = 'none';
+        if (icon) icon.style.transform = 'rotate(0deg)';
+        if (text) text.textContent = 'Ver Análisis por Tarjeta';
+        if (btn) {
+          btn.style.background = 'rgba(59, 130, 246, 0.15)';
+          btn.style.borderColor = 'rgba(59, 130, 246, 0.4)';
+          btn.style.color = '#93C5FD';
+        }
+      }
+    }
+
+    function filterCardAnalysis(filter, btn) {
+      currentCardAnalysisFilter = filter;
+      document.querySelectorAll('#containerCardAnalysisContent .chip-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderCardAnalysis();
+    }
+
+    function normalizeAccountKey(acc) {
+      const a = (acc || '').toLowerCase().trim();
+      if (a.includes('tenpo') && (a.includes('diego') || a.includes('huasco') || (!a.includes('soledad') && !a.includes('sole')))) return 'tenpoDiego';
+      if (a.includes('tenpo') && (a.includes('soledad') || a.includes('sole'))) return 'tenpoSoledad';
+      if (a.includes('mach')) return 'machDiego';
+      if (a.includes('mercado') || a.includes('mp')) {
+        if (a.includes('soledad') || a.includes('sole')) return 'mpSoledad';
+        return 'mpDiego';
+      }
+      if (a.includes('fan') || a.includes('chile')) return 'fanDiego';
+      if (a.includes('smart') || a.includes('visa')) return 'smartVisaSole';
+      if (a.includes('reserva') || (a.includes('ahorro') && a.includes('bancoestado'))) return 'reservaSole';
+      if (a.includes('chequera') || a.includes('bancoestado') || a.includes('rut') || a.includes('limache')) return 'chequeraSole';
+      if (a.includes('efectivo') || a.includes('cash')) return 'efectivo';
+      return 'otra';
+    }
+
+    const CARDS_ANALYSIS_CONFIG = [
+      {
+        key: 'tenpoDiego',
+        name: 'Tenpo Prepago Diego',
+        desc: 'Operaciones Huasco (Pasajes, Uber, Metro, Turno)',
+        owner: 'Diego',
+        isPrimary: false,
+        sourceAccount: 'Cuenta Fan',
+        getBudget: () => userProfile.cofresDiego.tenpoHuasco ?? 300000,
+        color: '#F59E0B',
+        badgeClass: 'badge-amber',
+        icon: '🚌'
+      },
+      {
+        key: 'machDiego',
+        name: 'Mach Prepago Diego',
+        desc: 'Bolsillo Semanal ($35k/sem) & Modo Recuperación',
+        owner: 'Diego',
+        isPrimary: false,
+        sourceAccount: 'Cuenta Fan',
+        getBudget: () => userProfile.cofresDiego.machBolsillo ?? 140000,
+        color: '#06B6D4',
+        badgeClass: 'badge-blue',
+        icon: '⚡'
+      },
+      {
+        key: 'mpDiego',
+        name: 'Mercado Pago Diego',
+        desc: 'Ahorro Activo & Fondo de Emergencia con Rendimiento',
+        owner: 'Diego',
+        isPrimary: false,
+        sourceAccount: 'Cuenta Fan',
+        getBudget: () => userProfile.cofresDiego.mpAhorro ?? 130000,
+        color: '#10B981',
+        badgeClass: 'badge-emerald',
+        icon: '📈'
+      },
+      {
+        key: 'fanDiego',
+        name: 'Cuenta Fan Banco de Chile',
+        desc: 'Cuenta Principal Diego (Dividendo, Arriendo, Michis, Fijos)',
+        owner: 'Diego',
+        isPrimary: true,
+        sourceAccount: 'Sueldo Líquido Diego',
+        getBudget: () => {
+          const sal = userProfile.diegoSalary || 1330786;
+          const trans = (userProfile.cofresDiego.tenpoHuasco ?? 300000) + (userProfile.cofresDiego.machBolsillo ?? 140000) + (userProfile.cofresDiego.mpAhorro ?? 130000);
+          return Math.max(0, sal - trans);
+        },
+        getTotalSalary: () => userProfile.diegoSalary || 1330786,
+        getTotalTransfersOut: () => (userProfile.cofresDiego.tenpoHuasco ?? 300000) + (userProfile.cofresDiego.machBolsillo ?? 140000) + (userProfile.cofresDiego.mpAhorro ?? 130000),
+        color: '#3B82F6',
+        badgeClass: 'badge-blue',
+        icon: '🏦'
+      },
+      {
+        key: 'chequeraSole',
+        name: 'Chequera Electrónica BancoEstado',
+        desc: 'Cuenta Principal Soledad (Cuentas Hogar Limache, Servicios)',
+        owner: 'Soledad',
+        isPrimary: true,
+        sourceAccount: 'Sueldo Líquido Soledad',
+        getBudget: () => {
+          const sal = userProfile.soledadSalary || 964839;
+          const trans = (userProfile.cofresSoledad.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad.mpAhorro ?? 150000) + (userProfile.cofresSoledad.bancoReserva ?? 150000);
+          return Math.max(0, sal - trans);
+        },
+        getTotalSalary: () => userProfile.soledadSalary || 964839,
+        getTotalTransfersOut: () => (userProfile.cofresSoledad.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad.mpAhorro ?? 150000) + (userProfile.cofresSoledad.bancoReserva ?? 150000),
+        color: '#A855F7',
+        badgeClass: 'badge-purple',
+        icon: '🏡'
+      },
+      {
+        key: 'tenpoSoledad',
+        name: 'Tenpo Soledad',
+        desc: 'Bolsillo Personal & Compras Personales Soledad',
+        owner: 'Soledad',
+        isPrimary: false,
+        sourceAccount: 'Chequera BancoEstado',
+        getBudget: () => userProfile.cofresSoledad.tenpoBolsillo ?? 150000,
+        color: '#C084FC',
+        badgeClass: 'badge-purple',
+        icon: '👜'
+      },
+      {
+        key: 'smartVisaSole',
+        name: 'Tarjeta Smart Visa BancoEstado',
+        desc: 'Línea de Crédito en Cuotas Programadas',
+        owner: 'Soledad',
+        isPrimary: false,
+        sourceAccount: 'Cupo BancoEstado',
+        getBudget: () => userProfile.cofresSoledad.smartVisa ?? 50000,
+        color: '#F43F5E',
+        badgeClass: 'badge-rose',
+        icon: '💳'
+      },
+      {
+        key: 'mpSoledad',
+        name: 'Mercado Pago Soledad',
+        desc: 'Ahorro Diario Remunerado Soledad',
+        owner: 'Soledad',
+        isPrimary: false,
+        sourceAccount: 'Chequera BancoEstado',
+        getBudget: () => userProfile.cofresSoledad.mpAhorro ?? 150000,
+        color: '#34D399',
+        badgeClass: 'badge-emerald',
+        icon: '✨'
+      },
+      {
+        key: 'reservaSole',
+        name: 'Cuenta Ahorro Reserva (BancoEstado)',
+        desc: 'Fondo de Reserva para Imprevistos Soledad',
+        owner: 'Soledad',
+        isPrimary: false,
+        sourceAccount: 'Chequera BancoEstado',
+        getBudget: () => userProfile.cofresSoledad.bancoReserva ?? 150000,
+        color: '#8B5CF6',
+        badgeClass: 'badge-purple',
+        icon: '🛡️'
+      }
+    ];
+
+    function renderCardAnalysis() {
+      const grid = document.getElementById('gridCardDoughnuts');
+      if (!grid) return;
+
+      // Limpiar gráficos anteriores para evitar fugas de memoria o solapamiento
+      Object.keys(cardDoughnutCharts).forEach(k => {
+        if (cardDoughnutCharts[k]) {
+          cardDoughnutCharts[k].destroy();
+          delete cardDoughnutCharts[k];
+        }
+      });
+
+      // Filtrar según botón activo
+      const visibleConfigs = CARDS_ANALYSIS_CONFIG.filter(cfg => {
+        if (currentCardAnalysisFilter === 'diego' && cfg.owner !== 'Diego') return false;
+        if (currentCardAnalysisFilter === 'soledad' && cfg.owner !== 'Soledad') return false;
+        return true;
+      });
+
+      grid.innerHTML = '';
+
+      visibleConfigs.forEach(cfg => {
+        const budget = cfg.getBudget();
+        let totalSpent = 0;
+        const categoryMap = {};
+        const recentExpenses = [];
+
+        expenses.forEach(item => {
+          const accKey = normalizeAccountKey(item.account);
+          if (accKey === cfg.key) {
+            const amt = Number(item.amount) || 0;
+            totalSpent += amt;
+            const cat = normalizeExpenseCategory(item.category, item.desc);
+            categoryMap[cat] = (categoryMap[cat] || 0) + amt;
+            recentExpenses.push(item);
+          }
+        });
+
+        const remaining = budget - totalSpent;
+        const pctUsed = budget > 0 ? Math.min(100, Math.round((totalSpent / budget) * 100)) : 0;
+        const isOverspent = remaining < 0;
+
+        // Subtítulo de transferencia interna
+        let transferHtml = '';
+        if (cfg.isPrimary) {
+          const sal = cfg.getTotalSalary();
+          const transOut = cfg.getTotalTransfersOut();
+          transferHtml = `
+            <div class="card-analysis-badge-transfer" style="background:rgba(59,130,246,0.15); color:#60A5FA; border:1px solid rgba(59,130,246,0.3);">
+              <span>🏦 Sueldo: ${formatCLP(sal)}</span>
+              <span>•</span>
+              <span>🔁 Transferido a cofres: -${formatCLP(transOut)}</span>
+            </div>
+          `;
+        } else {
+          transferHtml = `
+            <div class="card-analysis-badge-transfer" style="background:rgba(16,185,129,0.15); color:#34D399; border:1px solid rgba(16,185,129,0.3);">
+              <span>📥 Fondos transferidos desde: <strong>${cfg.sourceAccount}</strong></span>
+            </div>
+          `;
+        }
+
+        const cardEl = document.createElement('div');
+        cardEl.className = 'card-analysis-box';
+        cardEl.style.borderTop = `4px solid ${cfg.color}`;
+
+        const canvasId = `chartCard_${cfg.key}`;
+
+        cardEl.innerHTML = `
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <div style="display:flex; align-items:center; gap:0.4rem;">
+                  <span style="font-size:1.15rem;">${cfg.icon}</span>
+                  <strong style="color:var(--text-main); font-size:0.98rem;">${cfg.name}</strong>
+                </div>
+                <div style="font-size:0.73rem; color:var(--text-muted); margin-top:0.15rem;">${cfg.desc}</div>
+                ${transferHtml}
+              </div>
+              <span class="badge ${cfg.owner === 'Diego' ? 'badge-blue' : 'badge-purple'}" style="font-size:0.68rem;">${cfg.owner}</span>
+            </div>
+
+            <!-- Fila de 3 Métricas -->
+            <div style="display:flex; gap:0.4rem; margin-top:0.85rem;">
+              <div class="card-metric-pill">
+                <div class="card-metric-label">${cfg.isPrimary ? 'Fondo Neto' : 'Transferido'}</div>
+                <div class="card-metric-val" style="color:var(--text-main);">${formatCLP(budget)}</div>
+              </div>
+              <div class="card-metric-pill">
+                <div class="card-metric-label">Gastado</div>
+                <div class="card-metric-val" style="color:#F43F5E;">${formatCLP(totalSpent)}</div>
+              </div>
+              <div class="card-metric-pill">
+                <div class="card-metric-label">Disponible</div>
+                <div class="card-metric-val" style="color:${isOverspent ? '#F43F5E' : '#10B981'};">
+                  ${isOverspent ? '-' : '+'}${formatCLP(Math.abs(remaining))}
+                </div>
+              </div>
+            </div>
+
+            <!-- Barra de Progreso de Consumo de la Tarjeta -->
+            <div style="margin-top:0.75rem;">
+              <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-bottom:0.25rem;">
+                <span>Consumo: <strong>${pctUsed}%</strong> de fondos</span>
+                <span style="color:${isOverspent ? '#F43F5E' : '#10B981'}; font-weight:700;">
+                  ${isOverspent ? '⚠️ Sobregiro' : '🟢 Dentro del margen'}
+                </span>
+              </div>
+              <div style="background:rgba(255,255,255,0.08); border-radius:999px; height:6px; overflow:hidden;">
+                <div style="background:${isOverspent ? 'linear-gradient(90deg, #F59E0B, #F43F5E)' : `linear-gradient(90deg, ${cfg.color}, #10B981)`}; height:100%; width:${Math.min(100, pctUsed)}%; transition:width 0.4s ease;"></div>
+              </div>
+            </div>
+
+            <!-- Gráfico de Dona de Categorías de Esta Tarjeta -->
+            <div style="position:relative; height:180px; display:flex; align-items:center; justify-content:center; margin-top:0.85rem;">
+              <canvas id="${canvasId}"></canvas>
+            </div>
+          </div>
+
+          <!-- Desglose de Categorías Gastadas -->
+          <div style="margin-top:0.85rem; border-top:1px solid rgba(255,255,255,0.06); padding-top:0.6rem;">
+            <div style="font-size:0.72rem; color:var(--text-muted); font-weight:700; margin-bottom:0.4rem; text-transform:uppercase;">
+              ${Object.keys(categoryMap).length > 0 ? 'Desglose de gastos en esta cuenta:' : 'Estado de cuenta:'}
+            </div>
+            <div id="legend_${canvasId}" style="display:flex; flex-direction:column; gap:0.35rem; font-size:0.75rem;">
+              <!-- Insertado por JS -->
+            </div>
+          </div>
+        `;
+
+        grid.appendChild(cardEl);
+
+        // Renderizar Dona para esta tarjeta específica
+        setTimeout(() => {
+          const ctx = document.getElementById(canvasId)?.getContext('2d');
+          if (!ctx) return;
+
+          const catEntries = Object.entries(categoryMap);
+          let labels = [];
+          let dataValues = [];
+          let bgColors = [];
+          const palette = ['#3B82F6', '#10B981', '#F59E0B', '#A855F7', '#EC4899', '#06B6D4', '#8B5CF6'];
+
+          const legendEl = document.getElementById(`legend_${canvasId}`);
+
+          if (catEntries.length > 0) {
+            labels = catEntries.map(([k]) => k);
+            dataValues = catEntries.map(([_, v]) => v);
+            bgColors = palette.slice(0, labels.length);
+
+            if (legendEl) {
+              legendEl.innerHTML = catEntries.map(([cat, amt], i) => {
+                const pct = totalSpent > 0 ? ((amt / totalSpent) * 100).toFixed(1) : 0;
+                return `
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                      <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${palette[i % palette.length]};"></span>
+                      <span style="color:var(--text-main); font-weight:600;">${cat}</span>
+                    </div>
+                    <div>
+                      <strong style="color:var(--text-main); font-family:monospace;">${formatCLP(amt)}</strong>
+                      <span style="color:var(--text-muted); font-size:0.68rem;">(${pct}%)</span>
+                    </div>
+                  </div>
+                `;
+              }).join('');
+            }
+          } else {
+            labels = ['Sin gastos registrados aún'];
+            dataValues = [1];
+            bgColors = ['rgba(255, 255, 255, 0.08)'];
+
+            if (legendEl) {
+              legendEl.innerHTML = `
+                <div style="color:var(--text-muted); font-style:italic; padding:0.25rem 0;">
+                  ✨ 100% de fondos disponibles (${formatCLP(budget)}) sin compras registradas aún este mes.
+                </div>
+              `;
+            }
+          }
+
+          cardDoughnutCharts[cfg.key] = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+              labels: labels,
+              datasets: [{
+                data: dataValues,
+                backgroundColor: bgColors,
+                borderWidth: 2,
+                borderColor: 'rgba(10, 15, 30, 0.9)'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: (c) => {
+                      if (totalSpent === 0) return ' Fondos 100% intactos';
+                      const pct = totalSpent > 0 ? ((c.raw / totalSpent) * 100).toFixed(1) : 0;
+                      return ` ${c.label}: ${formatCLP(c.raw)} (${pct}%)`;
+                    }
+                  }
+                }
+              },
+              cutout: '62%'
+            }
+          });
+        }, 60);
+      });
+    }
+
+
     function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette) {
       const ctx = document.getElementById(canvasId)?.getContext('2d');
       if (!ctx) return null;
@@ -6013,6 +6520,11 @@
             topContainer.appendChild(row);
           });
         }
+      }
+
+      // Actualizar análisis de tarjetas si está desplegado
+      if (isCardAnalysisOpen && typeof renderCardAnalysis === 'function') {
+        renderCardAnalysis();
       }
     }
 
