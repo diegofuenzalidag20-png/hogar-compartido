@@ -1308,6 +1308,9 @@
             <button type="button" class="btn-secondary" onclick="switchTab('tab-historico', document.querySelectorAll('.tab-btn')[2])" style="padding:0.55rem 0.9rem; font-size:0.85rem;" title="Ver todos los meses guardados">
               <span>📂</span> Ver Base de Datos
             </button>
+            <button type="button" id="btnDeshacerCierre" class="btn-secondary" onclick="deshacerUltimoCierreMes()" style="display:none; border:1px solid #F59E0B; color:#FBBF24; padding:0.55rem 0.9rem; font-size:0.85rem;" title="Reabrir el mes anterior si lo cerraste por error">
+              <span>↩️</span> Reabrir Mes Anterior
+            </button>
           </div>
         </div>
       </div>
@@ -5830,12 +5833,17 @@
 
       const next = getNextMonthLabel(currentActiveMonth);
       const totalHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
-      const totalIng = userProfile.diegoSalary + userProfile.soledadSalary;
+      const totalIng = (userProfile?.diegoSalary || 0) + (userProfile?.soledadSalary || 0);
 
       if (spanActual) spanActual.textContent = currentActiveMonth;
       if (spanCierre) spanCierre.textContent = currentActiveMonth;
       if (spanNuevo) spanNuevo.textContent = next;
       if (stats) stats.textContent = `• Ingresos totales: ${formatCLP(totalIng)} | Gastos hogar auditados: ${formatCLP(totalHogar)}`;
+
+      // Reiniciar checkbox de confirmación
+      const check = document.getElementById('checkConfirmCierre');
+      if (check) check.checked = false;
+      toggleBtnConfirmarCierre();
 
       if (modal) modal.style.display = 'flex';
     }
@@ -5845,11 +5853,43 @@
       if (modal) modal.style.display = 'none';
     }
 
+    function toggleBtnConfirmarCierre() {
+      const check = document.getElementById('checkConfirmCierre');
+      const btn = document.getElementById('btnEjecutarCierre');
+      if (check && btn) {
+        btn.disabled = !check.checked;
+        btn.style.opacity = check.checked ? '1' : '0.65';
+        btn.style.cursor = check.checked ? 'pointer' : 'not-allowed';
+      }
+    }
+
+    function ejecutarCierreConConfirmacion() {
+      const check = document.getElementById('checkConfirmCierre');
+      if (!check || !check.checked) {
+        alert('Por favor marca la casilla confirmando que has revisado las boletas.');
+        return;
+      }
+      confirmarCierreMes();
+    }
+
     function confirmarCierreMes() {
       guardarMesEnBD(currentActiveMonth, true);
 
       const oldMonth = currentActiveMonth;
-      currentActiveMonth = getNextMonthLabel(currentActiveMonth);
+      const nextMonth = getNextMonthLabel(currentActiveMonth);
+
+      // CREAR SNAPSHOT DE SEGURIDAD PARA PODER REABRIR O DESHACER
+      const backupSnapshot = {
+        closedMonth: oldMonth,
+        nextMonth: nextMonth,
+        currentAuditItems: JSON.parse(JSON.stringify(currentAuditItems)),
+        expenses: JSON.parse(JSON.stringify(expenses)),
+        userProfile: JSON.parse(JSON.stringify(userProfile || {})),
+        timestamp: Date.now()
+      };
+      localStorage.setItem('ultimo_mes_cerrado_backup', JSON.stringify(backupSnapshot));
+
+      currentActiveMonth = nextMonth;
       localStorage.setItem('app_active_month', currentActiveMonth);
 
       currentAuditItems.forEach(it => {
@@ -5862,6 +5902,7 @@
 
       expenses = [];
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
+      localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
       renderExpenses();
 
       const elTitle = document.getElementById('activeMonthTitle');
@@ -5871,9 +5912,69 @@
       renderAuditTable();
       renderChecklist();
       renderTablaHistorialMesesBD();
+      if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
+      if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
+      if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
+      verificarBotonDeshacerCierre();
+      triggerAutoSyncToCloud();
+
       showToast(`🎉 ¡Mes "${oldMonth}" cerrado! Bienvenido a ${currentActiveMonth}. Boletas reiniciadas.`);
     }
 
+    function deshacerUltimoCierreMes() {
+      const raw = localStorage.getItem('ultimo_mes_cerrado_backup');
+      if (!raw) {
+        alert('No hay un cierre reciente disponible para deshacer.');
+        return;
+      }
+      const backup = JSON.parse(raw);
+      const confirmar = confirm(`↩️ ¿Deseas reabrir el mes "${backup.closedMonth}" y deshacer el cierre?\n\nSe restaurarán todas las boletas, gastos diarios y el periodo activo volverá a ser "${backup.closedMonth}".`);
+      if (!confirmar) return;
+
+      currentActiveMonth = backup.closedMonth;
+      localStorage.setItem('app_active_month', currentActiveMonth);
+
+      currentAuditItems = backup.currentAuditItems;
+      localStorage.setItem(`audit_${currentActiveMonth}`, JSON.stringify(currentAuditItems));
+
+      expenses = backup.expenses;
+      localStorage.setItem('family_expenses', JSON.stringify(expenses));
+      localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
+
+      // Eliminar el mes cerrado del historial BD
+      const rawHistorial = localStorage.getItem('db_historial_meses');
+      if (rawHistorial) {
+        let list = JSON.parse(rawHistorial);
+        list = list.filter(m => m.id !== backup.closedMonth && m.nombre !== backup.closedMonth);
+        localStorage.setItem('db_historial_meses', JSON.stringify(list));
+      }
+
+      localStorage.removeItem('ultimo_mes_cerrado_backup');
+      verificarBotonDeshacerCierre();
+
+      const elTitle = document.getElementById('activeMonthTitle');
+      if (elTitle) elTitle.textContent = currentActiveMonth;
+
+      renderAuditTable();
+      renderExpenses();
+      renderChecklist();
+      renderTablaHistorialMesesBD();
+      if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
+      if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
+      if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
+      triggerAutoSyncToCloud();
+
+      showToast(`✅ ¡Mes "${backup.closedMonth}" reabierto con éxito! Todos los datos fueron restaurados.`);
+    }
+
+    function verificarBotonDeshacerCierre() {
+      const btn = document.getElementById('btnDeshacerCierre');
+      if (btn) {
+        const tieneBackup = !!localStorage.getItem('ultimo_mes_cerrado_backup');
+        btn.style.display = tieneBackup ? 'inline-flex' : 'none';
+      }
+    }
+    
     function verDetalleMes(id) {
       const raw = localStorage.getItem('db_historial_meses');
       const list = raw ? JSON.parse(raw) : [];
@@ -7386,38 +7487,57 @@
 
   <!-- MODAL PARA CERRAR MES Y PASAR AL SIGUIENTE -->
   <div id="modalCerrarMes" class="modal-overlay">
-    <div class="modal-card" style="max-width:480px;">
+    <div class="modal-card" style="max-width:520px; border:1px solid rgba(245, 158, 11, 0.4); box-shadow:0 12px 40px rgba(0,0,0,0.6);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
-        <div style="display:flex; align-items:center; gap:0.5rem;">
-          <span style="font-size:1.3rem;">🚀</span>
-          <h3 style="font-size:1.15rem; font-weight:700;">Cerrar Mes y Pasar al Siguiente</h3>
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <span style="font-size:1.5rem;">⚠️</span>
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:800; color:#FBBF24;">Confirmación de Cierre de Mes</h3>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Acción de cierre y traspaso al siguiente periodo</div>
+          </div>
         </div>
         <button onclick="cerrarModalCerrarMes()" style="background:transparent; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer;">✕</button>
       </div>
 
       <div style="display:flex; flex-direction:column; gap:1rem;">
-        <div style="background:var(--bg-surface-elevated); padding:1rem; border-radius:10px; border:1px solid var(--border-color);">
-          <div style="font-size:0.85rem; color:var(--text-muted);">Estás a punto de cerrar el mes:</div>
-          <div style="font-size:1.4rem; font-weight:800; color:#10B981; margin:0.25rem 0;" id="modalCerrarMesActualNombre">Octubre 2026</div>
-          <div style="font-size:0.82rem; color:var(--text-main);" id="modalCerrarMesResumenStats">
+        <!-- Cuadro de Alerta Destacada -->
+        <div style="background:linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(239, 68, 68, 0.08)); border:1px solid rgba(245, 158, 11, 0.35); padding:1rem; border-radius:10px;">
+          <div style="font-size:0.98rem; font-weight:800; color:#FDE68A; margin-bottom:0.35rem;">
+            ¿Estás seguro de que quieres realizar el cierre de este mes?
+          </div>
+          <div style="font-size:0.82rem; color:var(--text-muted); line-height:1.45;">
+            Vas a cerrar el periodo financiero de <strong style="color:#10B981;" id="modalCerrarMesActualNombre">Octubre 2026</strong>. 
+            Todas las boletas ingresadas se archivarán en la base de datos histórica.
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-main); margin-top:0.5rem; font-weight:600;" id="modalCerrarMesResumenStats">
             • Ingresos totales: $2.089.038 | Gastos auditados: $284.000
           </div>
         </div>
 
-        <div style="background:rgba(59,130,246,0.08); border-left:3px solid var(--accent-diego); padding:0.85rem; border-radius:6px; font-size:0.82rem; line-height:1.5;">
-          <strong>¿Qué ocurrirá al confirmar?</strong>
-          <ul style="padding-left:1.2rem; margin-top:0.4rem; color:var(--text-muted);">
-            <li>El balance y gastos de <strong><span id="modalSpanMesCierre">Octubre 2026</span></strong> se guardarán para siempre en la Base de Datos.</li>
+        <!-- Explicación de lo que ocurrirá -->
+        <div style="background:var(--bg-surface-elevated); border:1px solid var(--border-color); padding:0.9rem; border-radius:8px; font-size:0.8rem; line-height:1.5;">
+          <div style="font-weight:700; color:var(--text-main); margin-bottom:0.3rem;">📋 Al confirmar el cierre:</div>
+          <ul style="padding-left:1.15rem; margin:0; color:var(--text-muted); display:flex; flex-direction:column; gap:0.25rem;">
+            <li>El balance y gastos de <strong><span id="modalSpanMesCierre">Octubre 2026</span></strong> quedarán guardados para siempre en el Historial.</li>
             <li>Avanzaremos automáticamente al mes de <strong><span id="modalSpanMesNuevo" style="color:var(--accent-emerald); font-weight:700;">Noviembre 2026</span></strong>.</li>
-            <li>Las boletas de servicios del hogar (Luz, Agua, Gas, etc.) se reiniciarán en $0 (pendientes) para que las vayas marcando a medida que lleguen este nuevo mes.</li>
-            <li>Tus sueldos y compromisos fijos se conservarán automáticamente.</li>
+            <li>Las boletas de servicios del hogar (Luz, Agua, Gas, etc.) se reiniciarán en $0 para recibirlas en el nuevo mes.</li>
+            <li><span style="color:#60A5FA; font-weight:600;">🛡️ Sistema Antierrores:</span> Si cierras por equivocación, podrás reabrirlo con el botón <em>"↩️ Reabrir Mes Anterior"</em>.</li>
           </ul>
         </div>
 
-        <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:0.5rem;">
-          <button type="button" onclick="cerrarModalCerrarMes()" class="btn-secondary">Cancelar</button>
-          <button type="button" onclick="confirmarCierreMes()" class="btn-primary" style="background:linear-gradient(135deg, #10B981, #059669); font-weight:700; padding:0.65rem 1.25rem;">
-            <span>🚀</span> Confirmar y Pasar al Siguiente Mes
+        <!-- Checkbox de Verificación Consciente -->
+        <label style="display:flex; align-items:center; gap:0.55rem; font-size:0.82rem; color:var(--text-main); cursor:pointer; background:rgba(0,0,0,0.25); padding:0.6rem 0.75rem; border-radius:8px; border:1px solid var(--border-color);">
+          <input type="checkbox" id="checkConfirmCierre" style="width:17px; height:17px; accent-color:#10B981; cursor:pointer;" onchange="toggleBtnConfirmarCierre()">
+          <span>He revisado que todas las boletas de este mes estén registradas.</span>
+        </label>
+
+        <!-- Botones de Acción -->
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:0.35rem;">
+          <button type="button" onclick="cerrarModalCerrarMes()" class="btn-secondary" style="font-size:0.85rem; padding:0.6rem 1.15rem;">
+            Cancelar y Seguir en este Mes
+          </button>
+          <button type="button" id="btnEjecutarCierre" onclick="ejecutarCierreConConfirmacion()" class="btn-primary" style="background:linear-gradient(135deg, #10B981, #059669); font-weight:700; padding:0.6rem 1.25rem; font-size:0.85rem; opacity:0.65; cursor:not-allowed;" disabled>
+            <span>🚀</span> Sí, Cerrar Mes y Avanzar
           </button>
         </div>
       </div>
@@ -7425,7 +7545,7 @@
   </div>
 
   <!-- MODAL PARA VER DETALLE DE MES HISTÓRICO GUARDADO -->
-  <div id="modalVerMes" class="modal-overlay">
+  <div lass="modal-overlay">
     <div class="modal-card" style="max-width:650px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
         <div style="display:flex; align-items:center; gap:0.5rem;">
