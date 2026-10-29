@@ -1,4 +1,4 @@
-const CACHE_NAME = 'finanzas-pareja-v4';
+const CACHE_NAME = 'finanzas-pareja-v5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -54,14 +54,14 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         })
-        .catch(() => caches.match(req).then((cached) => cached || caches.match('./index.html')))
+        .catch(() => caches.match(req, { ignoreSearch: true }).then((cached) => cached || caches.match('./index.html')))
     );
     return;
   }
 
-  // Cache-First con Network Fallback para assets estáticos (fuentes, iconos, librerías)
+  // Cache-First con Network Fallback e ignoreSearch para assets estáticos (fuentes, iconos, librerías)
   event.respondWith(
-    caches.match(req).then((cachedResponse) => {
+    caches.match(req, { ignoreSearch: true }).then((cachedResponse) => {
       return cachedResponse || fetch(req).then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
           const copy = networkResponse.clone();

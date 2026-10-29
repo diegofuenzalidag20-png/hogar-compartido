@@ -237,16 +237,22 @@
     /* Floating Capsule Navigation Bar (Reference Image 1, 2, 3) */
     .tabs-bar {
       display: flex;
-      flex-wrap: wrap;
       gap: 0.45rem;
-      background: rgba(16, 22, 36, 0.75);
+      background: rgba(16, 22, 36, 0.85);
       backdrop-filter: blur(28px) saturate(190%);
       -webkit-backdrop-filter: blur(28px) saturate(190%);
-      padding: 0.45rem 0.65rem;
-      border-radius: var(--radius-pill);
+      padding: 0.45rem 0.55rem;
+      border-radius: 14px;
       border: 1px solid var(--border-glass);
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.18);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.14);
       align-items: center;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      margin-bottom: 1.5rem;
+    }
+    .tabs-bar::-webkit-scrollbar {
+      display: none;
     }
 
     .tab-btn {
@@ -1204,6 +1210,40 @@
   }
 }
 
+    
+/* Responsive table and mobile expense cards */
+@media (min-width: 681px) {
+  .mobile-only-cards { display: none !important; }
+  .desktop-only-table { display: block !important; }
+}
+
+@media (max-width: 680px) {
+  .desktop-only-table { display: none !important; }
+  .mobile-only-cards { display: flex !important; flex-direction: column !important; gap: 0.65rem !important; }
+
+  .tabs-bar {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 14px !important;
+    padding: 0.4rem !important;
+    gap: 0.4rem !important;
+    scrollbar-width: none !important;
+    margin-bottom: 1rem !important;
+  }
+  .tabs-bar::-webkit-scrollbar {
+    display: none !important;
+  }
+  .tab-btn {
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+    padding: 0.55rem 0.85rem !important;
+    font-size: 0.82rem !important;
+    border-radius: 10px !important;
+  }
+}
+
     </style>
 </head>
 <body>
@@ -1212,7 +1252,9 @@
   <header>
     <div class="header-container">
       <div class="brand">
-        <img src="icon-192.png?v=20261026b" alt="Finanzas Diego & Soledad" style="width:44px; height:44px; border-radius:12px; box-shadow:0 4px 15px rgba(59,130,246,0.35); border:1px solid rgba(255,255,255,0.18); object-fit:cover;">
+        <div style="width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg, #2563EB, #7C3AED); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 15px rgba(59,130,246,0.35); border:1px solid rgba(255,255,255,0.2); overflow:hidden; flex-shrink:0;">
+          <img src="./icon-192.png" alt="🏡" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\'font-size:1.4rem;\'>🏡</span>';">
+        </div>
         <div class="brand-text">
           <div style="display:flex; align-items:center; gap:0.6rem;">
             <h1>Hogar Compartido</h1>
@@ -1588,7 +1630,7 @@
         </div>
 
         <!-- Table Container -->
-        <div class="table-container" style="max-height: 480px; overflow-y: auto; border-radius:10px; border:1px solid rgba(255,255,255,0.08);">
+        <div class="table-container desktop-only-table" style="max-height: 480px; overflow-y: auto; border-radius:10px; border:1px solid rgba(255,255,255,0.08);">
           <table id="quickExpensesTable" style="margin:0; width:100%;">
             <thead>
               <tr style="position: sticky; top: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); z-index: 2;">
@@ -1606,6 +1648,9 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Vista de Tarjetas para Móvil (100% Legible en Celulares) -->
+        <div id="quickExpensesMobileCards" class="mobile-only-cards" style="display:none;"></div>
       </div>
 
 
@@ -1861,32 +1906,7 @@
       </div>
 
       <!-- Audit Table -->
-      <div class="card">
-        <div class="card-title">
-          <span>📋 Planilla Interactiva de Boletas y Cuentas</span>
-          <span style="font-size:0.8rem; color:var(--text-muted); font-weight:normal;">✏️ Los campos amarillos son editables</span>
-        </div>
-        <div class="card-desc">
-          Edita cualquier valor para ver el impacto en tiempo real. Los cambios se guardan localmente en tu navegador.
-        </div>
-
-        <div class="table-container">
-          <table id="audit-table">
-            <thead>
-              <tr>
-                <th style="width: 26%;">Concepto / Servicio</th>
-                <th style="width: 14%; text-align:center;">Resp. & Medio</th>
-                <th style="width: 15%; text-align:right;">Promedio Base</th>
-                <th style="width: 18%; text-align:right;">✏️ Real Pagado (CLP)</th>
-                <th style="width: 14%; text-align:right;">Diferencia ($)</th>
-                <th style="width: 13%; text-align:center;">Semáforo</th>
-              </tr>
-            </thead>
-            <tbody id="audit-tbody">
-              <!-- Dynamically rendered -->
-            </tbody>
-          </table>
-        </div>
+      
       </div>
     </div>
 
@@ -4951,52 +4971,107 @@
           return true;
         });
 
-      // 3. Renderizar tabla principal en Tab Auditoría (#quickExpensesTableBody)
+            // 3. Renderizar tabla desktop (#quickExpensesTableBody) y tarjetas móviles (#quickExpensesMobileCards)
       const quickTbody = document.getElementById('quickExpensesTableBody');
-      if (quickTbody) {
-        quickTbody.innerHTML = '';
-        if (filtered.length === 0) {
-          const emptyTr = document.createElement('tr');
-          emptyTr.innerHTML = `
-            <td colspan="7" style="text-align:center; padding:2rem 1rem; color:var(--text-muted); font-size:0.88rem;">
-              <div style="font-size:1.6rem; margin-bottom:0.4rem;">🍃</div>
-              <div>No hay gastos registrados ${currentExpenseSearch || currentExpenseFilter !== 'all' ? 'que coincidan con el filtro' : 'este mes'}.</div>
-              <div style="font-size:0.75rem; color:var(--text-dim); margin-top:0.25rem;">Usa la <strong>Caja de Ingreso Rápido</strong> arriba para registrar uno en 5 segundos.</div>
-            </td>
-          `;
-          quickTbody.appendChild(emptyTr);
-        } else {
-          filtered.forEach(item => {
-            const tr = document.createElement('tr');
-            
-            // Payer badge
-            let payerHtml = '';
-            if (item.payer === 'Diego') {
-              payerHtml = `<span class="pill-partner pill-diego" style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.25rem 0.65rem; border-radius:999px; font-weight:700; font-size:0.75rem; background:rgba(59, 130, 246, 0.2); color:#60A5FA; border:1px solid rgba(59, 130, 246, 0.4);">🔵 Diego</span>`;
-            } else if (item.payer === 'Soledad') {
-              payerHtml = `<span class="pill-partner pill-soledad" style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.25rem 0.65rem; border-radius:999px; font-weight:700; font-size:0.75rem; background:rgba(168, 85, 247, 0.2); color:#C084FC; border:1px solid rgba(168, 85, 247, 0.4);">🟣 Soledad</span>`;
-            } else {
-              payerHtml = `<span class="pill-partner" style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.25rem 0.65rem; border-radius:999px; font-weight:700; font-size:0.75rem; background:rgba(16, 185, 129, 0.2); color:#34D399; border:1px solid rgba(16, 185, 129, 0.4);">🤝 Ambos (50/50)</span>`;
-            }
+      const mobileCards = document.getElementById('quickExpensesMobileCards');
 
+      if (mobileCards) mobileCards.innerHTML = '';
+      if (quickTbody) quickTbody.innerHTML = '';
+
+      if (filtered.length === 0) {
+        if (quickTbody) {
+          quickTbody.innerHTML = `
+            <tr>
+              <td colspan="7" style="text-align:center; padding:2rem 1rem; color:var(--text-muted); font-size:0.88rem;">
+                <div style="font-size:1.6rem; margin-bottom:0.4rem;">🍃</div>
+                <div>No hay gastos registrados ${currentExpenseSearch || currentExpenseFilter !== 'all' ? 'que coincidan con el filtro' : 'este mes'}.</div>
+                <div style="font-size:0.75rem; color:var(--text-dim); margin-top:0.25rem;">Usa la <strong>Caja de Ingreso Rápido</strong> arriba para registrar uno en 5 segundos.</div>
+              </td>
+            </tr>
+          `;
+        }
+        if (mobileCards) {
+          mobileCards.innerHTML = `
+            <div style="text-align:center; padding:2rem 1rem; color:var(--text-muted); font-size:0.88rem; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid var(--border-color);">
+              <div style="font-size:1.6rem; margin-bottom:0.4rem;">🍃</div>
+              <div>No hay gastos registrados ${currentExpenseSearch || currentExpenseFilter !== 'all' ? 'con este filtro' : 'este mes'}.</div>
+            </div>
+          `;
+        }
+      } else {
+        filtered.forEach(item => {
+          // Payer badge
+          let payerHtml = '';
+          let payerMobileHtml = '';
+          if (item.payer === 'Diego') {
+            payerHtml = `<span class="pill-partner pill-diego" style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.25rem 0.65rem; border-radius:999px; font-weight:700; font-size:0.75rem; background:rgba(59, 130, 246, 0.2); color:#60A5FA; border:1px solid rgba(59, 130, 246, 0.4);">🔵 Diego</span>`;
+            payerMobileHtml = `<span style="font-weight:700; font-size:0.75rem; color:#60A5FA; background:rgba(59,130,246,0.18); padding:0.2rem 0.5rem; border-radius:6px; border:1px solid rgba(59,130,246,0.35);">🔵 Diego</span>`;
+          } else if (item.payer === 'Soledad') {
+            payerHtml = `<span class="pill-partner pill-soledad" style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.25rem 0.65rem; border-radius:999px; font-weight:700; font-size:0.75rem; background:rgba(168, 85, 247, 0.2); color:#C084FC; border:1px solid rgba(168, 85, 247, 0.4);">🟣 Soledad</span>`;
+            payerMobileHtml = `<span style="font-weight:700; font-size:0.75rem; color:#C084FC; background:rgba(168,85,247,0.18); padding:0.2rem 0.5rem; border-radius:6px; border:1px solid rgba(168,85,247,0.35);">🟣 Soledad</span>`;
+          } else {
+            payerHtml = `<span class="pill-partner" style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.25rem 0.65rem; border-radius:999px; font-weight:700; font-size:0.75rem; background:rgba(16, 185, 129, 0.2); color:#34D399; border:1px solid rgba(16, 185, 129, 0.4);">🤝 Ambos</span>`;
+            payerMobileHtml = `<span style="font-weight:700; font-size:0.75rem; color:#34D399; background:rgba(16,185,129,0.18); padding:0.2rem 0.5rem; border-radius:6px; border:1px solid rgba(16,185,129,0.35);">🤝 Ambos</span>`;
+          }
+
+          // 1. Desktop TR
+          if (quickTbody) {
+            const tr = document.createElement('tr');
             tr.innerHTML = `
               <td style="font-size:0.85rem; font-family:monospace; color:var(--text-muted);">${item.date || '-'}</td>
               <td>${payerHtml}</td>
               <td><span style="font-size:0.82rem; font-weight:600; color:var(--text-main);">${escapeHtml(item.category || 'Otros')}</span></td>
               <td><strong style="font-size:0.88rem; color:var(--text-main);">${escapeHtml(item.desc || '-')}</strong></td>
               <td><span style="font-size:0.78rem; color:var(--text-muted); background:rgba(255,255,255,0.05); padding:0.2rem 0.5rem; border-radius:6px; border:1px solid rgba(255,255,255,0.08);">${escapeHtml(item.account || 'Efectivo/Otro')}</span></td>
-              <td style="font-weight:800; font-size:0.95rem; text-align:right; color:#10B981; font-family:monospace, monospace;">${formatCLP(item.amount)}</td>
+              <td style="font-weight:800; font-size:0.95rem; text-align:right; color:#10B981; font-family:monospace;">${formatCLP(item.amount)}</td>
               <td style="text-align:center; white-space:nowrap;">
                 <button type="button" onclick="openEditExpenseModal(${item._origIndex})" style="background:rgba(59, 130, 246, 0.15); border:1px solid rgba(59, 130, 246, 0.35); color:#93C5FD; border-radius:8px; padding:0.3rem 0.55rem; cursor:pointer; font-size:0.85rem; transition:all 0.2s; margin-right:0.3rem;" title="Editar este gasto">✏️</button>
                 <button type="button" onclick="deleteExpense(${item._origIndex})" style="background:rgba(239, 68, 68, 0.12); border:1px solid rgba(239, 68, 68, 0.3); color:#FCA5A5; border-radius:8px; padding:0.3rem 0.55rem; cursor:pointer; font-size:0.85rem; transition:all 0.2s;" title="Eliminar este gasto">🗑️</button>
               </td>
             `;
             quickTbody.appendChild(tr);
-          });
-        }
+          }
+
+          // 2. Mobile Card (100% Legible en Celulares)
+          if (mobileCards) {
+            const card = document.createElement('div');
+            card.className = 'mobile-exp-card';
+            card.style.cssText = 'background:rgba(18,24,38,0.7); border:1px solid var(--border-color); border-radius:12px; padding:0.85rem; box-shadow:0 4px 15px rgba(0,0,0,0.25); display:flex; flex-direction:column; gap:0.4rem;';
+            card.innerHTML = `
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:0.45rem;">
+                  ${payerMobileHtml}
+                  <span style="font-size:0.75rem; color:var(--text-muted); font-family:monospace;">${item.date || ''}</span>
+                </div>
+                <div style="font-size:1.05rem; font-weight:800; color:#10B981; font-family:monospace;">
+                  ${formatCLP(item.amount)}
+                </div>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:0.25rem;">
+                <div style="flex:1; padding-right:0.5rem;">
+                  <div style="font-size:0.92rem; font-weight:700; color:var(--text-main); margin-bottom:0.3rem;">
+                    ${escapeHtml(item.desc || '-')}
+                  </div>
+                  <div style="display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap;">
+                    <span style="font-size:0.72rem; color:var(--accent-diego); background:rgba(59,130,246,0.12); padding:0.15rem 0.45rem; border-radius:6px; border:1px solid rgba(59,130,246,0.25); font-weight:600;">
+                      ${escapeHtml(item.category || 'Otros')}
+                    </span>
+                    <span style="font-size:0.72rem; color:var(--text-muted); background:rgba(255,255,255,0.06); padding:0.15rem 0.45rem; border-radius:6px; border:1px solid rgba(255,255,255,0.08);">
+                      ${escapeHtml(item.account || 'Efectivo')}
+                    </span>
+                  </div>
+                </div>
+                <div style="display:flex; gap:0.35rem; flex-shrink:0;">
+                  <button type="button" onclick="openEditExpenseModal(${item._origIndex})" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); color:#93C5FD; border-radius:8px; padding:0.45rem 0.7rem; font-size:0.85rem; cursor:pointer;" title="Editar">✏️</button>
+                  <button type="button" onclick="deleteExpense(${item._origIndex})" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#FCA5A5; border-radius:8px; padding:0.45rem 0.7rem; font-size:0.85rem; cursor:pointer;" title="Eliminar">🗑️</button>
+                </div>
+              </div>
+            `;
+            mobileCards.appendChild(card);
+          }
+        });
       }
 
-      // 4. Mantener sincronizada la tabla histórica en Tab Registro (#expensesBody)
       const legacyTbody = document.getElementById('expensesBody');
       if (legacyTbody) {
         legacyTbody.innerHTML = '';
