@@ -1,4 +1,4 @@
-const CACHE_NAME = 'finanzas-pareja-v2';
+const CACHE_NAME = 'finanzas-pareja-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -35,9 +35,38 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  const isHtml = req.mode === 'navigate' ||
+                 (req.headers.get('accept') && req.headers.get('accept').includes('text/html')) ||
+                 req.url.endsWith('.html') ||
+                 req.url.endsWith('/');
+
+  if (isHtml) {
+    // Network-First para páginas HTML: asegura que Diego y Soledad siempre reciban los cambios más recientes de GitHub Pages
+    event.respondWith(
+      fetch(req)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(req).then((cached) => cached || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // Cache-First con Network Fallback para assets estáticos (fuentes, iconos, librerías)
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request).catch(() => cachedResponse);
+    caches.match(req).then((cachedResponse) => {
+      return cachedResponse || fetch(req).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const copy = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+        }
+        return networkResponse;
+      }).catch(() => cachedResponse);
     })
   );
 });

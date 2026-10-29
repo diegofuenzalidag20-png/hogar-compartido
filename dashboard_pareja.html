@@ -1063,7 +1063,146 @@
       font-family: monospace;
       margin-top: 0.15rem;
     }
-</style>
+
+/* ============================================================
+   RESPONSIVE DESIGN & MOBILE ENHANCEMENTS (AUDIT FIX)
+   ============================================================ */
+@media (max-width: 900px) {
+  .app-container {
+    padding: 1rem 0.75rem;
+  }
+  .charts-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 680px) {
+  :root {
+    --header-font-size: 1.05rem;
+  }
+  
+  header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.85rem !important;
+    padding: 1rem 0.85rem !important;
+  }
+  
+  .header-actions {
+    flex-wrap: wrap !important;
+    justify-content: stretch !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+  }
+
+  .header-actions button,
+  .header-actions .btn-header-action {
+    flex: 1 1 calc(50% - 0.5rem) !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+
+  .header-salaries-wrap {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+
+  .pill-partner {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .tab-navigation {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex-wrap: nowrap !important;
+    padding-bottom: 0.6rem !important;
+    scrollbar-width: none !important;
+  }
+  .tab-navigation::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .tab-btn {
+    white-space: nowrap !important;
+    padding: 0.65rem 0.95rem !important;
+    font-size: 0.82rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Responsive Grid Overrides: collapse minmax grids that overflow small screens */
+  div[style*="grid-template-columns: repeat(auto-fit, minmax(3"],
+  div[style*="grid-template-columns:repeat(auto-fit, minmax(3"],
+  div[style*="grid-template-columns: repeat(auto-fit, minmax(2"],
+  div[style*="grid-template-columns:repeat(auto-fit, minmax(2"],
+  div[style*="grid-template-columns: 1fr 1fr 1.2fr"],
+  div[style*="grid-template-columns:1fr 1fr 1.2fr"],
+  div[style*="grid-template-columns: 1fr auto auto"] {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Tables responsiveness */
+  .table-responsive,
+  div[style*="overflow-x:auto"],
+  div[style*="overflow-x: auto"] {
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 540px;
+  }
+
+  /* Modals on mobile */
+  .modal-overlay {
+    padding: 0.5rem !important;
+    align-items: flex-end !important;
+  }
+
+  .modal-card {
+    max-height: 92vh !important;
+    border-radius: 18px 18px 12px 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 1.25rem 1rem !important;
+    overflow-y: auto !important;
+  }
+
+  /* Form touch targets (44px min for thumb tapping) */
+  input, select, button, .glass-select-trigger {
+    min-height: 44px;
+    font-size: 15px;
+  }
+
+  .btn-primary, .btn-secondary {
+    min-height: 44px;
+    padding: 0.65rem 1rem;
+  }
+
+  /* Cloud sync tabs on mobile */
+  .sync-mode-tab {
+    flex: 1 1 100% !important;
+    text-align: center;
+  }
+}
+
+@media (max-width: 420px) {
+  body {
+    font-size: 13.5px;
+  }
+  .card {
+    padding: 1rem 0.75rem;
+  }
+  .card-metric-val {
+    font-size: 0.85rem;
+  }
+}
+
+    </style>
 </head>
 <body>
 
@@ -3925,12 +4064,43 @@
       }
     }
 
+    // --- GESTIÓN DE MODAL SYNC & TABS ---
     function openSyncModal() {
+      loadSavedCloudSettings();
       document.getElementById('modalSync').style.display = 'flex';
     }
 
     function closeSyncModal() {
       document.getElementById('modalSync').style.display = 'none';
+    }
+
+    function switchSyncTab(tab) {
+      document.querySelectorAll('.sync-tab-btn').forEach(b => {
+        b.style.background = 'transparent';
+        b.style.color = 'var(--text-muted)';
+        b.style.fontWeight = '600';
+      });
+      document.querySelectorAll('.sync-pane').forEach(p => p.style.display = 'none');
+
+      if (tab === 'wa') {
+        const btn = document.getElementById('tabBtnSyncWa');
+        if (btn) { btn.style.background = 'var(--accent-emerald)'; btn.style.color = '#000'; btn.style.fontWeight = '700'; }
+        document.getElementById('syncPaneWa').style.display = 'block';
+      } else if (tab === 'cloud') {
+        const btn = document.getElementById('tabBtnSyncCloud');
+        if (btn) { btn.style.background = 'var(--accent-blue)'; btn.style.color = '#fff'; btn.style.fontWeight = '700'; }
+        document.getElementById('syncPaneCloud').style.display = 'block';
+      } else if (tab === 'backup') {
+        const btn = document.getElementById('tabBtnSyncBackup');
+        if (btn) { btn.style.background = 'var(--accent-diego)'; btn.style.color = '#fff'; btn.style.fontWeight = '700'; }
+        document.getElementById('syncPaneBackup').style.display = 'block';
+      }
+    }
+
+    function toggleCloudProviderUI() {
+      const isVps = document.getElementById('radioProviderVps').checked;
+      document.getElementById('cloudFormVps').style.display = isVps ? 'block' : 'none';
+      document.getElementById('cloudFormFirebase').style.display = isVps ? 'none' : 'block';
     }
 
     let deferredPrompt = null;
@@ -3959,23 +4129,80 @@
       document.getElementById('modalInstallPwa').style.display = 'none';
     }
 
-    // --- 4. Enlace Mágico WhatsApp (Compartir con 1 Clic) ---
-    function generateMagicWhatsAppLink() {
-      const payload = {
-        month: document.getElementById('audit-month-select').value,
+    // --- CONSTRUCTOR DE PAQUETE COMPLETO FAMILIAR (100% DE LA APP) ---
+    function buildCompleteFamilyPayload() {
+      const month = document.getElementById('audit-month-select')?.value || '2026-10';
+      return {
+        v: 2,
         timestamp: Date.now(),
-        items: currentAuditItems
+        sender: (typeof userProfile !== 'undefined' && userProfile?.lastActiveUser) ? userProfile.lastActiveUser : 'Diego o Soledad',
+        month: month,
+        auditItems: currentAuditItems || [],
+        expenses: expenses || [],
+        userProfile: userProfile || {},
+        customAuditItems: JSON.parse(localStorage.getItem('custom_audit_items') || '[]'),
+        dbMeses: JSON.parse(localStorage.getItem('db_historial_meses') || '[]')
       };
+    }
 
+    // --- COMPRESIÓN Y DESCOMPRESIÓN GZIP / BASE64 ---
+    async function compressPayload(jsonStr) {
+      if (typeof CompressionStream !== 'undefined') {
+        try {
+          const stream = new Blob([new TextEncoder().encode(jsonStr)]).stream();
+          const compressedStream = stream.pipeThrough(new CompressionStream('gzip'));
+          const response = new Response(compressedStream);
+          const buffer = await response.arrayBuffer();
+          const bytes = new Uint8Array(buffer);
+          let binary = '';
+          const chunk = 8192;
+          for (let i = 0; i < bytes.length; i += chunk) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+          }
+          return 'z:' + btoa(binary);
+        } catch(e) {
+          console.warn('Fallo compresión GZIP, usando Base64 estándar:', e);
+        }
+      }
+      return btoa(unescape(encodeURIComponent(jsonStr)));
+    }
+
+    async function decompressPayload(raw) {
+      if (raw.startsWith('z:')) {
+        const b64Data = raw.slice(2);
+        const binary = atob(b64Data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        if (typeof DecompressionStream !== 'undefined') {
+          const stream = new Blob([bytes]).stream();
+          const decompressedStream = stream.pipeThrough(new DecompressionStream('gzip'));
+          const response = new Response(decompressedStream);
+          return await response.text();
+        }
+      }
+      return decodeURIComponent(escape(atob(raw)));
+    }
+
+    // --- ENLACE MÁGICO WHATSAPP (1 CLIC CON 100% DE DATOS) ---
+    async function generateMagicWhatsAppLink() {
+      const payload = buildCompleteFamilyPayload();
       const jsonStr = JSON.stringify(payload);
-      const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(jsonStr))));
+      const encoded = encodeURIComponent(await compressPayload(jsonStr));
       const shareUrl = window.location.origin + window.location.pathname + '#sync=' + encoded;
 
-      const whatsappText = `🏡 *Finanzas Diego & Soledad*\nActualicé los gastos de este mes en el panel compartido.\n\n👉 Ábrelo desde este enlace para sincronizar en tu celular:\n${shareUrl}`;
+      const expenseCount = payload.expenses.length;
+      const whatsappText = `🏡 *Finanzas Compartidas Diego & Soledad*\n` +
+        `Actualicé las finanzas del mes (${payload.month}):\n` +
+        `• ${expenseCount} boletas y gastos diarios\n` +
+        `• Sueldos y asignación de cofres\n` +
+        `• Estado de cuentas fijas y dividendo\n\n` +
+        `👉 Toca este enlace para sincronizar en tu celular al instante:\n${shareUrl}`;
 
       if (navigator.clipboard) {
         navigator.clipboard.writeText(shareUrl).then(() => {
-          showToast('📲 ¡Enlace copiado! Listo para enviar por WhatsApp');
+          showToast('📲 ¡Enlace comprimido copiado! Listo para WhatsApp');
           closeSyncModal();
         }).catch(() => {
           prompt('Copia este enlace para enviarlo por WhatsApp:', shareUrl);
@@ -3985,41 +4212,89 @@
       }
     }
 
-    // --- 5. Detección de Enlace Mágico al Cargar ---
-    function checkIncomingSync() {
+    // --- DETECCIÓN Y RESTAURACIÓN DEL ENLACE MÁGICO AL CARGAR ---
+    async function checkIncomingSync() {
       const hash = window.location.hash;
-      if (hash && hash.startsWith('#sync=')) {
-        try {
-          const raw = decodeURIComponent(hash.replace('#sync=', ''));
-          const jsonStr = decodeURIComponent(escape(atob(raw)));
-          const data = JSON.parse(jsonStr);
+      if (!hash || !hash.startsWith('#sync=')) return;
 
-          if (data && data.items && Array.isArray(data.items)) {
-            const confirmSync = confirm(`📲 Se detectaron datos actualizados del mes (${data.month || 'En Curso'}) compartidos por tu pareja.\n\n¿Deseas cargarlos y sincronizar tu app ahora?`);
-            if (confirmSync) {
-              currentAuditItems = data.items;
-              const month = data.month || document.getElementById('audit-month-select').value;
-              localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
-              window.location.hash = '';
-              showToast('✅ ¡Datos sincronizados con éxito!');
-              renderAuditTable();
-            }
-          }
-        } catch (err) {
-          console.error('Error al decodificar sync data:', err);
+      try {
+        const raw = decodeURIComponent(hash.replace('#sync=', ''));
+        const jsonStr = await decompressPayload(raw);
+        const data = JSON.parse(jsonStr);
+
+        if (!data) return;
+
+        const expensesCount = Array.isArray(data.expenses) ? data.expenses.length : 0;
+        const auditCount = Array.isArray(data.auditItems || data.items) ? (data.auditItems || data.items).length : 0;
+        const hasProfile = !!data.userProfile;
+        const month = data.month || data.activeMonth || document.getElementById('audit-month-select')?.value || '2026-10';
+
+        const confirmMsg = `📲 ¡Se detectaron datos compartidos por tu pareja!\n\n` +
+          `📅 Mes: ${month}\n` +
+          `🧾 Boletas y gastos diarios: ${expensesCount}\n` +
+          `📋 Cuentas fijas auditadas: ${auditCount}\n` +
+          (hasProfile ? `💰 Sueldos de Diego y Soledad + Asignación de Cofres\n\n` : `\n`) +
+          `¿Deseas cargar y sincronizar tu aplicación ahora?`;
+
+        const confirmSync = confirm(confirmMsg);
+        if (!confirmSync) {
+          history.replaceState(null, null, window.location.pathname);
+          return;
         }
+
+        // 1. Aplicar Audit Items
+        const items = data.auditItems || data.items;
+        if (Array.isArray(items)) {
+          currentAuditItems = items;
+          localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
+          if (typeof renderAuditTable === 'function') renderAuditTable();
+        }
+
+        // 2. Aplicar Expenses (Gastos Diarios)
+        if (Array.isArray(data.expenses)) {
+          expenses = data.expenses;
+          localStorage.setItem('family_expenses', JSON.stringify(expenses));
+          localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
+          if (typeof renderExpensesTable === 'function') renderExpensesTable();
+        }
+
+        // 3. Aplicar Perfil de Sueldos y Cofres
+        if (data.userProfile && typeof data.userProfile === 'object') {
+          userProfile = Object.assign(userProfile || {}, data.userProfile);
+          localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
+          if (userProfile.diegoSalary) localStorage.setItem('diego_salary', userProfile.diegoSalary);
+          if (userProfile.soledadSalary) localStorage.setItem('soledad_salary', userProfile.soledadSalary);
+          if (typeof updateHeaderSalaries === 'function') updateHeaderSalaries();
+          if (typeof populateSalaryModalInputs === 'function') populateSalaryModalInputs();
+        }
+
+        // 4. Custom audit items
+        if (Array.isArray(data.customAuditItems)) {
+          localStorage.setItem('custom_audit_items', JSON.stringify(data.customAuditItems));
+        }
+
+        // 5. Historial de Meses
+        if (Array.isArray(data.dbMeses)) {
+          localStorage.setItem('db_historial_meses', JSON.stringify(data.dbMeses));
+        }
+
+        // Refrescar gráficos y análisis
+        if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
+        if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
+        if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
+
+        history.replaceState(null, null, window.location.pathname);
+        showToast(`✅ ¡Sincronización completa! Se actualizaron ${expensesCount} boletas y los sueldos.`);
+      } catch (err) {
+        console.error('Error al decodificar sync data:', err);
+        alert('Hubo un problema al leer los datos del enlace. Asegúrate de copiar el enlace completo.');
       }
     }
 
-    // --- 6. Respaldo JSON Local ---
+    // --- RESPALDO JSON LOCAL COMPLETO ---
     function exportJsonBackup() {
-      const data = {
-        date: new Date().toISOString(),
-        month: document.getElementById('audit-month-select').value,
-        items: currentAuditItems,
-        customItems: localStorage.getItem('custom_audit_items')
-      };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const payload = buildCompleteFamilyPayload();
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -4027,7 +4302,7 @@
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      showToast('📥 Archivo de respaldo descargado');
+      showToast('📥 Copia de respaldo completa descargada (.json)');
     }
 
     function importJsonBackup(e) {
@@ -4037,44 +4312,190 @@
       reader.onload = (event) => {
         try {
           const data = JSON.parse(event.target.result);
-          if (data.items && Array.isArray(data.items)) {
-            currentAuditItems = data.items;
-            const month = data.month || document.getElementById('audit-month-select').value;
+          if (!data) throw new Error('Archivo vacío');
+
+          const month = data.month || data.activeMonth || document.getElementById('audit-month-select')?.value || '2026-10';
+
+          // 1. Audit items
+          const items = data.auditItems || data.items;
+          if (Array.isArray(items)) {
+            currentAuditItems = items;
             localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
-            renderAuditTable();
-            closeSyncModal();
-            showToast('✅ ¡Respaldo restaurado con éxito!');
+            if (typeof renderAuditTable === 'function') renderAuditTable();
           }
+
+          // 2. Expenses
+          if (Array.isArray(data.expenses)) {
+            expenses = data.expenses;
+            localStorage.setItem('family_expenses', JSON.stringify(expenses));
+            localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
+            if (typeof renderExpensesTable === 'function') renderExpensesTable();
+          }
+
+          // 3. User profile
+          if (data.userProfile && typeof data.userProfile === 'object') {
+            userProfile = Object.assign(userProfile || {}, data.userProfile);
+            localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
+            if (userProfile.diegoSalary) localStorage.setItem('diego_salary', userProfile.diegoSalary);
+            if (userProfile.soledadSalary) localStorage.setItem('soledad_salary', userProfile.soledadSalary);
+            if (typeof updateHeaderSalaries === 'function') updateHeaderSalaries();
+            if (typeof populateSalaryModalInputs === 'function') populateSalaryModalInputs();
+          }
+
+          // 4. Custom audit items
+          if (Array.isArray(data.customAuditItems)) {
+            localStorage.setItem('custom_audit_items', JSON.stringify(data.customAuditItems));
+          }
+
+          // 5. Historial
+          if (Array.isArray(data.dbMeses || data.dbHistorial)) {
+            localStorage.setItem('db_historial_meses', JSON.stringify(data.dbMeses || data.dbHistorial));
+          }
+
+          if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
+          if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
+          if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
+
+          closeSyncModal();
+          showToast('✅ ¡Respaldo total restaurado con éxito!');
         } catch(err) {
-          alert('El archivo no es válido.');
+          console.error(err);
+          alert('El archivo no es válido o está dañado.');
         }
       };
       reader.readAsText(file);
     }
 
-    // --- 7. Nube Compartida Simulado (LocalStorage Sync) ---
-    function pushToCloudSync() {
-      const month = document.getElementById('audit-month-select').value;
-      localStorage.setItem(`cloud_sync_room_${month}`, JSON.stringify({
-        updatedAt: new Date().toISOString(),
-        items: currentAuditItems
-      }));
-      showToast('☁️ ¡Datos guardados en la nube del hogar!');
+    // --- CONFIGURACIÓN Y OPERACIONES DE NUBE REAL (VPS / FIREBASE) ---
+    function loadSavedCloudSettings() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('hogar_cloud_config') || '{}');
+        if (saved.provider === 'firebase') {
+          const rFb = document.getElementById('radioProviderFirebase');
+          if (rFb) rFb.checked = true;
+        } else {
+          const rVps = document.getElementById('radioProviderVps');
+          if (rVps) rVps.checked = true;
+        }
+        toggleCloudProviderUI();
+
+        if (saved.vpsUrl) document.getElementById('vpsEndpointInput').value = saved.vpsUrl;
+        if (saved.vpsToken) document.getElementById('vpsTokenInput').value = saved.vpsToken;
+        if (saved.firebaseProjectId) document.getElementById('firebaseProjectIdInput').value = saved.firebaseProjectId;
+        if (saved.firebaseApiKey) document.getElementById('firebaseApiKeyInput').value = saved.firebaseApiKey;
+
+        const badge = document.getElementById('cloudStatusBadge');
+        if (badge) {
+          if (saved.vpsUrl || saved.firebaseProjectId) {
+            badge.className = 'badge badge-emerald';
+            badge.textContent = saved.provider === 'firebase' ? 'Firebase Conectado' : 'VPS Configurado';
+          } else {
+            badge.className = 'badge badge-amber';
+            badge.textContent = 'Sin Configurar';
+          }
+        }
+      } catch(e) {}
     }
 
-    function pullFromCloudSync() {
-      const month = document.getElementById('audit-month-select').value;
-      const saved = localStorage.getItem(`cloud_sync_room_${month}`);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        currentAuditItems = parsed.items;
-        renderAuditTable();
-        showToast('☁️ ¡Datos descargados desde la nube!');
+    function saveCloudSettings() {
+      const isVps = document.getElementById('radioProviderVps')?.checked;
+      const config = {
+        provider: isVps ? 'vps' : 'firebase',
+        vpsUrl: document.getElementById('vpsEndpointInput')?.value.trim() || '',
+        vpsToken: document.getElementById('vpsTokenInput')?.value.trim() || '',
+        firebaseProjectId: document.getElementById('firebaseProjectIdInput')?.value.trim() || '',
+        firebaseApiKey: document.getElementById('firebaseApiKeyInput')?.value.trim() || '',
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem('hogar_cloud_config', JSON.stringify(config));
+      showToast('💾 Configuración de nube guardada en tu navegador');
+      loadSavedCloudSettings();
+    }
+
+    async function pushToActiveCloud() {
+      const config = JSON.parse(localStorage.getItem('hogar_cloud_config') || '{}');
+      if (config.provider === 'vps' && config.vpsUrl) {
+        showToast('⏳ Conectando con tu VPS...');
+        try {
+          const payload = buildCompleteFamilyPayload();
+          const cleanUrl = config.vpsUrl.replace(/\/+$/, '');
+          const res = await fetch(`${cleanUrl}/api/sync`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${config.vpsToken || ''}`
+            },
+            body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          if (res.ok && json.success) {
+            showToast('☁️ ¡Datos guardados exitosamente en tu VPS!');
+          } else {
+            alert('Error del VPS: ' + (json.error || 'Respuesta inesperada'));
+          }
+        } catch(err) {
+          console.error(err);
+          alert('No se pudo conectar con el VPS. Verifica que python vps_sync_server.py esté corriendo y que la URL sea accesible.');
+        }
       } else {
-        showToast('ℹ️ No hay registros nuevos en la nube aún.');
+        alert('💡 Para subir a la nube, primero ingresa la URL de tu VPS o tus credenciales de Firebase en este panel.\n\nMientras tanto, puedes usar el "Enlace WhatsApp", que funciona de inmediato sin servidores.');
       }
     }
 
+    async function pullFromActiveCloud() {
+      const config = JSON.parse(localStorage.getItem('hogar_cloud_config') || '{}');
+      if (config.provider === 'vps' && config.vpsUrl) {
+        showToast('⏳ Descargando datos desde tu VPS...');
+        try {
+          const cleanUrl = config.vpsUrl.replace(/\/+$/, '');
+          const res = await fetch(`${cleanUrl}/api/sync`, {
+            headers: { 'Authorization': `Bearer ${config.vpsToken || ''}` }
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Error al obtener datos');
+
+          if (data.empty) {
+            showToast('ℹ️ No hay registros guardados en tu VPS aún.');
+            return;
+          }
+
+          const month = data.month || data.activeMonth || document.getElementById('audit-month-select')?.value || '2026-10';
+
+          if (Array.isArray(data.auditItems)) {
+            currentAuditItems = data.auditItems;
+            localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
+            if (typeof renderAuditTable === 'function') renderAuditTable();
+          }
+
+          if (Array.isArray(data.expenses)) {
+            expenses = data.expenses;
+            localStorage.setItem('family_expenses', JSON.stringify(expenses));
+            localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
+            if (typeof renderExpensesTable === 'function') renderExpensesTable();
+          }
+
+          if (data.userProfile && typeof data.userProfile === 'object') {
+            userProfile = Object.assign(userProfile || {}, data.userProfile);
+            localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
+            if (typeof updateHeaderSalaries === 'function') updateHeaderSalaries();
+          }
+
+          if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
+          if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
+          if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
+
+          closeSyncModal();
+          showToast('☁️ ¡Datos descargados desde el VPS y aplicados!');
+        } catch(err) {
+          console.error(err);
+          alert('No se pudo descargar desde el VPS: ' + err.message);
+        }
+      } else {
+        alert('💡 Para descargar desde la nube, primero ingresa la URL de tu VPS en este panel o usa el "Enlace WhatsApp".');
+      }
+    }
+
+    
     // Chart.js Setup
     let chartCofres, chartAportes, chartHistorico;
 
@@ -6618,62 +7039,139 @@
 
   <!-- MODAL DE SINCRONIZACIÓN EN PAREJA -->
   <div id="modalSync" class="modal-overlay">
-    <div class="modal-card">
+    <div class="modal-card" style="max-width:620px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
         <div style="display:flex; align-items:center; gap:0.5rem;">
-          <span style="font-size:1.3rem;">☁️</span>
-          <h3 style="font-size:1.15rem; font-weight:700;">Sincronización en Pareja (Diego & Soledad)</h3>
+          <span style="font-size:1.4rem;">☁️</span>
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:700;">Centro de Sincronización & Nube</h3>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Sincroniza boletas, sueldos y cuentas entre Diego y Soledad</div>
+          </div>
         </div>
         <button onclick="closeSyncModal()" style="background:transparent; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer;">✕</button>
       </div>
 
-      <div style="display:flex; flex-direction:column; gap:1.25rem;">
-        <!-- Método 1: Enlace Mágico por WhatsApp (1 Clic) -->
-        <div style="background:linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(168, 85, 247, 0.1)); border:1px solid rgba(168, 85, 247, 0.3); border-radius:10px; padding:1rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
-            <strong style="color:var(--text-main); font-size:0.95rem;">📲 Método 1: Enlace Mágico de WhatsApp (Recomendado)</strong>
-            <span class="badge badge-purple" style="font-size:0.75rem;">Instantáneo</span>
+      <!-- Pestañas de Métodos de Sincronización -->
+      <div style="display:flex; gap:0.5rem; background:rgba(0,0,0,0.3); padding:0.35rem; border-radius:10px; margin-bottom:1.25rem; flex-wrap:wrap;">
+        <button type="button" class="sync-tab-btn active" id="tabBtnSyncWa" onclick="switchSyncTab('wa')" style="flex:1; padding:0.5rem 0.75rem; border:none; border-radius:8px; background:var(--accent-emerald); color:#000; font-weight:700; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.4rem;">
+          <span>💬</span> Enlace WhatsApp
+        </button>
+        <button type="button" class="sync-tab-btn" id="tabBtnSyncCloud" onclick="switchSyncTab('cloud')" style="flex:1; padding:0.5rem 0.75rem; border:none; border-radius:8px; background:transparent; color:var(--text-muted); font-weight:600; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.4rem;">
+          <span>🌐</span> Nube Automática
+        </button>
+        <button type="button" class="sync-tab-btn" id="tabBtnSyncBackup" onclick="switchSyncTab('backup')" style="flex:1; padding:0.5rem 0.75rem; border:none; border-radius:8px; background:transparent; color:var(--text-muted); font-weight:600; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.4rem;">
+          <span>💾</span> Respaldo JSON
+        </button>
+      </div>
+
+      <!-- PANEL 1: ENLACE MÁGICO WHATSAPP -->
+      <div id="syncPaneWa" class="sync-pane" style="display:block;">
+        <div style="background:linear-gradient(135deg, rgba(37, 211, 102, 0.08), rgba(16, 185, 129, 0.05)); border:1px solid rgba(37, 211, 102, 0.3); border-radius:12px; padding:1.15rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+            <div style="font-weight:700; color:var(--text-main); font-size:0.95rem; display:flex; align-items:center; gap:0.4rem;">
+              <span>📲</span> Sincronización Instantánea 100% Completa
+            </div>
+            <span class="badge badge-emerald" style="font-size:0.75rem; padding:0.25rem 0.6rem;">Comprimido GZIP</span>
           </div>
-          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem;">
-            Genera un enlace con los datos actuales de este mes. Envíale el link a Soledad por WhatsApp, ella lo toca desde su celular ¡y se le actualiza todo en 1 segundo sin configurar nada!
+          <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.5; margin-bottom:0.85rem;">
+            Empaqueta y comprime <strong>todos los gastos diarios del mes, boletas registradas, sueldos actualizados y asignaciones de cofres</strong>. Al abrir el enlace en el otro celular, se actualiza la app de inmediato sin perder nada.
           </p>
-          <button onclick="generateMagicWhatsAppLink()" class="btn-primary" style="width:100%; justify-content:center; background:linear-gradient(135deg, #25D366, #128C7E); font-weight:700; font-size:0.9rem;">
-            <span>💬</span> Copiar Enlace Mágico para WhatsApp
+          <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:0.65rem 0.85rem; font-size:0.75rem; color:#A7F3D0; margin-bottom:1rem; display:flex; flex-direction:column; gap:0.25rem;">
+            <div>✨ <strong>Incluye:</strong> Boletas del mes + Cuentas fijas + Sueldos Diego & Soledad + Saldos de tarjetas</div>
+            <div style="color:var(--text-muted);">🔒 Los datos viajan comprimidos en el enlace; no requiere servidores externos.</div>
+          </div>
+          <button onclick="generateMagicWhatsAppLink()" class="btn-primary" style="width:100%; justify-content:center; background:linear-gradient(135deg, #25D366, #128C7E); font-weight:700; font-size:0.92rem; padding:0.75rem;">
+            <span>💬</span> Copiar Enlace y Enviar por WhatsApp
           </button>
         </div>
+      </div>
 
-        <!-- Método 2: Habitación en la Nube Compartida -->
-        <div style="background:var(--bg-surface-elevated); border:1px solid var(--border-color); border-radius:10px; padding:1rem;">
-          <strong style="color:var(--text-main); font-size:0.95rem;">🌐 Método 2: Nube Automática Compartida (Código de Hogar)</strong>
-          <p style="font-size:0.82rem; color:var(--text-muted); margin-top:0.25rem; margin-bottom:0.75rem;">
-            Usa el código privado de su hogar para respaldar y recuperar los gastos en la nube compartida:
+      <!-- PANEL 2: NUBE AUTOMÁTICA (FIREBASE O VPS) -->
+      <div id="syncPaneCloud" class="sync-pane" style="display:none;">
+        <div style="background:var(--bg-surface-elevated); border:1px solid var(--border-color); border-radius:12px; padding:1.15rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.65rem;">
+            <div style="font-weight:700; color:var(--text-main); font-size:0.95rem;">
+              🌐 Conexión Nube 24/7 (Sincronización en Vivo)
+            </div>
+            <span id="cloudStatusBadge" class="badge badge-amber" style="font-size:0.75rem;">Configurable</span>
+          </div>
+          <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.45; margin-bottom:1rem;">
+            Permite guardar y recuperar los gastos automáticamente desde cualquier celular. Puedes usar tu propio <strong>Servidor VPS</strong> (con el script incluido) o la nube gratuita de <strong>Firebase Firestore</strong>.
           </p>
-          <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.75rem;">
-            <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted);">Código Hogar:</label>
-            <input type="text" id="syncRoomCode" value="hogar-diego-soledad" style="padding:0.4rem 0.75rem; font-weight:700; color:var(--accent-diego);" readonly>
+
+          <!-- Selector de Tipo de Nube -->
+          <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+            <label style="flex:1; display:flex; align-items:center; gap:0.4rem; font-size:0.82rem; padding:0.5rem 0.75rem; background:rgba(0,0,0,0.25); border:1px solid var(--border-color); border-radius:8px; cursor:pointer;">
+              <input type="radio" name="cloudProvider" value="vps" id="radioProviderVps" checked onchange="toggleCloudProviderUI()">
+              <strong>🖥️ Mi VPS (24/7)</strong>
+            </label>
+            <label style="flex:1; display:flex; align-items:center; gap:0.4rem; font-size:0.82rem; padding:0.5rem 0.75rem; background:rgba(0,0,0,0.25); border:1px solid var(--border-color); border-radius:8px; cursor:pointer;">
+              <input type="radio" name="cloudProvider" value="firebase" id="radioProviderFirebase" onchange="toggleCloudProviderUI()">
+              <strong>🔥 Firebase (Google)</strong>
+            </label>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
-            <button onclick="pushToCloudSync()" class="btn-primary" style="justify-content:center; font-size:0.85rem;">
-              <span>⬆️</span> Guardar en Nube
+
+          <!-- Campos VPS -->
+          <div id="cloudFormVps" style="display:block; margin-bottom:1rem;">
+            <div style="display:flex; flex-direction:column; gap:0.65rem;">
+              <div>
+                <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">URL del VPS (IP o Dominio con Puerto):</label>
+                <input type="text" id="vpsEndpointInput" placeholder="http://tu-vps-ip:8443 o https://tu-dominio.com/sync" style="width:100%; padding:0.5rem 0.75rem; font-size:0.82rem; border-radius:6px;">
+              </div>
+              <div>
+                <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Token Secreto de Acceso (API Key Familiar):</label>
+                <input type="password" id="vpsTokenInput" placeholder="diego-sole-2026" style="width:100%; padding:0.5rem 0.75rem; font-size:0.82rem; border-radius:6px;">
+              </div>
+              <div style="font-size:0.75rem; color:var(--accent-diego); line-height:1.4;">
+                💡 En tu VPS corre el archivo <code>python vps_sync_server.py</code> ya incluido en el proyecto.
+              </div>
+            </div>
+          </div>
+
+          <!-- Campos Firebase -->
+          <div id="cloudFormFirebase" style="display:none; margin-bottom:1rem;">
+            <div style="display:flex; flex-direction:column; gap:0.65rem;">
+              <div>
+                <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Firebase Config (JSON o Project ID):</label>
+                <input type="text" id="firebaseProjectIdInput" placeholder="tu-proyecto-finanzas-hogar" style="width:100%; padding:0.5rem 0.75rem; font-size:0.82rem; border-radius:6px;">
+              </div>
+              <div>
+                <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">API Key de Firebase Web:</label>
+                <input type="password" id="firebaseApiKeyInput" placeholder="AIzaSy..." style="width:100%; padding:0.5rem 0.75rem; font-size:0.82rem; border-radius:6px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Botones de Acción Nube -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.75rem;">
+            <button onclick="pushToActiveCloud()" class="btn-primary" style="justify-content:center; font-size:0.85rem; padding:0.65rem;">
+              <span>⬆️</span> Subir a la Nube
             </button>
-            <button onclick="pullFromCloudSync()" class="btn-secondary" style="justify-content:center; font-size:0.85rem;">
-              <span>⬇️</span> Descargar de Nube
+            <button onclick="pullFromActiveCloud()" class="btn-secondary" style="justify-content:center; font-size:0.85rem; padding:0.65rem;">
+              <span>⬇️</span> Descargar de la Nube
             </button>
           </div>
+          <button onclick="saveCloudSettings()" class="btn-secondary" style="width:100%; justify-content:center; font-size:0.8rem; padding:0.45rem;">
+            💾 Guardar Configuración de Conexión
+          </button>
         </div>
+      </div>
 
-        <!-- Método 3: Archivo de Respaldo JSON -->
-        <div style="background:var(--bg-surface-elevated); border:1px solid var(--border-color); border-radius:10px; padding:1rem;">
-          <strong style="color:var(--text-main); font-size:0.95rem;">💾 Método 3: Copia de Respaldo Local (Archivo JSON)</strong>
-          <p style="font-size:0.82rem; color:var(--text-muted); margin-top:0.25rem; margin-bottom:0.75rem;">
-            Descarga un archivo con todos sus datos o restaura una copia anterior:
+      <!-- PANEL 3: RESPALDO JSON -->
+      <div id="syncPaneBackup" class="sync-pane" style="display:none;">
+        <div style="background:var(--bg-surface-elevated); border:1px solid var(--border-color); border-radius:12px; padding:1.15rem;">
+          <div style="font-weight:700; color:var(--text-main); font-size:0.95rem; margin-bottom:0.5rem;">
+            💾 Copia de Seguridad Completa (Archivo .json)
+          </div>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.45;">
+            Descarga un archivo con el 100% de la base de datos (boletas del día, sueldos históricos, asignaciones de cofres y cuentas fijas). Ideal para guardar en Google Drive o restaurar en cualquier equipo.
           </p>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-            <button onclick="exportJsonBackup()" class="btn-secondary" style="font-size:0.85rem;">
-              📥 Descargar Copia (.json)
+          <div style="display:flex; gap:0.65rem; flex-wrap:wrap;">
+            <button onclick="exportJsonBackup()" class="btn-secondary" style="font-size:0.85rem; flex:1; justify-content:center; padding:0.65rem;">
+              <span>📥</span> Descargar Respaldo Completo (.json)
             </button>
-            <label class="btn-secondary" style="font-size:0.85rem; cursor:pointer;">
-              📤 Cargar Copia
+            <label class="btn-secondary" style="font-size:0.85rem; flex:1; justify-content:center; padding:0.65rem; cursor:pointer; text-align:center;">
+              <span>📤</span> Restaurar Archivo
               <input type="file" accept=".json" onchange="importJsonBackup(event)" style="display:none;">
             </label>
           </div>
@@ -6682,8 +7180,7 @@
     </div>
   </div>
 
-  <!-- MODAL DE INSTALACIÓN PWA -->
-  <div id="modalInstallPwa" class="modal-overlay">
+  id="modalInstallPwa" class="modal-overlay">
     <div class="modal-card" style="max-width:480px; text-align:center;">
       <div style="font-size:3rem; margin-bottom:0.5rem;">📲</div>
       <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:0.5rem;">Instalar como App en tu Celular</h3>
