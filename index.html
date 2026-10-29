@@ -20,6 +20,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <style>
     :root {
       /* Obsidian Atmospheric Glass */
@@ -1212,7 +1214,10 @@
       <div class="brand">
         <img src="icon-192.png?v=20261026b" alt="Finanzas Diego & Soledad" style="width:44px; height:44px; border-radius:12px; box-shadow:0 4px 15px rgba(59,130,246,0.35); border:1px solid rgba(255,255,255,0.18); object-fit:cover;">
         <div class="brand-text">
-          <h1>Hogar Compartido</h1>
+          <div style="display:flex; align-items:center; gap:0.6rem;">
+            <h1>Hogar Compartido</h1>
+            <span id="headerCloudStatus"></span>
+          </div>
           <p>Presupuesto & Finanzas Diego & Soledad</p>
         </div>
       </div>
@@ -3933,6 +3938,7 @@
       renderAuditTable();
       renderChecklist();
       saveAuditMonth();
+      triggerAutoSyncToCloud();
       if (typeof updateDiegoColchonDisplay === 'function') updateDiegoColchonDisplay();
       if (typeof updateSoleMargenDisplay === 'function') updateSoleMargenDisplay();
       if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();
@@ -4366,136 +4372,253 @@
       reader.readAsText(file);
     }
 
-    // --- CONFIGURACIÓN Y OPERACIONES DE NUBE REAL (VPS / FIREBASE) ---
-    function loadSavedCloudSettings() {
+    
+    // ============================================================
+    // FIREBASE FIRESTORE REAL-TIME CLOUD ENGINE (HOGAR COMPARTIDO)
+    // ============================================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyBGwknt90g2gjEBBMtdu6VPRLzy_3slPhU",
+      authDomain: "finanzas-diego-soledad.firebaseapp.com",
+      projectId: "finanzas-diego-soledad",
+      storageBucket: "finanzas-diego-soledad.firebasestorage.app",
+      messagingSenderId: "89316923418",
+      appId: "1:89316923418:web:54734a222852b50f32d9a3",
+      measurementId: "G-1M3GQQE8JE"
+    };
+
+    let dbFirestore = null;
+    let firestoreUnsubscribe = null;
+    let isInternalSyncSave = false;
+
+    function initFirebaseSync() {
+      if (typeof firebase === 'undefined') {
+        console.warn('Firebase SDK no cargado aún.');
+        return;
+      }
       try {
-        const saved = JSON.parse(localStorage.getItem('hogar_cloud_config') || '{}');
-        if (saved.provider === 'firebase') {
-          const rFb = document.getElementById('radioProviderFirebase');
-          if (rFb) rFb.checked = true;
-        } else {
-          const rVps = document.getElementById('radioProviderVps');
-          if (rVps) rVps.checked = true;
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
         }
-        toggleCloudProviderUI();
+        dbFirestore = firebase.firestore();
 
-        if (saved.vpsUrl) document.getElementById('vpsEndpointInput').value = saved.vpsUrl;
-        if (saved.vpsToken) document.getElementById('vpsTokenInput').value = saved.vpsToken;
-        if (saved.firebaseProjectId) document.getElementById('firebaseProjectIdInput').value = saved.firebaseProjectId;
-        if (saved.firebaseApiKey) document.getElementById('firebaseApiKeyInput').value = saved.firebaseApiKey;
-
-        const badge = document.getElementById('cloudStatusBadge');
-        if (badge) {
-          if (saved.vpsUrl || saved.firebaseProjectId) {
-            badge.className = 'badge badge-emerald';
-            badge.textContent = saved.provider === 'firebase' ? 'Firebase Conectado' : 'VPS Configurado';
-          } else {
-            badge.className = 'badge badge-amber';
-            badge.textContent = 'Sin Configurar';
-          }
-        }
-      } catch(e) {}
+        updateCloudStatusBadge(true, '🟢 Nube Conectada');
+        listenToCloudUpdates();
+      } catch (err) {
+        console.error('Error al inicializar Firebase Firestore:', err);
+        updateCloudStatusBadge(false, '⚪ Modo Local');
+      }
     }
 
-    function saveCloudSettings() {
-      const isVps = document.getElementById('radioProviderVps')?.checked;
-      const config = {
-        provider: isVps ? 'vps' : 'firebase',
-        vpsUrl: document.getElementById('vpsEndpointInput')?.value.trim() || '',
-        vpsToken: document.getElementById('vpsTokenInput')?.value.trim() || '',
-        firebaseProjectId: document.getElementById('firebaseProjectIdInput')?.value.trim() || '',
-        firebaseApiKey: document.getElementById('firebaseApiKeyInput')?.value.trim() || '',
-        updatedAt: new Date().toISOString()
-      };
-      localStorage.setItem('hogar_cloud_config', JSON.stringify(config));
-      showToast('💾 Configuración de nube guardada en tu navegador');
-      loadSavedCloudSettings();
+    function updateCloudStatusBadge(online, text) {
+      const badge = document.getElementById('cloudStatusBadge');
+      if (badge) {
+        badge.className = online ? 'badge badge-emerald' : 'badge badge-amber';
+        badge.textContent = text;
+      }
+      const headerCloudDot = document.getElementById('headerCloudStatus');
+      if (headerCloudDot) {
+        headerCloudDot.innerHTML = online 
+          ? `<span title="Sincronizado en tiempo real con Firebase" style="display:inline-flex; align-items:center; gap:0.35rem; color:#34D399; font-size:0.75rem; font-weight:700; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); padding:0.2rem 0.55rem; border-radius:20px;"><span style="width:7px; height:7px; border-radius:50%; background:#10B981; box-shadow:0 0 8px #10B981; display:inline-block;"></span> Nube en Vivo</span>`
+          : `<span title="Modo local" style="color:var(--text-muted); font-size:0.75rem;">⚪ Offline</span>`;
+      }
+    }
+
+    function listenToCloudUpdates() {
+      if (!dbFirestore) return;
+      if (firestoreUnsubscribe) firestoreUnsubscribe();
+
+      const docRef = dbFirestore.collection('hogar').doc('datos_compartidos');
+
+      firestoreUnsubscribe = docRef.onSnapshot((docSnapshot) => {
+        if (isInternalSyncSave) {
+          isInternalSyncSave = false;
+          return;
+        }
+
+        if (!docSnapshot.exists) {
+          console.log('Documento Firestore inicial no existe, guardando estado actual...');
+          pushToFirestore(true);
+          return;
+        }
+
+        const data = docSnapshot.data();
+        if (!data) return;
+
+        const localUpdatedAt = parseInt(localStorage.getItem('finanzas_last_local_update') || '0', 10);
+        const remoteUpdatedAt = data.timestamp || 0;
+
+        // Si los datos remotos son más nuevos o no tenemos timestamp, aplicarlos
+        if (remoteUpdatedAt > localUpdatedAt) {
+          console.log('🔄 Sincronizando datos remotos en tiempo real...');
+          applyRemoteDataToApp(data);
+          localStorage.setItem('finanzas_last_local_update', remoteUpdatedAt.toString());
+          showToast('☁️ Datos del hogar actualizados automáticamente desde la nube');
+        }
+      }, (error) => {
+        console.error('Error en listener Firestore:', error);
+        updateCloudStatusBadge(false, '⚠️ Error Nube');
+      });
+    }
+
+    function applyRemoteDataToApp(data) {
+      const month = data.month || data.activeMonth || document.getElementById('audit-month-select')?.value || '2026-10';
+
+      if (Array.isArray(data.auditItems)) {
+        currentAuditItems = data.auditItems;
+        localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
+        if (typeof renderAuditTable === 'function') renderAuditTable();
+      }
+
+      if (Array.isArray(data.expenses)) {
+        expenses = data.expenses;
+        localStorage.setItem('family_expenses', JSON.stringify(expenses));
+        localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
+        if (typeof renderExpensesTable === 'function') renderExpensesTable();
+      }
+
+      if (data.userProfile && typeof data.userProfile === 'object') {
+        userProfile = Object.assign(userProfile || {}, data.userProfile);
+        localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
+        if (userProfile.diegoSalary) localStorage.setItem('diego_salary', userProfile.diegoSalary);
+        if (userProfile.soledadSalary) localStorage.setItem('soledad_salary', userProfile.soledadSalary);
+        if (typeof updateHeaderSalaries === 'function') updateHeaderSalaries();
+        if (typeof populateSalaryModalInputs === 'function') populateSalaryModalInputs();
+      }
+
+      if (Array.isArray(data.customAuditItems)) {
+        localStorage.setItem('custom_audit_items', JSON.stringify(data.customAuditItems));
+      }
+
+      if (Array.isArray(data.dbMeses)) {
+        localStorage.setItem('db_historial_meses', JSON.stringify(data.dbMeses));
+      }
+
+      if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
+      if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
+      if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
+    }
+
+    async function pushToFirestore(isSilent = false) {
+      if (!dbFirestore) return false;
+      try {
+        isInternalSyncSave = true;
+        const payload = buildCompleteFamilyPayload();
+        payload.timestamp = Date.now();
+        localStorage.setItem('finanzas_last_local_update', payload.timestamp.toString());
+
+        await dbFirestore.collection('hogar').doc('datos_compartidos').set(payload);
+        if (!isSilent) showToast('☁️ ¡Guardado en la nube de Firebase con éxito!');
+        return true;
+      } catch(err) {
+        console.error('Error guardando en Firestore:', err);
+        if (!isSilent) alert('Error al guardar en Firebase: ' + err.message);
+        return false;
+      }
+    }
+
+    async function pullFromFirestore() {
+      if (!dbFirestore) return false;
+      try {
+        showToast('⏳ Descargando datos desde Firebase...');
+        const doc = await dbFirestore.collection('hogar').doc('datos_compartidos').get();
+        if (doc.exists) {
+          applyRemoteDataToApp(doc.data());
+          showToast('☁️ ¡Datos actualizados desde Firebase!');
+          closeSyncModal();
+          return true;
+        } else {
+          showToast('ℹ️ No hay datos guardados aún en la nube.');
+          return false;
+        }
+      } catch(err) {
+        console.error('Error descargando de Firestore:', err);
+        alert('Error al descargar de Firebase: ' + err.message);
+        return false;
+      }
+    }
+
+    function triggerAutoSyncToCloud() {
+      if (dbFirestore) {
+        pushToFirestore(true);
+      }
+    }
+
+    // --- ACCIONES DE NUBE DESDE EL MODAL ---
+    function loadSavedCloudSettings() {
+      if (dbFirestore) {
+        updateCloudStatusBadge(true, '🟢 Firebase Conectado');
+        const rFb = document.getElementById('radioProviderFirebase');
+        if (rFb) rFb.checked = true;
+        toggleCloudProviderUI();
+      }
     }
 
     async function pushToActiveCloud() {
-      const config = JSON.parse(localStorage.getItem('hogar_cloud_config') || '{}');
-      if (config.provider === 'vps' && config.vpsUrl) {
+      const isVps = document.getElementById('radioProviderVps')?.checked;
+      if (isVps) {
+        const vpsUrl = document.getElementById('vpsEndpointInput')?.value.trim();
+        const vpsToken = document.getElementById('vpsTokenInput')?.value.trim();
+        if (!vpsUrl) {
+          alert('Por favor ingresa la URL de tu VPS.');
+          return;
+        }
         showToast('⏳ Conectando con tu VPS...');
         try {
           const payload = buildCompleteFamilyPayload();
-          const cleanUrl = config.vpsUrl.replace(/\/+$/, '');
+          const cleanUrl = vpsUrl.replace(/\/+$/, '');
           const res = await fetch(`${cleanUrl}/api/sync`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${config.vpsToken || ''}`
+              'Authorization': `Bearer ${vpsToken || ''}`
             },
             body: JSON.stringify(payload)
           });
           const json = await res.json();
           if (res.ok && json.success) {
-            showToast('☁️ ¡Datos guardados exitosamente en tu VPS!');
+            showToast('☁️ ¡Datos guardados en tu VPS con éxito!');
           } else {
             alert('Error del VPS: ' + (json.error || 'Respuesta inesperada'));
           }
         } catch(err) {
-          console.error(err);
-          alert('No se pudo conectar con el VPS. Verifica que python vps_sync_server.py esté corriendo y que la URL sea accesible.');
+          alert('No se pudo conectar con el VPS: ' + err.message);
         }
       } else {
-        alert('💡 Para subir a la nube, primero ingresa la URL de tu VPS o tus credenciales de Firebase en este panel.\n\nMientras tanto, puedes usar el "Enlace WhatsApp", que funciona de inmediato sin servidores.');
+        await pushToFirestore(false);
       }
     }
 
     async function pullFromActiveCloud() {
-      const config = JSON.parse(localStorage.getItem('hogar_cloud_config') || '{}');
-      if (config.provider === 'vps' && config.vpsUrl) {
-        showToast('⏳ Descargando datos desde tu VPS...');
+      const isVps = document.getElementById('radioProviderVps')?.checked;
+      if (isVps) {
+        const vpsUrl = document.getElementById('vpsEndpointInput')?.value.trim();
+        const vpsToken = document.getElementById('vpsTokenInput')?.value.trim();
+        if (!vpsUrl) {
+          alert('Por favor ingresa la URL de tu VPS.');
+          return;
+        }
+        showToast('⏳ Descargando desde tu VPS...');
         try {
-          const cleanUrl = config.vpsUrl.replace(/\/+$/, '');
+          const cleanUrl = vpsUrl.replace(/\/+$/, '');
           const res = await fetch(`${cleanUrl}/api/sync`, {
-            headers: { 'Authorization': `Bearer ${config.vpsToken || ''}` }
+            headers: { 'Authorization': `Bearer ${vpsToken || ''}` }
           });
           const data = await res.json();
-          if (!res.ok) throw new Error(data.error || 'Error al obtener datos');
-
-          if (data.empty) {
-            showToast('ℹ️ No hay registros guardados en tu VPS aún.');
-            return;
+          if (data && !data.error) {
+            applyRemoteDataToApp(data);
+            showToast('☁️ ¡Datos descargados desde el VPS!');
+            closeSyncModal();
+          } else {
+            alert('Error del VPS: ' + (data.error || 'Sin datos'));
           }
-
-          const month = data.month || data.activeMonth || document.getElementById('audit-month-select')?.value || '2026-10';
-
-          if (Array.isArray(data.auditItems)) {
-            currentAuditItems = data.auditItems;
-            localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
-            if (typeof renderAuditTable === 'function') renderAuditTable();
-          }
-
-          if (Array.isArray(data.expenses)) {
-            expenses = data.expenses;
-            localStorage.setItem('family_expenses', JSON.stringify(expenses));
-            localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
-            if (typeof renderExpensesTable === 'function') renderExpensesTable();
-          }
-
-          if (data.userProfile && typeof data.userProfile === 'object') {
-            userProfile = Object.assign(userProfile || {}, data.userProfile);
-            localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
-            if (typeof updateHeaderSalaries === 'function') updateHeaderSalaries();
-          }
-
-          if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
-          if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
-          if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
-
-          closeSyncModal();
-          showToast('☁️ ¡Datos descargados desde el VPS y aplicados!');
         } catch(err) {
-          console.error(err);
-          alert('No se pudo descargar desde el VPS: ' + err.message);
+          alert('Error al descargar del VPS: ' + err.message);
         }
       } else {
-        alert('💡 Para descargar desde la nube, primero ingresa la URL de tu VPS en este panel o usa el "Enlace WhatsApp".');
+        await pullFromFirestore();
       }
     }
 
-    
     // Chart.js Setup
     let chartCofres, chartAportes, chartHistorico;
 
@@ -6950,6 +7073,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      initFirebaseSync();
       loadCustomItems();
       loadUserProfile();
       initAllGlassSelects();
