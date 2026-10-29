@@ -2738,12 +2738,12 @@
           <div class="guide-step">
             <div class="step-number">3</div>
             <div class="step-content">
-              <h3>Cómo Sincronizar entre los Celulares de Diego y Soledad</h3>
-              <p>Ambos pueden tener la app en su propio celular y sincronizar con 1 solo toque:</p>
+              <h3>Sincronización Automática en Tiempo Real (Nube Firebase)</h3>
+              <p>Tu aplicación cuenta con sincronización instantánea en la nube 24/7:</p>
               <ul>
-                <li>Haz clic en el botón superior <strong>☁️ Sincronizar Pareja</strong>.</li>
-                <li>Toca <strong>💬 Copiar Enlace Mágico para WhatsApp</strong> y envíaselo a tu pareja por chat.</li>
-                <li>Cuando Soledad o tú abran el enlace en su celular, la app preguntará: <em>"¿Deseas sincronizar los últimos datos?"</em>. Al aceptar, ¡ambos quedan con la información exactamente igual!</li>
+                <li><strong style="color:#10B981;">🟢 Nube en Vivo Automática:</strong> Cada vez que Diego o Soledad anoten una boleta, modifiquen un sueldo o muevan un cofre, el cambio se refleja en el otro celular en menos de 1 segundo de forma automática.</li>
+                <li><strong>Modo Fuera de Línea (Offline):</strong> Si estás sin señal (en el metro o sin cobertura), puedes registrar gastos normalmente; la app los guardará en tu teléfono y los sincronizará solos en cuanto recuperes internet.</li>
+                <li><strong>Respaldo Manual por WhatsApp:</strong> Si alguna vez lo prefieren, el botón superior <strong>☁️ Sincronización</strong> permite generar un enlace comprimido por WhatsApp o descargar una copia de seguridad en archivo .json.</li>
               </ul>
             </div>
           </div>
@@ -3809,6 +3809,7 @@
       const diegoFijo = 365000;
       const soledadDiff = Math.max(0, total - diegoFijo);
 
+      // 1. Actualizar en la tabla de auditoría fija
       let itemDiego = currentAuditItems.find(it => it.id === 'item-1' || it.name.includes('Aporte Fijo Diego'));
       let itemSole = currentAuditItems.find(it => it.id === 'item-1b' || it.name.includes('Diferencial UF Soledad'));
 
@@ -3821,11 +3822,67 @@
         itemSole.base = soledadDiff;
       }
 
-      renderAuditTable();
-      showToast(`🤝 ¡Dividendo Hipotecario ($${total.toLocaleString('es-CL')}) aplicado: Diego $365k + Soledad $${soledadDiff.toLocaleString('es-CL')}!`);
+      // 2. Crear o actualizar inteligentemente en la Tabla de Gastos Registrados Diarios
+      const today = new Date().toISOString().split('T')[0];
+      const dateStr = currentActiveMonth && currentActiveMonth.includes('-') ? `${currentActiveMonth}-05` : today;
 
-      const month = document.getElementById('audit-month-select').value;
+      // Gasto Diego ($365.000)
+      let expDiego = expenses.find(e => e.id === 'hipo-diego' || (e.category === 'Crédito Hipotecario' && e.payer === 'Diego'));
+      if (expDiego) {
+        expDiego.amount = diegoFijo;
+        expDiego.desc = 'Dividendo Limache (Aporte Fijo Diego)';
+        expDiego.account = 'Cuenta Fan';
+      } else {
+        expenses.unshift({
+          id: 'hipo-diego',
+          date: dateStr,
+          payer: 'Diego',
+          category: 'Crédito Hipotecario',
+          amount: diegoFijo,
+          account: 'Cuenta Fan',
+          desc: 'Dividendo Limache (Aporte Fijo Diego)'
+        });
+      }
+
+      // Gasto Soledad (Diferencial)
+      let expSole = expenses.find(e => e.id === 'hipo-soledad' || (e.category === 'Crédito Hipotecario' && e.payer === 'Soledad'));
+      if (soledadDiff > 0) {
+        if (expSole) {
+          expSole.amount = soledadDiff;
+          expSole.desc = 'Diferencial UF Dividendo (Co-Aporte Soledad)';
+          expSole.account = 'Chequera BancoEstado';
+        } else {
+          expenses.unshift({
+            id: 'hipo-soledad',
+            date: dateStr,
+            payer: 'Soledad',
+            category: 'Crédito Hipotecario',
+            amount: soledadDiff,
+            account: 'Chequera BancoEstado',
+            desc: 'Diferencial UF Dividendo (Co-Aporte Soledad)'
+          });
+        }
+      } else if (expSole) {
+        expenses = expenses.filter(e => e !== expSole);
+      }
+
+      // 3. Persistir en localStorage
+      const month = document.getElementById('audit-month-select')?.value || '2026-10';
       localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
+      localStorage.setItem('family_expenses', JSON.stringify(expenses));
+      localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
+
+      // 4. Re-renderizar tablas y gráficos reactivos
+      renderAuditTable();
+      renderExpenses();
+      if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
+      if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
+      if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
+
+      // 5. Sincronizar automáticamente en la nube de Firebase
+      triggerAutoSyncToCloud();
+
+      showToast(`🤝 ¡Dividendo Hipotecario ($${total.toLocaleString('es-CL')}) aplicado: Diego $365k + Soledad $${soledadDiff.toLocaleString('es-CL')} sincronizados en la tabla!`);
     }
 
     // ==============================================================
@@ -4929,7 +4986,8 @@
               <td><strong style="font-size:0.88rem; color:var(--text-main);">${escapeHtml(item.desc || '-')}</strong></td>
               <td><span style="font-size:0.78rem; color:var(--text-muted); background:rgba(255,255,255,0.05); padding:0.2rem 0.5rem; border-radius:6px; border:1px solid rgba(255,255,255,0.08);">${escapeHtml(item.account || 'Efectivo/Otro')}</span></td>
               <td style="font-weight:800; font-size:0.95rem; text-align:right; color:#10B981; font-family:monospace, monospace;">${formatCLP(item.amount)}</td>
-              <td style="text-align:center;">
+              <td style="text-align:center; white-space:nowrap;">
+                <button type="button" onclick="openEditExpenseModal(${item._origIndex})" style="background:rgba(59, 130, 246, 0.15); border:1px solid rgba(59, 130, 246, 0.35); color:#93C5FD; border-radius:8px; padding:0.3rem 0.55rem; cursor:pointer; font-size:0.85rem; transition:all 0.2s; margin-right:0.3rem;" title="Editar este gasto">✏️</button>
                 <button type="button" onclick="deleteExpense(${item._origIndex})" style="background:rgba(239, 68, 68, 0.12); border:1px solid rgba(239, 68, 68, 0.3); color:#FCA5A5; border-radius:8px; padding:0.3rem 0.55rem; cursor:pointer; font-size:0.85rem; transition:all 0.2s;" title="Eliminar este gasto">🗑️</button>
               </td>
             `;
@@ -4984,6 +5042,101 @@
       document.getElementById('expenseForm').reset();
       const expDateEl = document.getElementById('exp-date'); if (expDateEl) expDateEl.valueAsDate = new Date();
       showToast('¡Gasto registrado con éxito!');
+    }
+
+    
+    // ==============================================================
+    // MODIFICAR Y EDITAR GASTO REGISTRADO
+    // ==============================================================
+    function openEditExpenseModal(index) {
+      if (index < 0 || index >= expenses.length) return;
+      const exp = expenses[index];
+      document.getElementById('editExpIndex').value = index;
+      document.getElementById('editExpDate').value = exp.date || new Date().toISOString().split('T')[0];
+      document.getElementById('editExpPayer').value = exp.payer || 'Diego';
+      document.getElementById('editExpDesc').value = exp.desc || '';
+      document.getElementById('editExpAmount').value = exp.amount || 0;
+
+      // Seleccionar Categoría
+      const catEl = document.getElementById('editExpCategory');
+      if (catEl) {
+        let found = false;
+        for (let i = 0; i < catEl.options.length; i++) {
+          if (catEl.options[i].value === exp.category) {
+            catEl.selectedIndex = i;
+            found = true;
+            break;
+          }
+        }
+        if (!found && exp.category) {
+          const opt = new Option(exp.category, exp.category, true, true);
+          catEl.add(opt);
+        }
+      }
+
+      // Seleccionar Cuenta
+      const accEl = document.getElementById('editExpAccount');
+      if (accEl) {
+        let found = false;
+        for (let i = 0; i < accEl.options.length; i++) {
+          if (accEl.options[i].value === exp.account) {
+            accEl.selectedIndex = i;
+            found = true;
+            break;
+          }
+        }
+        if (!found && exp.account) {
+          const opt = new Option(exp.account, exp.account, true, true);
+          accEl.add(opt);
+        }
+      }
+
+      document.getElementById('modalEditExpense').style.display = 'flex';
+    }
+
+    function closeEditExpenseModal() {
+      const modal = document.getElementById('modalEditExpense');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function saveEditedExpense(e) {
+      e.preventDefault();
+      const idx = parseInt(document.getElementById('editExpIndex').value, 10);
+      if (isNaN(idx) || idx < 0 || idx >= expenses.length) return;
+
+      const date = document.getElementById('editExpDate').value;
+      const payer = document.getElementById('editExpPayer').value;
+      const category = document.getElementById('editExpCategory').value;
+      const desc = document.getElementById('editExpDesc').value.trim();
+      const amount = parseInt(document.getElementById('editExpAmount').value, 10);
+      const account = document.getElementById('editExpAccount').value;
+
+      if (!amount || amount <= 0) {
+        alert('Por favor ingresa un monto válido.');
+        return;
+      }
+
+      expenses[idx] = {
+        ...expenses[idx],
+        date: date,
+        payer: payer,
+        category: category,
+        desc: desc,
+        amount: amount,
+        account: account
+      };
+
+      localStorage.setItem('family_expenses', JSON.stringify(expenses));
+      localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
+
+      renderExpenses();
+      if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
+      if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
+      if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
+      triggerAutoSyncToCloud();
+
+      closeEditExpenseModal();
+      showToast(`✅ Gasto "${desc}" modificado y sincronizado`);
     }
 
     function deleteExpense(idx) {
@@ -7567,3 +7720,92 @@
 
 </body>
 </html>
+  <!-- ============================================================== -->
+  <!-- MODAL DE EDICIÓN DE GASTO REGISTRADO                           -->
+  <!-- ============================================================== -->
+  <div id="modalEditExpense" class="modal-overlay">
+    <div class="modal-card" style="max-width:480px; border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 12px 40px rgba(0,0,0,0.6);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-size:1.3rem;">✏️</span>
+          <h3 style="font-size:1.15rem; font-weight:700;">Modificar Gasto Registrado</h3>
+        </div>
+        <button type="button" onclick="closeEditExpenseModal()" style="background:transparent; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer;">✕</button>
+      </div>
+
+      <form id="editExpenseForm" onsubmit="saveEditedExpense(event)">
+        <input type="hidden" id="editExpIndex" value="">
+
+        <div style="display:flex; flex-direction:column; gap:0.85rem;">
+          <div>
+            <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Fecha:</label>
+            <input type="date" id="editExpDate" required style="width:100%; padding:0.55rem 0.75rem; font-size:0.85rem; border-radius:8px;">
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
+            <div>
+              <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Pagado Por:</label>
+              <select id="editExpPayer" required style="width:100%; padding:0.55rem 0.75rem; font-size:0.85rem; border-radius:8px;">
+                <option value="Diego">🔵 Diego</option>
+                <option value="Soledad">🟣 Soledad</option>
+                <option value="Ambos">🤝 Ambos (50/50)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Categoría:</label>
+              <select id="editExpCategory" required style="width:100%; padding:0.55rem 0.75rem; font-size:0.85rem; border-radius:8px;">
+                <option value="Supermercado">🛒 Supermercado</option>
+                <option value="Alimentación">🍔 Alimentación</option>
+                <option value="Luz Chilquinta Limache">💡 Luz Chilquinta</option>
+                <option value="Agua Esval Limache">💧 Agua Esval</option>
+                <option value="Gas Balón/Red Limache">🔥 Gas Balón/Red</option>
+                <option value="Plan Claro Soledad">📱 Plan Claro Soledad</option>
+                <option value="Planes Entel">📱 Planes Entel</option>
+                <option value="Internet">🌐 Internet</option>
+                <option value="Crédito Hipotecario">🏠 Crédito Hipotecario</option>
+                <option value="Gasto Común">🏢 Gasto Común</option>
+                <option value="Pagos Servicios Huasco">⚡ Pagos Servicios Huasco</option>
+                <option value="Transporte">🚗 Transporte</option>
+                <option value="Salud">💊 Salud</option>
+                <option value="Mascotas">🐾 Mascotas</option>
+                <option value="Gustos Personales">✨ Gustos Personales</option>
+                <option value="Otros">📦 Otros</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Detalle o Comercio:</label>
+            <input type="text" id="editExpDesc" required style="width:100%; padding:0.55rem 0.75rem; font-size:0.85rem; border-radius:8px;" placeholder="Ej: Lider, Copec, Farmacia...">
+          </div>
+
+          <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:0.65rem;">
+            <div>
+              <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Monto (CLP):</label>
+              <input type="number" id="editExpAmount" required min="1" step="1" style="width:100%; padding:0.55rem 0.75rem; font-size:0.95rem; font-weight:800; color:#10B981; border-radius:8px;">
+            </div>
+            <div>
+              <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Cuenta / Tarjeta:</label>
+              <select id="editExpAccount" required style="width:100%; padding:0.55rem 0.75rem; font-size:0.85rem; border-radius:8px;">
+                <option value="Tenpo">Tenpo</option>
+                <option value="Cuenta Fan">Cuenta Fan</option>
+                <option value="Chequera BancoEstado">Chequera BancoEstado</option>
+                <option value="CMR Falabella">CMR Falabella</option>
+                <option value="Mach">Mach</option>
+                <option value="Mercado Pago">Mercado Pago</option>
+                <option value="BancoEstado CuentaRUT">BancoEstado CuentaRUT</option>
+                <option value="Efectivo/Otro">Efectivo/Otro</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:0.75rem; border-top:1px solid var(--border-color); padding-top:0.75rem;">
+            <button type="button" onclick="closeEditExpenseModal()" class="btn-secondary" style="font-size:0.85rem; padding:0.55rem 1rem;">Cancelar</button>
+            <button type="submit" class="btn-primary" style="font-size:0.85rem; padding:0.55rem 1.25rem; font-weight:700;">💾 Guardar Cambios</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  
