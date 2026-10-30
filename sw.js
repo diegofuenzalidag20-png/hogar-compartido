@@ -1,4 +1,4 @@
-const CACHE_NAME = 'finanzas-pareja-v10';
+const CACHE_NAME = 'finanzas-pareja-v11';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -12,8 +12,6 @@ const ASSETS_TO_CACHE = [
   './apple-touch-icon.png',
   'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap',
   'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
-  'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js'
 ];
 
 self.addEventListener('install', (event) => {

@@ -20,8 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <!-- Firebase Cloud Sync Engine (REST Directo ultra-rápido sin dependencias pesadas) -->
   <style>
     :root {
       /* Obsidian Atmospheric Glass */
@@ -3564,6 +3563,20 @@ main, .tab-pane {
 
     let currentAuditItems = JSON.parse(JSON.stringify(masterAuditItems));
 
+    function loadCurrentMonthAudit() {
+      const selectEl = document.getElementById('audit-month-select');
+      const month = selectEl ? selectEl.value : 'Oct-26';
+      const saved = localStorage.getItem(`audit_${month}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            currentAuditItems = parsed;
+          }
+        } catch(e) {}
+      }
+    }
+
     function renderAuditTable() {
       if (typeof renderAnalisisMesActual === 'function' && document.getElementById('tab-mes-actual')?.classList.contains('active')) {
         renderAnalisisMesActual();
@@ -4788,6 +4801,7 @@ main, .tab-pane {
       };
       expenses.unshift(newExp);
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
+      localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
       renderExpenses();
 
       // 3. Renderizar y persistir
@@ -5231,42 +5245,16 @@ main, .tab-pane {
     
     // ============================================================
 // ============================================================
-    // FIREBASE FIRESTORE REAL-TIME CLOUD ENGINE (HOGAR COMPARTIDO)
+    // FIREBASE FIRESTORE NATIVE REST ENGINE (ULTRA-RÁPIDO, CERO TRABAS)
     // ============================================================
-    const firebaseConfig = {
-      apiKey: "AIzaSyBGwknt90g2gjEBBMtdu6VPRLzy_3slPhU",
-      authDomain: "finanzas-diego-soledad.firebaseapp.com",
-      projectId: "finanzas-diego-soledad",
-      storageBucket: "finanzas-diego-soledad.firebasestorage.app",
-      messagingSenderId: "89316923418",
-      appId: "1:89316923418:web:54734a222852b50f32d9a3",
-      measurementId: "G-1M3GQQE8JE"
-    };
-
+    const FIRESTORE_PROJECT_ID = "finanzas-diego-soledad";
+    const FIRESTORE_API_KEY = "AIzaSyBGwknt90g2gjEBBMtdu6VPRLzy_3slPhU";
+    const FIRESTORE_DOC_URL = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents/hogar/datos_compartidos?key=${FIRESTORE_API_KEY}`;
     const CLIENT_SESSION_ID = 'sess_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
-    let dbFirestore = null;
-    let firestoreUnsubscribe = null;
+
     let autoSyncCloudTimer = null;
     let lastUploadedTimestamp = 0;
-
-    function initFirebaseSync() {
-      if (typeof firebase === 'undefined') {
-        console.warn('Firebase SDK no cargado aún.');
-        return;
-      }
-      try {
-        if (!firebase.apps.length) {
-          firebase.initializeApp(firebaseConfig);
-        }
-        dbFirestore = firebase.firestore();
-
-        updateCloudStatusBadge(true, '🟢 Nube en Vivo');
-        listenToCloudUpdates();
-      } catch (err) {
-        console.error('Error al inicializar Firebase Firestore:', err);
-        updateCloudStatusBadge(false, '⚪ Modo Local');
-      }
-    }
+    let cloudPollInterval = null;
 
     function updateCloudStatusBadge(online, text) {
       const badge = document.getElementById('cloudStatusBadge');
@@ -5282,48 +5270,39 @@ main, .tab-pane {
       }
     }
 
-    function listenToCloudUpdates() {
-      if (!dbFirestore) return;
-      if (firestoreUnsubscribe) firestoreUnsubscribe();
-
-      const docRef = dbFirestore.collection('hogar').doc('datos_compartidos');
-
-      firestoreUnsubscribe = docRef.onSnapshot((docSnapshot) => {
-        // Ignorar escrituras pendientes del propio cliente local
-        if (docSnapshot.metadata && docSnapshot.metadata.hasPendingWrites) {
-          return;
+    function parseFirestoreField(field) {
+      if (!field) return null;
+      if ('stringValue' in field) return field.stringValue;
+      if ('integerValue' in field) return parseInt(field.integerValue, 10);
+      if ('doubleValue' in field) return parseFloat(field.doubleValue);
+      if ('booleanValue' in field) return field.booleanValue;
+      if ('nullValue' in field) return null;
+      if ('arrayValue' in field) {
+        const values = field.arrayValue.values || [];
+        return values.map(parseFirestoreField);
+      }
+      if ('mapValue' in field) {
+        const res = {};
+        const f = field.mapValue.fields || {};
+        for (const k in f) {
+          res[k] = parseFirestoreField(f[k]);
         }
+        return res;
+      }
+      return null;
+    }
 
-        if (!docSnapshot.exists) {
-          console.log('Documento Firestore inicial no existe, guardando estado actual...');
-          pushToFirestore(true);
-          return;
-        }
-
-        const data = docSnapshot.data();
-        if (!data) return;
-
-        // Si el cambio fue originado por esta misma sesión o tiene el timestamp que acabamos de subir, ignorarlo
-        if (data.clientSessionId && data.clientSessionId === CLIENT_SESSION_ID) {
-          return;
-        }
-        if (data.timestamp && data.timestamp === lastUploadedTimestamp) {
-          return;
-        }
-
-        console.log('🔄 Sincronizando datos remotos en tiempo real desde Firebase...', data);
-        localStorage.setItem('finanzas_last_local_update', (data.timestamp || Date.now()).toString());
-        applyRemoteDataToApp(data);
-        showToast('☁️ ¡Sincronizado con tu pareja en tiempo real!');
-      }, (error) => {
-        console.error('Error en listener Firestore:', error);
-        updateCloudStatusBadge(false, '⚠️ Error Nube');
-      });
+    function parseFirestoreDocFields(fields) {
+      const res = {};
+      for (const k in fields) {
+        res[k] = parseFirestoreField(fields[k]);
+      }
+      return res;
     }
 
     function applyRemoteDataToApp(data) {
       if (!data) return;
-      const month = data.month || data.activeMonth || document.getElementById('audit-month-select')?.value || '2026-10';
+      const month = data.month || data.activeMonth || document.getElementById('audit-month-select')?.value || 'Oct-26';
 
       if (Array.isArray(data.auditItems) && data.auditItems.length > 0) {
         currentAuditItems = data.auditItems;
@@ -5366,11 +5345,9 @@ main, .tab-pane {
       if (typeof renderTablaHistorialMesesBD === 'function') renderTablaHistorialMesesBD();
     }
 
-    // Alias global para máxima compatibilidad
     window.renderExpensesTable = renderExpenses;
 
     async function pushToFirestore(isSilent = false) {
-      if (!dbFirestore) return false;
       try {
         const payload = buildCompleteFamilyPayload();
         payload.timestamp = Date.now();
@@ -5378,47 +5355,129 @@ main, .tab-pane {
         lastUploadedTimestamp = payload.timestamp;
         localStorage.setItem('finanzas_last_local_update', payload.timestamp.toString());
 
-        await dbFirestore.collection('hogar').doc('datos_compartidos').set(payload);
+        const body = {
+          fields: {
+            appStateJson: { stringValue: JSON.stringify(payload) },
+            timestamp: { integerValue: payload.timestamp.toString() },
+            sender: { stringValue: payload.sender || 'Diego o Soledad' },
+            month: { stringValue: payload.month || 'Oct-26' }
+          }
+        };
+
+        const res = await fetch(FIRESTORE_DOC_URL, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error?.message || `HTTP ${res.status}`);
+        }
+
+        updateCloudStatusBadge(true, '🟢 Nube en Vivo');
         if (!isSilent) showToast('☁️ ¡Guardado en la nube de Firebase con éxito!');
         return true;
-      } catch(err) {
+      } catch (err) {
         console.error('Error guardando en Firestore:', err);
+        updateCloudStatusBadge(false, '⚠️ Error Nube');
         if (!isSilent) alert('Error al guardar en Firebase: ' + err.message);
         return false;
       }
     }
 
-    async function pullFromFirestore() {
-      if (!dbFirestore) return false;
+    async function pullFromFirestore(isSilent = false) {
       try {
-        showToast('⏳ Descargando datos desde Firebase...');
-        const doc = await dbFirestore.collection('hogar').doc('datos_compartidos').get();
-        if (doc.exists) {
-          applyRemoteDataToApp(doc.data());
-          showToast('☁️ ¡Datos actualizados desde Firebase!');
-          closeSyncModal();
-          return true;
-        } else {
-          showToast('ℹ️ No hay datos guardados aún en la nube.');
+        if (!isSilent) showToast('⏳ Descargando datos desde Firebase...');
+        const res = await fetch(FIRESTORE_DOC_URL, { cache: 'no-store' });
+        if (!res.ok) {
+          if (res.status === 404) {
+            if (!isSilent) showToast('ℹ️ No hay datos guardados aún en la nube.');
+            return false;
+          }
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const doc = await res.json();
+        if (!doc.fields) {
+          if (!isSilent) showToast('ℹ️ Sin registros en la nube aún.');
           return false;
         }
-      } catch(err) {
+
+        let payload = null;
+        if (doc.fields.appStateJson && doc.fields.appStateJson.stringValue) {
+          try {
+            payload = JSON.parse(doc.fields.appStateJson.stringValue);
+          } catch(e) {}
+        }
+        if (!payload) {
+          payload = parseFirestoreDocFields(doc.fields);
+        }
+
+        if (!payload) {
+          if (!isSilent) showToast('ℹ️ No se pudieron leer los datos.');
+          return false;
+        }
+
+        // Si es sincronización automática silenciosa, ignorar si ya lo tenemos o fue de esta sesión
+        if (isSilent) {
+          if (payload.clientSessionId && payload.clientSessionId === CLIENT_SESSION_ID) {
+            return false;
+          }
+          const currentLocalUpdate = parseInt(localStorage.getItem('finanzas_last_local_update') || '0', 10);
+          if (payload.timestamp && payload.timestamp <= currentLocalUpdate) {
+            return false;
+          }
+        }
+
+        console.log('🔄 Sincronizando datos remotos desde Firebase...', payload);
+        localStorage.setItem('finanzas_last_local_update', (payload.timestamp || Date.now()).toString());
+        applyRemoteDataToApp(payload);
+        updateCloudStatusBadge(true, '🟢 Nube en Vivo');
+
+        if (!isSilent) {
+          showToast('☁️ ¡Datos actualizados desde Firebase!');
+          closeSyncModal();
+        } else {
+          showToast('☁️ ¡Sincronizado con tu pareja en tiempo real!');
+        }
+        return true;
+      } catch (err) {
         console.error('Error descargando de Firestore:', err);
-        alert('Error al descargar de Firebase: ' + err.message);
+        updateCloudStatusBadge(false, '⚠️ Sin Conexión');
+        if (!isSilent) alert('Error al descargar de Firebase: ' + err.message);
         return false;
       }
     }
 
     function triggerAutoSyncToCloud(immediate = false) {
-      if (!dbFirestore) return;
       if (autoSyncCloudTimer) clearTimeout(autoSyncCloudTimer);
       if (immediate) {
         pushToFirestore(true);
       } else {
         autoSyncCloudTimer = setTimeout(() => {
           pushToFirestore(true);
-        }, 300);
+        }, 350);
       }
+    }
+
+    function initFirebaseSync() {
+      updateCloudStatusBadge(true, '🟢 Nube en Vivo');
+      // Descarga inicial automática al abrir la app
+      pullFromFirestore(true);
+
+      // Sincronización automática periódica y reactiva
+      if (cloudPollInterval) clearInterval(cloudPollInterval);
+      cloudPollInterval = setInterval(() => {
+        if (!document.hidden) pullFromFirestore(true);
+      }, 15000);
+
+      window.addEventListener('visibilitychange', () => {
+        if (!document.hidden) pullFromFirestore(true);
+      });
+      window.addEventListener('focus', () => {
+        pullFromFirestore(true);
+      });
     }
 
     // --- ACCIONES DE NUBE DESDE EL MODAL ---
@@ -8102,9 +8161,9 @@ main, .tab-pane {
 
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
-      initFirebaseSync();
       loadCustomItems();
       loadUserProfile();
+      loadCurrentMonthAudit();
       initAllGlassSelects();
       
       updateHipotecarioCoAporte();
@@ -8118,6 +8177,9 @@ main, .tab-pane {
       syncProfileToInputs();
       renderAuditTable();
       renderDashboardCharts();
+
+      // Iniciar sincronización de nube Firestore (descarga datos remotos en background sin trabas)
+      initFirebaseSync();
 
       // Register PWA Service Worker
       if ('serviceWorker' in navigator) {
