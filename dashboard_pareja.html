@@ -1995,6 +1995,7 @@ main, .tab-pane {
             <div class="form-group">
               <label for="quickPayer">¿Quién Pagó?</label>
               <select id="quickPayer" required style="font-weight:600; padding:0.6rem;">
+                <option value="" disabled selected>-- ¿Quién Pagó? --</option>
                 <option value="Diego">🔵 Diego</option>
                 <option value="Soledad">🟣 Soledad</option>
                 <option value="Ambos">🤝 Ambos (Compartido 50/50)</option>
@@ -2004,6 +2005,7 @@ main, .tab-pane {
             <div class="form-group">
               <label for="quickCategory">Categoría</label>
               <select id="quickCategory" required style="font-weight:600; padding:0.6rem;">
+                <option value="" disabled selected>-- Seleccionar Categoría --</option>
                 <optgroup label="🏠 Cuentas & Servicios Limache">
                   <option value="💡 Luz (Chilquinta Limache)">💡 Luz (Chilquinta Limache)</option>
                   <option value="💧 Agua (Esval Limache)">💧 Agua (Esval Limache)</option>
@@ -2060,6 +2062,7 @@ main, .tab-pane {
             <div class="form-group">
               <label for="quickAccount">Medio de Pago</label>
               <select id="quickAccount" required style="font-weight:600; padding:0.6rem;">
+                <option value="" disabled selected>-- Seleccionar Medio de Pago --</option>
                 <option value="Cuenta Fan">🔵 Cuenta Fan Banco de Chile (Diego)</option>
                 <option value="Chequera BancoEstado">🟣 Chequera BancoEstado (Soledad - Cuentas Hogar)</option>
                 <option value="Tarjeta Smart Visa">💳 Tarjeta Smart Visa (Soledad - Crédito Cupo Aparte)</option>
@@ -4874,15 +4877,24 @@ main, .tab-pane {
       return findIndexBySubstr(account);
     }
 
+    function getLocalDateISO() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
     function quickSelectChip(billName, defaultAmount, payer, category, account, detail) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateISO();
       const elDate = document.getElementById('quickDate');
-      if (elDate && !elDate.value) elDate.value = today;
+      if (elDate) elDate.value = today;
 
       const elPayer = document.getElementById('quickPayer');
       if (elPayer && payer) {
         elPayer.value = payer;
         elPayer.dispatchEvent(new Event('change', { bubbles: true }));
+        if (typeof elPayer._syncGlassDisplay === 'function') elPayer._syncGlassDisplay();
       }
 
       const elCat = document.getElementById('quickCategory');
@@ -4918,15 +4930,27 @@ main, .tab-pane {
 
     function handleQuickBillSubmit(e) {
       e.preventDefault();
-      const date = document.getElementById('quickDate').value || new Date().toISOString().split('T')[0];
+      const date = document.getElementById('quickDate').value || getLocalDateISO();
       const payer = document.getElementById('quickPayer').value;
       const cat = document.getElementById('quickCategory').value;
       const amount = parseInt(document.getElementById('quickAmount').value, 10);
       const account = document.getElementById('quickAccount').value;
       const desc = document.getElementById('quickDesc').value.trim();
 
+      if (!payer) {
+        alert('Por favor selecciona quién pagó.');
+        return;
+      }
+      if (!cat) {
+        alert('Por favor selecciona una categoría.');
+        return;
+      }
       if (!amount || isNaN(amount) || amount <= 0) {
         alert('Por favor ingresa un monto válido.');
+        return;
+      }
+      if (!account) {
+        alert('Por favor selecciona el medio de pago.');
         return;
       }
       if (!desc) {
@@ -4992,28 +5016,46 @@ main, .tab-pane {
       if (typeof updateSoleMargenDisplay === 'function') updateSoleMargenDisplay();
       if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();
 
-      document.getElementById('quickAmount').value = '';
-      const elDesc = document.getElementById('quickDesc');
-      if (elDesc) elDesc.value = '';
+      limpiarCajaRapida();
     }
 
     // Funciones para limpiar casillas en caso de error o equivocación
     function limpiarCajaRapida() {
-      const elAmt = document.getElementById('quickAmount');
-      const elDesc = document.getElementById('quickDesc');
-      if (elAmt) elAmt.value = '';
-      if (elDesc) elDesc.value = '';
       const elDate = document.getElementById('quickDate');
-      if (elDate) elDate.value = new Date().toISOString().split('T')[0];
+      if (elDate) elDate.value = getLocalDateISO();
+
+      const elAmt = document.getElementById('quickAmount');
+      if (elAmt) elAmt.value = '';
+
+      const elDesc = document.getElementById('quickDesc');
+      if (elDesc) elDesc.value = '';
+
       const elPayer = document.getElementById('quickPayer');
-      if (elPayer) elPayer.selectedIndex = 0;
+      if (elPayer) {
+        elPayer.selectedIndex = 0;
+        elPayer.dispatchEvent(new Event('change', { bubbles: true }));
+        if (typeof elPayer._syncGlassDisplay === 'function') elPayer._syncGlassDisplay();
+      }
+
       const elCat = document.getElementById('quickCategory');
-      if (elCat) elCat.selectedIndex = 0;
+      if (elCat) {
+        elCat.selectedIndex = 0;
+        elCat.dispatchEvent(new Event('change', { bubbles: true }));
+        if (typeof elCat._syncGlassDisplay === 'function') elCat._syncGlassDisplay();
+      }
+
       const elAcc = document.getElementById('quickAccount');
-      if (elAcc) elAcc.selectedIndex = 0;
-      if (elAmt) elAmt.focus();
+      if (elAcc) {
+        elAcc.selectedIndex = 0;
+        elAcc.dispatchEvent(new Event('change', { bubbles: true }));
+        if (typeof elAcc._syncGlassDisplay === 'function') elAcc._syncGlassDisplay();
+      }
+
       syncAllGlassSelects();
-      showToast('🧹 Casillas de boleta rápida limpiadas');
+      if (elAmt) elAmt.focus();
+      if (typeof showToast === 'function') {
+        showToast('🧹 Casillas limpiadas. Fecha fijada en hoy.');
+      }
     }
 
     function limpiarGastoDiario() {
@@ -7214,6 +7256,11 @@ main, .tab-pane {
       }
 
       function createOptionItem(opt) {
+        if (opt.disabled && !opt.value) {
+          const ph = document.createElement('div');
+          ph.style.display = 'none';
+          return ph;
+        }
         const item = document.createElement('div');
         item.className = 'glass-select-item';
         if (opt.selected) item.classList.add('selected');
@@ -8309,7 +8356,7 @@ main, .tab-pane {
       updateHipotecarioCoAporte();
       checkIncomingSync();
       const qDate = document.getElementById('quickDate');
-      if (qDate) qDate.valueAsDate = new Date();
+      if (qDate) qDate.value = getLocalDateISO();
       initCharts();
       renderExpenses();
       inicializarBDMeses(); 
@@ -8331,7 +8378,7 @@ main, .tab-pane {
 
       // Register PWA Service Worker con actualización forzada v13
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=20261030k').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=20261030l').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
