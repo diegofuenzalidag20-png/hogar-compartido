@@ -1978,7 +1978,7 @@ main, .tab-pane {
             <button type="button" class="chip-btn chip-soledad" onclick="quickSelectChip('Crédito Hipotecario (Diferencial UF Soledad)', 10000, 'Soledad', 'Servicios Hogar', 'Chequera BancoEstado', 'Diferencial UF Hipotecario')">🏦 Hipot. Soledad (Dif)</button>
             <button type="button" class="chip-btn" onclick="quickSelectChip('Comida Michis (Promedio)', 42200, 'Diego', 'Mascotas', 'Cuenta Fan', 'Comida Michis')">🐱 Comida Michis</button>
             <button type="button" class="chip-btn" onclick="quickSelectChip('Arena Sanitaria Michis', 20000, 'Diego', 'Mascotas', 'Cuenta Fan', 'Arena Sanitaria Michis')">🐱 Arena Michis</button>
-            <button type="button" class="chip-btn chip-soledad" onclick="quickSelectChip('Curso Waldorf Limache', 50000, 'Soledad', 'Otros', 'Chequera BancoEstado', 'Curso Waldorf Limache')">🎓 Curso Waldorf</button>
+            <button type="button" class="chip-btn" onclick="quickSelectChip('Pasajes Bus Huasco (8 tramos)', 28000, 'Diego', 'Operaciones Huasco', 'Tenpo Diego', 'Pasaje Bus Huasco')">🚌 Pasaje Bus</button>
             <button type="button" class="chip-btn chip-soledad" onclick="quickSelectChip('Aseo Domiciliario (Cuota Trimestral)', 13841, 'Soledad', 'Servicios Hogar', 'Chequera BancoEstado', 'Aseo Domiciliario')">🧹 Aseo Municipal</button>
             <button type="button" class="chip-btn" onclick="quickSelectChip('', '', 'Diego', 'Otros', 'Cuenta Fan', '')">➕ Otra cuenta...</button>
           </div>
@@ -4728,7 +4728,7 @@ main, .tab-pane {
       if (/\bhuasco\b/i.test(query) && /arriendo|habitaci/i.test(query)) {
         return findIndexBySubstr('Arriendo Habitación Huasco');
       }
-      if (/pasaje|bus\b/i.test(query) && /\bhuasco\b/i.test(query)) {
+      if (/pasaje|bus\b/i.test(query)) {
         return findIndexBySubstr('Pasajes Bus Huasco');
       }
 
@@ -8259,7 +8259,7 @@ main, .tab-pane {
 
       // Register PWA Service Worker con actualización forzada v13
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=20261030d').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=20261030e').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
