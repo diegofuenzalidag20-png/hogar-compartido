@@ -5096,12 +5096,18 @@ main, .tab-pane {
 
     // --- GESTIÓN DE MODAL SYNC & TABS ---
     function openSyncModal() {
-      loadSavedCloudSettings();
-      document.getElementById('modalSync').style.display = 'flex';
+      try {
+        loadSavedCloudSettings();
+      } catch (e) {
+        console.warn('Error al preparar modal de sincronización:', e);
+      }
+      const modal = document.getElementById('modalSync');
+      if (modal) modal.style.display = 'flex';
     }
 
     function closeSyncModal() {
-      document.getElementById('modalSync').style.display = 'none';
+      const modal = document.getElementById('modalSync');
+      if (modal) modal.style.display = 'none';
     }
 
     function switchSyncTab(tab) {
@@ -5636,8 +5642,28 @@ main, .tab-pane {
 
     // --- ACCIONES DE NUBE DESDE EL MODAL ---
     function loadSavedCloudSettings() {
-      if (dbFirestore) {
+      try {
+        const vpsUrl = localStorage.getItem('vps_endpoint_url') || '';
+        const vpsToken = localStorage.getItem('vps_token') || '';
+        const urlInput = document.getElementById('vpsEndpointInput');
+        const tokenInput = document.getElementById('vpsTokenInput');
+        if (urlInput) urlInput.value = vpsUrl;
+        if (tokenInput) tokenInput.value = vpsToken;
         updateCloudStatusBadge(true, '🟢 Nube en Vivo');
+      } catch (e) {
+        console.warn('loadSavedCloudSettings warning:', e);
+      }
+    }
+
+    function saveCloudSettings() {
+      try {
+        const vpsUrl = document.getElementById('vpsEndpointInput')?.value.trim() || '';
+        const vpsToken = document.getElementById('vpsTokenInput')?.value.trim() || '';
+        localStorage.setItem('vps_endpoint_url', vpsUrl);
+        localStorage.setItem('vps_token', vpsToken);
+        showToast('💾 Configuración VPS guardada correctamente');
+      } catch (e) {
+        console.error('Error guardando VPS:', e);
       }
     }
 
@@ -8271,7 +8297,7 @@ main, .tab-pane {
 
 
   <!-- MODAL DE SINCRONIZACIÓN EN PAREJA -->
-  <div id="modalSync" class="modal-overlay">
+  <div id="modalSync" class="modal-overlay" onclick="if(event.target === this) closeSyncModal()">
     <div class="modal-card" style="max-width:620px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
         <div style="display:flex; align-items:center; gap:0.5rem;">
