@@ -4431,7 +4431,11 @@ main, .tab-pane {
       if (elFan) {
         elFan.value = remanenteFan;
       }
+      userProfile.cofresDiego = userProfile.cofresDiego || {};
       userProfile.cofresDiego.fanFijos = remanenteFan;
+      userProfile.cofresDiego.tenpoHuasco = tenpo;
+      userProfile.cofresDiego.machBolsillo = mach;
+      userProfile.cofresDiego.mpAhorro = mp;
 
       const elDesc = document.getElementById('diegoFanFormulaDesc');
       if (elDesc) {
@@ -4454,11 +4458,14 @@ main, .tab-pane {
       const totalAcumuladoMP = remanenteMP + mp;
       const elDispAcumMP = document.getElementById('displayTotalAcumuladoMPDiego');
       if (elDispAcumMP) elDispAcumMP.textContent = formatCLP(totalAcumuladoMP);
+
+      if (typeof updateChartsWithNewSalary === 'function') updateChartsWithNewSalary();
     }
 
     // CÁLCULO AUTOMÁTICO EN TIEMPO REAL: REMANENTE CHEQUERA & SALDO LIBRE SOLEDAD
     function updateSoleMargenDisplay() {
       const salary = userProfile.soledadSalary || 875000;
+      const smart = parseInt(document.getElementById('inputCofreSoleSmart')?.value, 10) || (userProfile.cofresSoledad?.smartVisa ?? 50000);
       const tenpo = parseInt(document.getElementById('inputCofreSoleTenpo')?.value, 10) || 0;
       const mp = parseInt(document.getElementById('inputCofreSoleMP')?.value, 10) || 0;
       const banco = parseInt(document.getElementById('inputCofreSoleBanco')?.value, 10) || 0;
@@ -4471,7 +4478,12 @@ main, .tab-pane {
       if (elCheq) {
         elCheq.value = remanenteChequera;
       }
+      userProfile.cofresSoledad = userProfile.cofresSoledad || {};
       userProfile.cofresSoledad.chequeraHogar = remanenteChequera;
+      userProfile.cofresSoledad.smartVisa = smart;
+      userProfile.cofresSoledad.tenpoBolsillo = tenpo;
+      userProfile.cofresSoledad.mpAhorro = mp;
+      userProfile.cofresSoledad.bancoReserva = banco;
 
       const elDesc = document.getElementById('soleChequeraFormulaDesc');
       if (elDesc) {
@@ -4497,6 +4509,8 @@ main, .tab-pane {
       const remBanco = parseInt(document.getElementById('inputRemanenteBancoSole')?.value, 10) || (userProfile.remanentes?.bancoSole ?? 0);
       const dispBanco = document.getElementById('displayTotalAcumuladoBancoSole');
       if (dispBanco) dispBanco.textContent = formatCLP(remBanco + banco);
+
+      if (typeof updateChartsWithNewSalary === 'function') updateChartsWithNewSalary();
     }
 
     // CÁLCULO Y CONTROL EN TIEMPO REAL: TARJETA SMART VISA (BANCOESTADO)
@@ -4626,15 +4640,32 @@ main, .tab-pane {
 
     function updateChartsWithNewSalary() {
       if (chartAportes && chartAportes.data && chartAportes.data.datasets) {
-        chartAportes.data.datasets[0].data = [userProfile.diegoSalary, userProfile.soledadSalary];
+        chartAportes.data.datasets[0].data = [userProfile.diegoSalary || 1214038, userProfile.soledadSalary || 875000];
         chartAportes.update();
       }
       if (chartCofres && chartCofres.data && chartCofres.data.datasets) {
-        chartCofres.data.datasets[0].data[0] = userProfile.cofresDiego.fanFijos;
-        chartCofres.data.datasets[0].data[1] = userProfile.cofresDiego.tenpoHuasco;
-        chartCofres.data.datasets[0].data[2] = userProfile.cofresDiego.machBolsillo;
-        chartCofres.data.datasets[0].data[3] = userProfile.cofresDiego.mpAhorro;
+        const fan = userProfile.cofresDiego?.fanFijos ?? 609360;
+        const tenpoD = userProfile.cofresDiego?.tenpoHuasco ?? 300000;
+        const mach = userProfile.cofresDiego?.machBolsillo ?? 140000;
+        const mpD = userProfile.cofresDiego?.mpAhorro ?? 130000;
+
+        const cheq = userProfile.cofresSoledad?.chequeraHogar ?? 425000;
+        const smart = userProfile.cofresSoledad?.smartVisa ?? 50000;
+        const tenpoS = userProfile.cofresSoledad?.tenpoBolsillo ?? 150000;
+        const mpS = userProfile.cofresSoledad?.mpAhorro ?? 150000;
+        const bancoS = userProfile.cofresSoledad?.bancoReserva ?? 150000;
+
+        chartCofres.data.datasets[0].data = [fan, tenpoD, mach, mpD, cheq, smart, tenpoS, mpS, bancoS];
         chartCofres.update();
+
+        const totalCofres = fan + tenpoD + mach + mpD + cheq + smart + tenpoS + mpS + bancoS;
+        const subTitleEl = document.getElementById('dashCofresSubtitle');
+        if (subTitleEl) subTitleEl.textContent = `Asignación porcentual de compromisos mensuales (${formatCLP(totalCofres)})`;
+      }
+
+      // Sincronizar también las donas individuales de tarjetas en la sección de análisis
+      if (typeof renderCardAnalysis === 'function') {
+        renderCardAnalysis();
       }
     }
 
@@ -4655,8 +4686,8 @@ main, .tab-pane {
     // RENDERIZADOR ROBUSTO DE GRÁFICOS DEL DASHBOARD (COFRES & APORTES)
     // ==============================================================
     function renderDashboardCharts() {
-      const diegoSal = userProfile.diegoSalary || 1330786;
-      const soleSal = userProfile.soledadSalary || 964839;
+      const diegoSal = userProfile.diegoSalary || 1214038;
+      const soleSal = userProfile.soledadSalary || 875000;
       const totalSal = diegoSal + soleSal;
 
       // 1. Chart Cofres (Desglose real de cofres Diego + Soledad)
@@ -4664,15 +4695,16 @@ main, .tab-pane {
       if (ctxCofres) {
         if (chartCofres) chartCofres.destroy();
 
-        const fan = userProfile.cofresDiego.fanFijos || 609360;
-        const tenpoD = userProfile.cofresDiego.tenpoHuasco || 300000;
-        const mach = userProfile.cofresDiego.machBolsillo || 140000;
-        const mpD = userProfile.cofresDiego.mpAhorro || 130000;
-        const cheq = userProfile.cofresSoledad.chequeraHogar || 286000;
-        const smart = userProfile.cofresSoledad.smartVisa || 50000;
-        const tenpoS = userProfile.cofresSoledad.tenpoBolsillo || 150000;
-        const mpS = userProfile.cofresSoledad.mpAhorro || 150000;
-        const totalCofres = fan + tenpoD + mach + mpD + cheq + smart + tenpoS + mpS;
+        const fan = userProfile.cofresDiego?.fanFijos ?? 609360;
+        const tenpoD = userProfile.cofresDiego?.tenpoHuasco ?? 300000;
+        const mach = userProfile.cofresDiego?.machBolsillo ?? 140000;
+        const mpD = userProfile.cofresDiego?.mpAhorro ?? 130000;
+        const cheq = userProfile.cofresSoledad?.chequeraHogar ?? 425000;
+        const smart = userProfile.cofresSoledad?.smartVisa ?? 50000;
+        const tenpoS = userProfile.cofresSoledad?.tenpoBolsillo ?? 150000;
+        const mpS = userProfile.cofresSoledad?.mpAhorro ?? 150000;
+        const bancoS = userProfile.cofresSoledad?.bancoReserva ?? 150000;
+        const totalCofres = fan + tenpoD + mach + mpD + cheq + smart + tenpoS + mpS + bancoS;
 
         const subTitleEl = document.getElementById('dashCofresSubtitle');
         if (subTitleEl) subTitleEl.textContent = `Asignación porcentual de compromisos mensuales (${formatCLP(totalCofres)})`;
@@ -4688,13 +4720,14 @@ main, .tab-pane {
               'Chequera Hogar (Soledad)',
               'Smart Visa (Soledad)',
               'Bolsillo Tenpo (Soledad)',
-              'Ahorro MP (Soledad)'
+              'Ahorro MP (Soledad)',
+              'Reserva BancoEstado (Soledad)'
             ],
             datasets: [{
-              data: [fan, tenpoD, mach, mpD, cheq, smart, tenpoS, mpS],
+              data: [fan, tenpoD, mach, mpD, cheq, smart, tenpoS, mpS, bancoS],
               backgroundColor: [
                 '#3B82F6', '#F59E0B', '#06B6D4', '#10B981',
-                '#A855F7', '#EC4899', '#8B5CF6', '#14B8A6'
+                '#A855F7', '#EC4899', '#8B5CF6', '#14B8A6', '#38BDF8'
               ],
               borderWidth: 2,
               borderColor: 'rgba(10, 15, 30, 0.9)'
@@ -7760,12 +7793,12 @@ main, .tab-pane {
         isPrimary: true,
         sourceAccount: 'Sueldo Líquido Diego',
         getBudget: () => {
-          const sal = userProfile.diegoSalary || 1330786;
-          const trans = (userProfile.cofresDiego.tenpoHuasco ?? 300000) + (userProfile.cofresDiego.machBolsillo ?? 140000) + (userProfile.cofresDiego.mpAhorro ?? 130000);
+          const sal = userProfile.diegoSalary || 1214038;
+          const trans = (userProfile.cofresDiego?.tenpoHuasco ?? 300000) + (userProfile.cofresDiego?.machBolsillo ?? 140000) + (userProfile.cofresDiego?.mpAhorro ?? 130000);
           return Math.max(0, sal - trans);
         },
-        getTotalSalary: () => userProfile.diegoSalary || 1330786,
-        getTotalTransfersOut: () => (userProfile.cofresDiego.tenpoHuasco ?? 300000) + (userProfile.cofresDiego.machBolsillo ?? 140000) + (userProfile.cofresDiego.mpAhorro ?? 130000),
+        getTotalSalary: () => userProfile.diegoSalary || 1214038,
+        getTotalTransfersOut: () => (userProfile.cofresDiego?.tenpoHuasco ?? 300000) + (userProfile.cofresDiego?.machBolsillo ?? 140000) + (userProfile.cofresDiego?.mpAhorro ?? 130000),
         color: '#3B82F6',
         badgeClass: 'badge-blue',
         icon: '🏦'
@@ -7778,12 +7811,12 @@ main, .tab-pane {
         isPrimary: true,
         sourceAccount: 'Sueldo Líquido Soledad',
         getBudget: () => {
-          const sal = userProfile.soledadSalary || 964839;
-          const trans = (userProfile.cofresSoledad.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad.mpAhorro ?? 150000) + (userProfile.cofresSoledad.bancoReserva ?? 150000);
+          const sal = userProfile.soledadSalary || 875000;
+          const trans = (userProfile.cofresSoledad?.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad?.mpAhorro ?? 150000) + (userProfile.cofresSoledad?.bancoReserva ?? 150000);
           return Math.max(0, sal - trans);
         },
-        getTotalSalary: () => userProfile.soledadSalary || 964839,
-        getTotalTransfersOut: () => (userProfile.cofresSoledad.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad.mpAhorro ?? 150000) + (userProfile.cofresSoledad.bancoReserva ?? 150000),
+        getTotalSalary: () => userProfile.soledadSalary || 875000,
+        getTotalTransfersOut: () => (userProfile.cofresSoledad?.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad?.mpAhorro ?? 150000) + (userProfile.cofresSoledad?.bancoReserva ?? 150000),
         color: '#A855F7',
         badgeClass: 'badge-purple',
         icon: '🏡'
@@ -8183,8 +8216,8 @@ main, .tab-pane {
     // ==============================================================
     function renderAnalisisMesActual() {
       // 1. Datos base de ingresos
-      const diegoSal = userProfile.diegoSalary || 1330786;
-      const soleSal = userProfile.soledadSalary || 964839;
+      const diegoSal = userProfile.diegoSalary || 1214038;
+      const soleSal = userProfile.soledadSalary || 875000;
       const totalIng = diegoSal + soleSal;
 
       // 2. Gastos del mes actual calculados DIRECTAMENTE desde la tabla (expenses)
@@ -8637,7 +8670,7 @@ main, .tab-pane {
 
       // Register PWA Service Worker con actualización forzada v13
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=20261030n').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=20261030o').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
