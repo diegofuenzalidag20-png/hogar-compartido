@@ -2930,44 +2930,44 @@ main, .tab-pane {
     <div id="tab-historico" class="tab-pane">
       <div class="card">
         <div class="card-title">
-          <span>📈 Panorama Completo de 14 Meses de Gastos (Agosto 2024 — Septiembre 2025)</span>
-          <span class="badge badge-emerald">14 Meses Auditados</span>
+          <span>📈 Panorama Completo Histórico de Gastos (26 Meses: 2024 — 2026)</span>
+          <span class="badge badge-emerald">26 Meses Auditados (2024-2026)</span>
         </div>
         <div class="card-desc">
-          Resumen estadístico con promedios reales, máximos de invierno, mínimos de verano y evolución por reajuste UF.
+          Resumen estadístico y evolución mes a mes con promedios reales, máximos de invierno, mínimos de verano y reajuste UF desde Agosto 2024 hasta Septiembre 2026.
         </div>
 
         <!-- Metric highlights -->
         <div class="kpi-grid" style="margin-bottom:1.5rem;">
           <div class="kpi-card blue">
             <div class="kpi-header"><span>⚡ Luz Chilquinta</span></div>
-            <div class="kpi-value">$22.220</div>
-            <div class="kpi-sub">Invierno máx: $53.251 | Verano mín: $12.496</div>
+            <div class="kpi-value">$24.041</div>
+            <div class="kpi-sub">Invierno máx: $54.618 (Jul-26) | Verano mín: $12.496</div>
           </div>
           <div class="kpi-card purple">
             <div class="kpi-header"><span>💧 Agua Esval</span></div>
-            <div class="kpi-value">$7.134</div>
-            <div class="kpi-sub">Mín: $6.230 | Máx: $8.030 (Muy estable)</div>
+            <div class="kpi-value">$7.321</div>
+            <div class="kpi-sub">Promedio muy estable (~$7.3k) | Máx: $15.414</div>
           </div>
           <div class="kpi-card amber">
             <div class="kpi-header"><span>🔥 Gas Balón/Red</span></div>
-            <div class="kpi-value">$20.114</div>
-            <div class="kpi-sub">Invierno máx: $30.300 | Verano mín: $11.350</div>
+            <div class="kpi-value">$20.712</div>
+            <div class="kpi-sub">Invierno máx: $30.300 | Verano mín: $11.050 (Ene-26)</div>
           </div>
           <div class="kpi-card emerald">
             <div class="kpi-header"><span>🏢 Gasto Común</span></div>
-            <div class="kpi-value">$52.539</div>
-            <div class="kpi-sub">Rango: $46.904 — $58.696</div>
+            <div class="kpi-value">$52.900</div>
+            <div class="kpi-sub">Rango histórico: $46.904 — $58.696</div>
           </div>
           <div class="kpi-card rose">
             <div class="kpi-header"><span>🏦 Hipotecario (UF)</span></div>
-            <div class="kpi-value">$354.730</div>
-            <div class="kpi-sub">Nov-24: $346.506 ➔ Sep-25: $360.181 (+3.9%)</div>
+            <div class="kpi-value">$360.977</div>
+            <div class="kpi-sub">Nov-24: $346.506 ➔ Sep-26: $374.199 (+8.0%)</div>
           </div>
           <div class="kpi-card blue">
             <div class="kpi-header"><span>🐱 Michis (Comida+Arena)</span></div>
-            <div class="kpi-value">$62.363</div>
-            <div class="kpi-sub">Comida: $42.200 | Arena: $20.163</div>
+            <div class="kpi-value">$59.418</div>
+            <div class="kpi-sub">Comida + Arena + Vacunas y Salud</div>
           </div>
         </div>
 
@@ -3024,9 +3024,9 @@ main, .tab-pane {
         </div>
 
         <!-- Detailed Historical Table -->
-        <div class="table-container">
+        <div class="table-container" style="max-height:620px; overflow-y:auto;">
           <table>
-            <thead>
+            <thead style="position:sticky; top:0; z-index:10; background:var(--bg-surface-elevated);">
               <tr>
                 <th>Mes</th>
                 <th style="text-align:right;">Luz</th>
@@ -3042,32 +3042,44 @@ main, .tab-pane {
               </tr>
             </thead>
             <tbody>
-              <tr><td><strong>Ago-24</strong></td><td style="text-align:right; color:#F43F5E;">$53.251</td><td style="text-align:right;">$7.610</td><td style="text-align:right;">$28.550</td><td style="text-align:right;">$9.150</td><td style="text-align:right;">$47.000</td><td style="text-align:right;">$105.000</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$50.000</td><td style="text-align:right; font-weight:700;">$300.561</td></tr>
+<tr><td><strong>Ago-24</strong></td><td style="text-align:right;">$53.251</td><td style="text-align:right;">$7.610</td><td style="text-align:right;">$28.550</td><td style="text-align:right;">$9.150</td><td style="text-align:right;">$47.000</td><td style="text-align:right;">$105.000</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$50.000</td><td style="text-align:right; font-weight:700;">$300.561</td></tr>
               <tr><td><strong>Sep-24</strong></td><td style="text-align:right;">$22.486</td><td style="text-align:right;">$7.280</td><td style="text-align:right;">$19.500</td><td style="text-align:right;">$9.150</td><td style="text-align:right;">$51.000</td><td style="text-align:right;">$105.000</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$50.000</td><td style="text-align:right; font-weight:700;">$264.416</td></tr>
-              <tr><td><strong>Oct-24</strong></td><td style="text-align:right; color:#10B981;">$12.930</td><td style="text-align:right;">$6.370</td><td style="text-align:right;">$19.850</td><td style="text-align:right;">$9.208</td><td style="text-align:right;">$52.723</td><td style="text-align:right;">$0</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$97.000</td><td style="text-align:right; font-weight:700;">$198.081</td></tr>
+              <tr><td><strong>Oct-24</strong></td><td style="text-align:right;">$12.930</td><td style="text-align:right;">$6.370</td><td style="text-align:right;">$19.850</td><td style="text-align:right;">$9.208</td><td style="text-align:right;">$52.723</td><td style="text-align:right;">$0</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$97.000</td><td style="text-align:right; font-weight:700;">$198.081</td></tr>
               <tr><td><strong>Nov-24</strong></td><td style="text-align:right;">$14.081</td><td style="text-align:right;">$6.470</td><td style="text-align:right;">$15.250</td><td style="text-align:right;">$9.208</td><td style="text-align:right;">$49.748</td><td style="text-align:right;">$60.000</td><td style="text-align:right;">$346.506</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$50.000</td><td style="text-align:right; font-weight:700;">$551.263</td></tr>
               <tr><td><strong>Dic-24</strong></td><td style="text-align:right; color:#10B981;">$12.496</td><td style="text-align:right;">$6.420</td><td style="text-align:right;">$15.750</td><td style="text-align:right;">$9.329</td><td style="text-align:right;">$51.273</td><td style="text-align:right;">$28.000</td><td style="text-align:right;">$348.108</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$100.000</td><td style="text-align:right; font-weight:700;">$571.376</td></tr>
-              <tr><td><strong>Ene-25</strong></td><td style="text-align:right; color:#10B981;">$12.597</td><td style="text-align:right;">$6.440</td><td style="text-align:right;">$15.850</td><td style="text-align:right;">$9.329</td><td style="text-align:right;">$52.426</td><td style="text-align:right;">$66.000</td><td style="text-align:right;">$350.320</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$50.000</td><td style="text-align:right; font-weight:700;">$562.962</td></tr>
+              <tr><td><strong>Ene-25</strong></td><td style="text-align:right;">$12.597</td><td style="text-align:right;">$6.440</td><td style="text-align:right;">$15.850</td><td style="text-align:right;">$9.329</td><td style="text-align:right;">$52.426</td><td style="text-align:right;">$66.000</td><td style="text-align:right;">$350.320</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$50.000</td><td style="text-align:right; font-weight:700;">$562.962</td></tr>
               <tr><td><strong>Feb-25</strong></td><td style="text-align:right;">$16.010</td><td style="text-align:right;">$7.160</td><td style="text-align:right;">$15.900</td><td style="text-align:right;">$9.329</td><td style="text-align:right; color:#F43F5E;">$58.696</td><td style="text-align:right;">$60.000</td><td style="text-align:right;">$352.707</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$519.802</td></tr>
-              <tr><td><strong>Mar-25</strong></td><td style="text-align:right;">$15.512</td><td style="text-align:right;">$8.030</td><td style="text-align:right; color:#10B981;">$11.350</td><td style="text-align:right;">$9.429</td><td style="text-align:right;">$54.132</td><td style="text-align:right;">$57.800</td><td style="text-align:right;">$354.930</td><td style="text-align:right;">$54.640</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$565.823</td></tr>
+              <tr><td><strong>Mar-25</strong></td><td style="text-align:right;">$15.512</td><td style="text-align:right;">$8.030</td><td style="text-align:right;">$11.350</td><td style="text-align:right;">$9.429</td><td style="text-align:right;">$54.132</td><td style="text-align:right;">$57.800</td><td style="text-align:right;">$354.930</td><td style="text-align:right;">$54.640</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$565.823</td></tr>
               <tr><td><strong>Abr-25</strong></td><td style="text-align:right;">$18.206</td><td style="text-align:right;">$7.140</td><td style="text-align:right;">$21.100</td><td style="text-align:right;">$9.434</td><td style="text-align:right; color:#10B981;">$46.904</td><td style="text-align:right;">$17.900</td><td style="text-align:right;">$356.679</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$139.600</td><td style="text-align:right; font-weight:700;">$626.963</td></tr>
               <tr><td><strong>May-25</strong></td><td style="text-align:right;">$17.641</td><td style="text-align:right;">$8.020</td><td style="text-align:right;">$20.900</td><td style="text-align:right;">$9.434</td><td style="text-align:right;">$53.670</td><td style="text-align:right;">$57.990</td><td style="text-align:right;">$357.554</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$153.000</td><td style="text-align:right; font-weight:700;">$678.209</td></tr>
               <tr><td><strong>Jun-25</strong></td><td style="text-align:right;">$23.359</td><td style="text-align:right;">$7.134</td><td style="text-align:right;">$20.950</td><td style="text-align:right;">$9.537</td><td style="text-align:right;">$53.476</td><td style="text-align:right;">$60.000</td><td style="text-align:right;">$358.261</td><td style="text-align:right;">$23.815</td><td style="text-align:right;">$123.320</td><td style="text-align:right; font-weight:700;">$679.852</td></tr>
-              <tr><td><strong>Jul-25</strong></td><td style="text-align:right; color:#F43F5E;">$40.631</td><td style="text-align:right; color:#10B981;">$6.230</td><td style="text-align:right;">$20.850</td><td style="text-align:right;">$9.539</td><td style="text-align:right;">$53.571</td><td style="text-align:right;">$62.363</td><td style="text-align:right;">$357.433</td><td style="text-align:right;">$52.304</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$602.921</td></tr>
+              <tr><td><strong>Jul-25</strong></td><td style="text-align:right;">$40.631</td><td style="text-align:right;">$6.230</td><td style="text-align:right;">$20.850</td><td style="text-align:right;">$9.539</td><td style="text-align:right;">$53.571</td><td style="text-align:right;">$62.363</td><td style="text-align:right;">$357.433</td><td style="text-align:right;">$52.304</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$602.921</td></tr>
               <tr><td><strong>Ago-25</strong></td><td style="text-align:right;">$28.122</td><td style="text-align:right;">$7.870</td><td style="text-align:right; color:#F43F5E;">$30.300</td><td style="text-align:right;">$9.537</td><td style="text-align:right;">$54.606</td><td style="text-align:right;">$71.700</td><td style="text-align:right;">$359.354</td><td style="text-align:right;">$48.994</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$610.483</td></tr>
-              <tr><td><strong>Sep-25</strong></td><td style="text-align:right;">$23.762</td><td style="text-align:right;">$7.840</td><td style="text-align:right;">$25.500</td><td style="text-align:right;">$9.600</td><td style="text-align:right;">$56.315</td><td style="text-align:right;">$77.000</td><td style="text-align:right; color:#F43F5E;">$360.181</td><td style="text-align:right;">$50.000</td><td style="text-align:right;">$13.841</td><td style="text-align:right; font-weight:700;">$674.039</td></tr>
+              <tr><td><strong>Sep-25</strong></td><td style="text-align:right;">$23.762</td><td style="text-align:right;">$7.840</td><td style="text-align:right;">$25.500</td><td style="text-align:right;">$9.600</td><td style="text-align:right;">$56.315</td><td style="text-align:right;">$77.000</td><td style="text-align:right;">$360.181</td><td style="text-align:right;">$50.000</td><td style="text-align:right;">$13.841</td><td style="text-align:right; font-weight:700;">$674.039</td></tr>
+              <tr><td><strong>Oct-25</strong></td><td style="text-align:right;">$22.907</td><td style="text-align:right;">$6.920</td><td style="text-align:right;">$25.450</td><td style="text-align:right;">$9.600</td><td style="text-align:right;">$52.365</td><td style="text-align:right;">$25.000</td><td style="text-align:right;">$361.131</td><td style="text-align:right;">$50.000</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$553.373</td></tr>
+              <tr><td><strong>Nov-25</strong></td><td style="text-align:right;">$17.326</td><td style="text-align:right;">$6.030</td><td style="text-align:right;">$20.700</td><td style="text-align:right;">$9.600</td><td style="text-align:right;">$54.647</td><td style="text-align:right;">$21.000</td><td style="text-align:right;">$361.537</td><td style="text-align:right;">$151.336</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$642.176</td></tr>
+              <tr><td><strong>Dic-25</strong></td><td style="text-align:right;">$17.031</td><td style="text-align:right;">$6.880</td><td style="text-align:right;">$20.650</td><td style="text-align:right;">$9.670</td><td style="text-align:right;">$53.854</td><td style="text-align:right;">$81.400</td><td style="text-align:right;">$362.386</td><td style="text-align:right;">$62.891</td><td style="text-align:right;">$128.567</td><td style="text-align:right; font-weight:700;">$743.329</td></tr>
+              <tr><td><strong>Ene-26</strong></td><td style="text-align:right;">$17.531</td><td style="text-align:right;">$5.970</td><td style="text-align:right; color:#10B981;">$11.050</td><td style="text-align:right;">$9.650</td><td style="text-align:right;">$53.553</td><td style="text-align:right;">$38.000</td><td style="text-align:right;">$362.044</td><td style="text-align:right;">$68.921</td><td style="text-align:right;">$180.267</td><td style="text-align:right; font-weight:700;">$746.986</td></tr>
+              <tr><td><strong>Feb-26</strong></td><td style="text-align:right;">$18.196</td><td style="text-align:right;">$5.980</td><td style="text-align:right;">$20.500</td><td style="text-align:right;">$9.650</td><td style="text-align:right;">$52.189</td><td style="text-align:right;">$40.000</td><td style="text-align:right;">$362.785</td><td style="text-align:right;">$80.000</td><td style="text-align:right;">$150.267</td><td style="text-align:right; font-weight:700;">$739.567</td></tr>
+              <tr><td><strong>Mar-26</strong></td><td style="text-align:right;">$17.600</td><td style="text-align:right;">$6.960</td><td style="text-align:right;">$15.600</td><td style="text-align:right;">$9.696</td><td style="text-align:right;">$55.858</td><td style="text-align:right;">$88.000</td><td style="text-align:right;">$363.277</td><td style="text-align:right;">$40.000</td><td style="text-align:right;">$185.700</td><td style="text-align:right; font-weight:700;">$782.691</td></tr>
+              <tr><td><strong>Abr-26</strong></td><td style="text-align:right;">$18.185</td><td style="text-align:right;">$15.414</td><td style="text-align:right;">$21.000</td><td style="text-align:right;">$9.696</td><td style="text-align:right;">$53.844</td><td style="text-align:right;">$83.000</td><td style="text-align:right;">$365.790</td><td style="text-align:right;">$77.486</td><td style="text-align:right;">$22.000</td><td style="text-align:right; font-weight:700;">$666.415</td></tr>
+              <tr><td><strong>May-26</strong></td><td style="text-align:right;">$36.223</td><td style="text-align:right;">$0</td><td style="text-align:right;">$27.050</td><td style="text-align:right;">$9.696</td><td style="text-align:right;">$52.254</td><td style="text-align:right;">$127.300</td><td style="text-align:right;">$370.390</td><td style="text-align:right;">$92.146</td><td style="text-align:right;">$22.000</td><td style="text-align:right; font-weight:700;">$737.059</td></tr>
+              <tr><td><strong>Jun-26</strong></td><td style="text-align:right;">$49.690</td><td style="text-align:right;">$5.320</td><td style="text-align:right;">$17.300</td><td style="text-align:right;">$9.914</td><td style="text-align:right;">$55.022</td><td style="text-align:right;">$20.000</td><td style="text-align:right;">$372.021</td><td style="text-align:right;">$147.213</td><td style="text-align:right;">$50.536</td><td style="text-align:right; font-weight:700;">$727.016</td></tr>
+              <tr><td><strong>Jul-26</strong></td><td style="text-align:right; color:#F43F5E;">$54.618</td><td style="text-align:right;">$8.490</td><td style="text-align:right;">$27.800</td><td style="text-align:right;">$9.914</td><td style="text-align:right;">$49.957</td><td style="text-align:right;">$66.900</td><td style="text-align:right;">$372.317</td><td style="text-align:right;">$100.000</td><td style="text-align:right;">$119.800</td><td style="text-align:right; font-weight:700;">$809.796</td></tr>
+              <tr><td><strong>Ago-26</strong></td><td style="text-align:right;">$27.604</td><td style="text-align:right;">$7.580</td><td style="text-align:right;">$27.600</td><td style="text-align:right;">$9.914</td><td style="text-align:right;">$52.597</td><td style="text-align:right;">$23.200</td><td style="text-align:right;">$372.558</td><td style="text-align:right;">$110.000</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$631.053</td></tr>
+              <tr><td><strong>Sep-26</strong></td><td style="text-align:right;">$17.075</td><td style="text-align:right;">$7.460</td><td style="text-align:right;">$22.200</td><td style="text-align:right;">$9.938</td><td style="text-align:right;">$53.728</td><td style="text-align:right;">$42.900</td><td style="text-align:right;">$374.199</td><td style="text-align:right;">$110.000</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$637.500</td></tr>
               <tr style="background: var(--bg-surface-elevated); font-weight:700;">
                 <td><strong>PROMEDIO REAL</strong></td>
-                <td style="text-align:right; color:var(--accent-diego);">$22.220</td>
-                <td style="text-align:right; color:var(--accent-diego);">$7.134</td>
-                <td style="text-align:right; color:var(--accent-diego);">$20.114</td>
-                <td style="text-align:right; color:var(--accent-diego);">$9.372</td>
-                <td style="text-align:right; color:var(--accent-diego);">$52.539</td>
-                <td style="text-align:right; color:var(--accent-diego);">$62.363</td>
-                <td style="text-align:right; color:var(--accent-diego);">$354.730</td>
-                <td style="text-align:right; color:var(--accent-diego);">$45.951</td>
-                <td style="text-align:right; color:var(--accent-diego);">$76.744</td>
-                <td style="text-align:right; color:var(--accent-emerald); font-size:1.05rem;">$537.666</td>
+                <td style="text-align:right; color:var(--accent-diego);">$24.041</td>
+                <td style="text-align:right; color:var(--accent-diego);">$7.321</td>
+                <td style="text-align:right; color:var(--accent-diego);">$20.712</td>
+                <td style="text-align:right; color:var(--accent-diego);">$9.544</td>
+                <td style="text-align:right; color:var(--accent-diego);">$52.900</td>
+                <td style="text-align:right; color:var(--accent-diego);">$59.418</td>
+                <td style="text-align:right; color:var(--accent-diego);">$360.977</td>
+                <td style="text-align:right; color:var(--accent-diego);">$77.632</td>
+                <td style="text-align:right; color:var(--accent-diego);">$93.661</td>
+                <td style="text-align:right; color:var(--accent-emerald); font-size:1.05rem;">$608.604</td>
               </tr>
             </tbody>
           </table>
@@ -8247,7 +8259,7 @@ main, .tab-pane {
 
       // Register PWA Service Worker con actualización forzada v13
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=20261030c').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=20261030d').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
