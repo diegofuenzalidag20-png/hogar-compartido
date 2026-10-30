@@ -78,11 +78,7 @@
 
     /* Light Theme Canvas */
     body[data-theme="light"] {
-      background: 
-        radial-gradient(ellipse 70% 50% at 50% -10%, rgba(99, 102, 241, 0.06), transparent),
-        radial-gradient(circle 500px at 10% 20%, rgba(59, 130, 246, 0.05), transparent),
-        radial-gradient(circle 450px at 90% 18%, rgba(245, 158, 11, 0.05), transparent),
-        #F1F5F9 !important;
+      background-color: #F1F5F9 !important;
       color: #0F172A !important;
     }
 
@@ -497,6 +493,25 @@
 
     /* Ambient Lighting Canvas (Reference Image 1, 2, 3) */
     body {
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Fondo fijo acelerado por GPU que se pinta 1 sola vez evitando sobrecalentamiento */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      transform: translateZ(0);
+      will-change: transform;
       background: 
         radial-gradient(ellipse 70% 50% at 50% -10%, rgba(99, 102, 241, 0.16), transparent),
         radial-gradient(circle 500px at 10% 20%, rgba(59, 130, 246, 0.12), transparent),
@@ -504,13 +519,14 @@
         radial-gradient(circle 550px at 75% 75%, rgba(168, 85, 247, 0.11), transparent),
         radial-gradient(circle 400px at 20% 85%, rgba(16, 185, 129, 0.09), transparent),
         var(--bg-body);
-      background-attachment: fixed;
-      color: var(--text-main);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      transition: background 0.3s ease, color 0.3s ease;
-      overflow-x: hidden;
+    }
+
+    body[data-theme="light"]::before {
+      background: 
+        radial-gradient(ellipse 70% 50% at 50% -10%, rgba(99, 102, 241, 0.06), transparent),
+        radial-gradient(circle 500px at 10% 20%, rgba(59, 130, 246, 0.05), transparent),
+        radial-gradient(circle 450px at 90% 18%, rgba(245, 158, 11, 0.05), transparent),
+        #F1F5F9;
     }
 
     h1, h2, h3, .font-heading {
@@ -1542,6 +1558,64 @@ main, .tab-pane {
 }
 
 @media (max-width: 768px) {
+  /* ============================================================== */
+  /* ALIVIO DE GPU Y BATERÍA EN CELULARES (CERO RECALENTAMIENTO)     */
+  /* ============================================================== */
+  .card,
+  .kpi-card,
+  .quick-action-pill,
+  .table-container,
+  .chip-btn,
+  .check-item,
+  .badge,
+  .btn-secondary,
+  footer,
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  select {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Superficies limpias y nítidas de alto contraste sin sobrecarga de shaders */
+  .card {
+    background: #0E1424 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+  [data-theme="light"] .card {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+  }
+
+  .kpi-card {
+    background: #111827 !important;
+  }
+  [data-theme="light"] .kpi-card {
+    background: #F8FAFC !important;
+  }
+
+  .check-item {
+    background: #131B2E !important;
+  }
+  [data-theme="light"] .check-item {
+    background: #FFFFFF !important;
+  }
+
+  .chip-btn {
+    background: rgba(255, 255, 255, 0.07) !important;
+  }
+  [data-theme="light"] .chip-btn {
+    background: #F1F5F9 !important;
+  }
+
+  /* Reducir blur en cabecera fija y tabs a 10px para scroll fluido a 120 FPS */
+  header,
+  .tabs-bar {
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+
   :root {
     --header-font-size: 1.05rem;
   }
@@ -5414,191 +5488,95 @@ main, .tab-pane {
     let chartCofres, chartAportes, chartHistorico;
 
     function initCharts() {
-      // 1. Chart Cofres
-      const ctxCofres = document.getElementById('chartCofres').getContext('2d');
-      chartCofres = new Chart(ctxCofres, {
-        type: 'doughnut',
-        data: {
-          labels: [
-            'Fijos Diego (Fan)',
-            'Operaciones (Tenpo)',
-            'Bolsillo Diego (Mach)',
-            'Ahorro MP (Diego)',
-            'Hogar Limache (BancoEstado)',
-            'Tarjeta Smart (BancoEstado)'
-          ],
-          datasets: [{
-            data: [609360, 300000, 140000, 130000, 238575, 45951],
-            backgroundColor: [
-              '#3B82F6', // Blue
-              '#F59E0B', // Amber
-              '#06B6D4', // Cyan
-              '#10B981', // Emerald
-              '#A855F7', // Purple
-              '#F43F5E'  // Rose
-            ],
-            borderWidth: 0,
-            hoverOffset: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                boxWidth: 12,
-                font: { size: 11 },
-                color: '#94A3B8'
-              }
-            },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => ' ' + ctx.label + ': ' + formatCLP(ctx.raw)
-              }
-            }
-          },
-          cutout: '68%'
+      // Optimización global de Chart.js para evitar drenaje de CPU y batería en celulares
+      if (typeof Chart !== 'undefined') {
+        const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+          Chart.defaults.animation = false;
+        } else {
+          Chart.defaults.animation = { duration: 250 };
         }
-      });
+        Chart.defaults.responsive = true;
+        Chart.defaults.maintainAspectRatio = false;
+      }
 
-      // 2. Chart Aportes (Real Sueldos)
-      const ctxAportes = document.getElementById('chartAportes').getContext('2d');
-      chartAportes = new Chart(ctxAportes, {
-        type: 'bar',
-        data: {
-          labels: ['Diego', 'Soledad'],
-          datasets: [
-            {
-              label: 'Ingreso Mensual',
-              data: [1214038, 875000],
-              backgroundColor: ['#3B82F6', '#A855F7'],
-              borderRadius: 6
-            },
-            {
-              label: 'Compromisos Asignados',
-              data: [1179360, 284526],
-              backgroundColor: ['#60A5FA', '#C084FC'],
-              borderRadius: 6
-            },
-            {
-              label: 'Margen / Ahorro Libre',
-              data: [34678, 590474],
-              backgroundColor: ['#10B981', '#34D399'],
-              borderRadius: 6
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: {
-                color: '#94A3B8',
-                callback: (val) => '$' + (val / 1000) + 'k'
+      // 3. Chart Histórico 14 Meses (Solo se inicializa 1 vez sin recreaciones)
+      const ctxHist = document.getElementById('chartHistorico')?.getContext('2d');
+      if (ctxHist && !chartHistorico) {
+        chartHistorico = new Chart(ctxHist, {
+          type: 'line',
+          data: {
+            labels: ['Ago-24', 'Sep-24', 'Oct-24', 'Nov-24', 'Dic-24', 'Ene-25', 'Feb-25', 'Mar-25', 'Abr-25', 'May-25', 'Jun-25', 'Jul-25', 'Ago-25', 'Sep-25'],
+            datasets: [
+              {
+                label: '⚡ Luz (Chilquinta)',
+                data: [53251, 22486, 12930, 14081, 12496, 12597, 16010, 15512, 18206, 17641, 23359, 40631, 28122, 23762],
+                borderColor: '#3B82F6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.3,
+                fill: true,
+                borderWidth: 2
+              },
+              {
+                label: '🔥 Gas',
+                data: [28550, 19500, 19850, 15250, 15750, 15850, 15900, 11350, 21100, 20900, 20950, 20850, 30300, 25500],
+                borderColor: '#F59E0B',
+                backgroundColor: 'transparent',
+                tension: 0.3,
+                borderWidth: 2
+              },
+              {
+                label: '🏢 Gasto Común',
+                data: [47000, 51000, 52723, 49748, 51273, 52426, 58696, 54132, 46904, 53670, 53476, 53571, 54606, 56315],
+                borderColor: '#A855F7',
+                backgroundColor: 'transparent',
+                tension: 0.3,
+                borderWidth: 2
+              },
+              {
+                label: '💧 Agua (Esval)',
+                data: [7610, 7280, 6370, 6470, 6420, 6440, 7160, 8030, 7140, 8020, 7134, 6230, 7870, 7840],
+                borderColor: '#10B981',
+                backgroundColor: 'transparent',
+                tension: 0.3,
+                borderWidth: 2
               }
-            },
-            x: {
-              grid: { display: false },
-              ticks: { color: '#94A3B8' }
-            }
+            ]
           },
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                boxWidth: 12,
-                font: { size: 11 },
-                color: '#94A3B8'
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                ticks: {
+                  color: '#94A3B8',
+                  callback: (val) => '$' + (val / 1000) + 'k'
+                }
+              },
+              x: {
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                ticks: { color: '#94A3B8' }
               }
             },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => ' ' + ctx.dataset.label + ': ' + formatCLP(ctx.raw)
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  boxWidth: 12,
+                  font: { size: 11 },
+                  color: '#94A3B8'
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => ' ' + ctx.dataset.label + ': ' + formatCLP(ctx.raw)
+                }
               }
             }
           }
-        }
-      });
-
-      // 3. Chart Histórico 14 Meses
-      const ctxHist = document.getElementById('chartHistorico').getContext('2d');
-      chartHistorico = new Chart(ctxHist, {
-        type: 'line',
-        data: {
-          labels: ['Ago-24', 'Sep-24', 'Oct-24', 'Nov-24', 'Dic-24', 'Ene-25', 'Feb-25', 'Mar-25', 'Abr-25', 'May-25', 'Jun-25', 'Jul-25', 'Ago-25', 'Sep-25'],
-          datasets: [
-            {
-              label: '⚡ Luz (Chilquinta)',
-              data: [53251, 22486, 12930, 14081, 12496, 12597, 16010, 15512, 18206, 17641, 23359, 40631, 28122, 23762],
-              borderColor: '#3B82F6',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              tension: 0.3,
-              fill: true,
-              borderWidth: 2
-            },
-            {
-              label: '🔥 Gas',
-              data: [28550, 19500, 19850, 15250, 15750, 15850, 15900, 11350, 21100, 20900, 20950, 20850, 30300, 25500],
-              borderColor: '#F59E0B',
-              backgroundColor: 'transparent',
-              tension: 0.3,
-              borderWidth: 2
-            },
-            {
-              label: '🏢 Gasto Común',
-              data: [47000, 51000, 52723, 49748, 51273, 52426, 58696, 54132, 46904, 53670, 53476, 53571, 54606, 56315],
-              borderColor: '#A855F7',
-              backgroundColor: 'transparent',
-              tension: 0.3,
-              borderWidth: 2
-            },
-            {
-              label: '💧 Agua (Esval)',
-              data: [7610, 7280, 6370, 6470, 6420, 6440, 7160, 8030, 7140, 8020, 7134, 6230, 7870, 7840],
-              borderColor: '#10B981',
-              backgroundColor: 'transparent',
-              tension: 0.3,
-              borderWidth: 2
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: {
-                color: '#94A3B8',
-                callback: (val) => '$' + (val / 1000) + 'k'
-              }
-            },
-            x: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#94A3B8' }
-            }
-          },
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                boxWidth: 12,
-                font: { size: 11 },
-                color: '#94A3B8'
-              }
-            },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => ' ' + ctx.dataset.label + ': ' + formatCLP(ctx.raw)
-              }
-            }
-          }
-        }
-      });
+        });
+      }
     }
 
     // Dynamic Expense Management
@@ -7122,7 +7100,7 @@ main, .tab-pane {
         }
       }
 
-      function toggleMenu(e) {
+            function toggleMenu(e) {
         e.stopPropagation();
         const isOpen = menu.classList.contains('open');
         closeAllGlassSelects();
@@ -7132,6 +7110,7 @@ main, .tab-pane {
           menu.classList.add('open');
           trigger.classList.add('active');
           trigger.setAttribute('aria-expanded', 'true');
+          isAnyGlassSelectOpen = true;
 
           const selItem = menu.querySelector('.glass-select-item.selected');
           if (selItem) {
@@ -7144,6 +7123,7 @@ main, .tab-pane {
         menu.classList.remove('open');
         trigger.classList.remove('active');
         trigger.setAttribute('aria-expanded', 'false');
+        isAnyGlassSelectOpen = false;
       }
 
       trigger.addEventListener('click', toggleMenu);
@@ -7153,7 +7133,10 @@ main, .tab-pane {
       populateMenu();
     }
 
+    let isAnyGlassSelectOpen = false;
+
     function closeAllGlassSelects() {
+      if (!isAnyGlassSelectOpen) return;
       document.querySelectorAll('.glass-select-menu.open').forEach(menu => {
         menu.classList.remove('open');
       });
@@ -7161,6 +7144,7 @@ main, .tab-pane {
         trig.classList.remove('active');
         trig.setAttribute('aria-expanded', 'false');
       });
+      isAnyGlassSelectOpen = false;
     }
 
     document.addEventListener('click', closeAllGlassSelects);
@@ -7168,8 +7152,9 @@ main, .tab-pane {
       if (e.key === 'Escape') closeAllGlassSelects();
     });
     window.addEventListener('scroll', (e) => {
+      if (!isAnyGlassSelectOpen) return; // 0 costo de CPU si los menús están cerrados
       if (e.target && e.target.classList && e.target.classList.contains('glass-select-menu')) {
-        return; // No cerrar al desplazarse dentro del propio menú desplegable
+        return; // No cerrar al desplazarse dentro del propio menú
       }
       closeAllGlassSelects();
     }, { capture: true, passive: true });
