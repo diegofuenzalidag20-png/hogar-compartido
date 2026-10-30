@@ -1974,7 +1974,7 @@ main, .tab-pane {
             <button type="button" class="chip-btn chip-soledad" onclick="quickSelectChip('Gasto Común Condominio', 56315, 'Soledad', 'Servicios Hogar', 'Chequera BancoEstado', 'Gasto Común Condominio')">🏢 Gasto Común</button>
             <button type="button" class="chip-btn chip-soledad" onclick="quickSelectChip('Supermercado Hogar Limache', 120000, 'Soledad', 'Supermercado', 'Chequera BancoEstado', 'Lider Limache - Supermercado')">🛒 Supermercado</button>
             <button type="button" class="chip-btn chip-soledad" onclick="quickSelectChip('Tarjeta Smart Visa (Compromiso)', 50000, 'Soledad', 'Otros', 'Smart Visa', 'Cuota Tarjeta Smart Visa')">💳 Smart Visa</button>
-            <button type="button" class="chip-btn" onclick="quickSelectChip('Crédito Hipotecario (Aporte Fijo Diego)', 365000, 'Diego', 'Servicios Hogar', 'Cuenta Fan', 'Aporte Fijo Hipotecario')">🏦 Hipot. Diego ($365k)</button>
+            <button type="button" class="chip-btn" onclick="quickSelectChip('Snacks / Comida Turno Huasco', 33500, 'Diego', 'Operaciones Huasco', 'Tenpo Diego', 'Snacks Turno Huasco')">🥪 Snack</button>
             <button type="button" class="chip-btn" onclick="quickSelectChip('Uber / Traslados', 25000, 'Diego', 'Operaciones Huasco', 'Tenpo Diego', 'Uber')">🚗 Uber</button>
             <button type="button" class="chip-btn" onclick="quickSelectChip('Comida Michis (Promedio)', 42200, 'Diego', 'Mascotas', 'Cuenta Fan', 'Comida Michis')">🐱 Comida Michis</button>
             <button type="button" class="chip-btn" onclick="quickSelectChip('Arena Sanitaria Michis', 20000, 'Diego', 'Mascotas', 'Cuenta Fan', 'Arena Sanitaria Michis')">🐱 Arena Michis</button>
@@ -2046,6 +2046,7 @@ main, .tab-pane {
                 </optgroup>
                 <optgroup label="📦 Otros & Ahorro">
                   <option value="💰 Ahorro / Fondo Emergencia">💰 Ahorro / Fondo Emergencia</option>
+                  <option value="💸 Transferencia a Tercero">💸 Transferencia a Tercero</option>
                   <option value="📦 Otros Imprevistos / Gastos Hogar">📦 Otros Imprevistos / Gastos Hogar</option>
                 </optgroup>
 </select>
@@ -4810,6 +4811,9 @@ main, .tab-pane {
       if (/snack|turno/i.test(query)) {
         return findIndexBySubstr('Snacks');
       }
+      if (/transferencia|tercero/i.test(query)) {
+        return findIndexBySubstr('Transferencia a Tercero');
+      }
 
       if (/mach\b|bolsillo/i.test(query)) {
         return findIndexBySubstr('Bolsillo Personal');
@@ -7333,6 +7337,9 @@ main, .tab-pane {
       if (text.includes('salud') || text.includes('farmacia') || text.includes('medica') || text.includes('eutirox') || text.includes('rupatadina') || text.includes('waldorf') || text.includes('curso') || text.includes('netflix') || text.includes('spotify') || text.includes('streaming')) {
         return 'Salud & Educación';
       }
+      if (text.includes('transferencia') || text.includes('tercero')) {
+        return 'Bolsillo & Ahorro';
+      }
       if (text.includes('super') || text.includes('súper') || text.includes('lider') || text.includes('mayorista') || text.includes('alimento') || text.includes('feria') || text.includes('pan') || text.includes('verdura') || text.includes('delivery') || text.includes('comida') || text.includes('salida')) {
         return 'Alimentación';
       }
@@ -7341,7 +7348,7 @@ main, .tab-pane {
 
     function isExpenseFijo(categoryName, descName) {
       const text = `${categoryName || ''} ${descName || ''}`.toLowerCase();
-      if (text.includes('feria') || text.includes('salida') || text.includes('delivery') || text.includes('imprevisto') || text.includes('regalo') || text.includes('pan') || text.includes('comida fuera') || text.includes('super') || text.includes('súper') || text.includes('lider') || text.includes('verdura')) {
+      if (text.includes('feria') || text.includes('salida') || text.includes('delivery') || text.includes('imprevisto') || text.includes('regalo') || text.includes('pan') || text.includes('comida fuera') || text.includes('super') || text.includes('súper') || text.includes('lider') || text.includes('verdura') || text.includes('transferencia') || text.includes('tercero')) {
         return false;
       }
       return true;
@@ -8259,7 +8266,7 @@ main, .tab-pane {
 
       // Register PWA Service Worker con actualización forzada v13
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=20261030h').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=20261030i').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
@@ -8671,6 +8678,7 @@ main, .tab-pane {
                 <option value="Salud">💊 Salud</option>
                 <option value="Mascotas">🐾 Mascotas</option>
                 <option value="Gustos Personales">✨ Gustos Personales</option>
+                <option value="Transferencia a Tercero">💸 Transferencia a Tercero</option>
                 <option value="Otros">📦 Otros</option>
               </select>
             </div>
