@@ -4446,31 +4446,194 @@ main, .tab-pane {
     // ==============================================================
     // CAJA DE INGRESO RÁPIDO & CHECKLIST CON FILTRO SOLEDAD
     // ==============================================================
+        // ==============================================================
+    // ALGORITMO INTELIGENTE DE MATCHING PARA CATEGORÍAS Y CUENTAS
+    // ==============================================================
+    function matchCategoryOptionIndex(selectEl, billName, category, detail) {
+      if (!selectEl) return -1;
+      const query = `${billName || ''} ${detail || ''} ${category || ''}`.toLowerCase();
+
+      function findIndexBySubstr(target) {
+        const t = target.toLowerCase();
+        for (let i = 0; i < selectEl.options.length; i++) {
+          if (selectEl.options[i].value.toLowerCase().includes(t) || 
+              selectEl.options[i].textContent.toLowerCase().includes(t)) {
+            return i;
+          }
+        }
+        return -1;
+      }
+
+      // 1. Reglas específicas por palabra clave en orden de prioridad
+      if (/\bhuasco\b/i.test(query) && (/\bluz\b|\bagua\b|servicios/i.test(query))) {
+        return findIndexBySubstr('Pagos Servicios Huasco');
+      }
+      if (/\bhuasco\b/i.test(query) && /arriendo|habitaci/i.test(query)) {
+        return findIndexBySubstr('Arriendo Habitación Huasco');
+      }
+      if (/pasaje|bus\b/i.test(query) && /\bhuasco\b/i.test(query)) {
+        return findIndexBySubstr('Pasajes Bus Huasco');
+      }
+
+      if (/hipotec|dividendo/i.test(query)) {
+        if (/soledad|diferencial|\buf\b/i.test(query)) {
+          return findIndexBySubstr('Diferencial UF Soledad');
+        }
+        return findIndexBySubstr('Aporte Fijo Diego');
+      }
+
+      if (/smart|visa/i.test(query)) {
+        return findIndexBySubstr('Tarjeta Smart Visa');
+      }
+
+      if (/\bluz\b|chilquinta/i.test(query)) {
+        return findIndexBySubstr('Luz (Chilquinta');
+      }
+      if (/\bagua\b|esval/i.test(query)) {
+        return findIndexBySubstr('Agua (Esval');
+      }
+      if (/\bgas\b|balón|balon/i.test(query) && !/gasto\s*com/i.test(query)) {
+        return findIndexBySubstr('Gas (Balón');
+      }
+      if (/común|comun|condominio/i.test(query)) {
+        return findIndexBySubstr('Gasto Común');
+      }
+      if (/\bclaro\b/i.test(query)) {
+        return findIndexBySubstr('Plan Claro');
+      }
+      if (/\bentel\b/i.test(query)) {
+        return findIndexBySubstr('Planes Entel');
+      }
+      if (/internet|wifi|fibra/i.test(query)) {
+        return findIndexBySubstr('Internet Hogar');
+      }
+      if (/aseo\b|municipal/i.test(query)) {
+        return findIndexBySubstr('Aseo Domiciliario');
+      }
+
+      if (/supermercado|lider|mayorista|jumbo|unimarc|tottus/i.test(query)) {
+        return findIndexBySubstr('Supermercado');
+      }
+      if (/feria|verduler|fruta/i.test(query)) {
+        return findIndexBySubstr('Feria Libre');
+      }
+      if (/delivery|salida|almuerzo|cena|restauran/i.test(query)) {
+        return findIndexBySubstr('Comida Fuera');
+      }
+
+      if (/arena/i.test(query)) {
+        return findIndexBySubstr('Arena Sanitaria');
+      }
+      if (/michi|gato|felin/i.test(query)) {
+        return findIndexBySubstr('Comida Michis');
+      }
+      if (/veterin/i.test(query)) {
+        return findIndexBySubstr('Veterinario');
+      }
+
+      if (/waldorf|curso/i.test(query)) {
+        return findIndexBySubstr('Curso Waldorf');
+      }
+      if (/eutirox|rupatadina|farmacia|medicam/i.test(query)) {
+        return findIndexBySubstr('Farmacia');
+      }
+      if (/dent|médic|medic|consulta/i.test(query)) {
+        return findIndexBySubstr('Consultas Médicas');
+      }
+      if (/netflix|crunchyroll|streaming|spotify/i.test(query)) {
+        return findIndexBySubstr('Streaming');
+      }
+
+      if (/uber|colectivo|taxi|traslado/i.test(query)) {
+        return findIndexBySubstr('Uber');
+      }
+      if (/metro|efe\b/i.test(query)) {
+        return findIndexBySubstr('Metro Valparaíso');
+      }
+      if (/snack|turno/i.test(query)) {
+        return findIndexBySubstr('Snacks');
+      }
+
+      if (/mach\b|bolsillo/i.test(query)) {
+        return findIndexBySubstr('Bolsillo Personal');
+      }
+      if (/emergencia|ahorro|reserva/i.test(query)) {
+        return findIndexBySubstr('Ahorro / Fondo');
+      }
+
+      // 2. Coincidencia directa en value
+      if (category && category !== 'Otros' && category !== 'Servicios Hogar') {
+        const catLower = category.toLowerCase();
+        for (let i = 0; i < selectEl.options.length; i++) {
+          if (selectEl.options[i].value.toLowerCase().includes(catLower)) {
+            return i;
+          }
+        }
+      }
+
+      return findIndexBySubstr('Otros Imprevistos');
+    }
+
+    function matchAccountOptionIndex(selectEl, account, payer) {
+      if (!selectEl || !account) return -1;
+      const acc = account.toLowerCase();
+      const isSole = (payer === 'Soledad');
+
+      function findIndexBySubstr(target) {
+        const t = target.toLowerCase();
+        for (let i = 0; i < selectEl.options.length; i++) {
+          if (selectEl.options[i].value.toLowerCase().includes(t) || 
+              selectEl.options[i].textContent.toLowerCase().includes(t)) {
+            return i;
+          }
+        }
+        return -1;
+      }
+
+      if (/smart|visa/i.test(acc)) return findIndexBySubstr('Tarjeta Smart Visa');
+      if (/fan/i.test(acc)) return findIndexBySubstr('Cuenta Fan');
+      if (/chequera/i.test(acc) || (/bancoestado/i.test(acc) && !/ahorro/i.test(acc))) {
+        return findIndexBySubstr('Chequera BancoEstado');
+      }
+      if (/ahorro/i.test(acc)) return findIndexBySubstr('BancoEstado Ahorro');
+      if (/mach/i.test(acc)) return findIndexBySubstr('Mach');
+      if (/tenpo/i.test(acc)) {
+        return isSole ? findIndexBySubstr('Tenpo Soledad') : findIndexBySubstr('Tenpo Diego');
+      }
+      if (/mercado|pago/i.test(acc)) {
+        return isSole ? findIndexBySubstr('Mercado Pago Soledad') : findIndexBySubstr('Mercado Pago Diego');
+      }
+      if (/efectivo/i.test(acc)) return findIndexBySubstr('Efectivo');
+
+      return findIndexBySubstr(account);
+    }
+
     function quickSelectChip(billName, defaultAmount, payer, category, account, detail) {
       const today = new Date().toISOString().split('T')[0];
       const elDate = document.getElementById('quickDate');
       if (elDate && !elDate.value) elDate.value = today;
 
       const elPayer = document.getElementById('quickPayer');
-      if (elPayer && payer) elPayer.value = payer;
+      if (elPayer && payer) {
+        elPayer.value = payer;
+        elPayer.dispatchEvent(new Event('change', { bubbles: true }));
+      }
 
       const elCat = document.getElementById('quickCategory');
-      if (elCat && category) {
-        for (let i = 0; i < elCat.options.length; i++) {
-          if (elCat.options[i].value.includes(category) || category.includes(elCat.options[i].value)) {
-            elCat.selectedIndex = i;
-            break;
-          }
+      if (elCat) {
+        const catIdx = matchCategoryOptionIndex(elCat, billName, category, detail);
+        if (catIdx >= 0) {
+          elCat.selectedIndex = catIdx;
+          elCat.dispatchEvent(new Event('change', { bubbles: true }));
         }
       }
 
       const elAcc = document.getElementById('quickAccount');
-      if (elAcc && account) {
-        for (let i = 0; i < elAcc.options.length; i++) {
-          if (elAcc.options[i].value.includes(account) || account.includes(elAcc.options[i].value)) {
-            elAcc.selectedIndex = i;
-            break;
-          }
+      if (elAcc) {
+        const accIdx = matchAccountOptionIndex(elAcc, account, payer);
+        if (accIdx >= 0) {
+          elAcc.selectedIndex = accIdx;
+          elAcc.dispatchEvent(new Event('change', { bubbles: true }));
         }
       }
 
@@ -4483,6 +4646,7 @@ main, .tab-pane {
         elAmount.focus();
         elAmount.select();
       }
+
       syncAllGlassSelects();
     }
 
@@ -8150,7 +8314,7 @@ main, .tab-pane {
       </div>
 
       <!-- PANEL 3: RESPALDO JSON -->
-       class="sync-pane" style="display:none;">
+      <div id="syncPaneBackup" class="sync-pane" style="display:none;">
         <div style="background:var(--bg-surface-elevated); border:1px solid var(--border-color); border-radius:12px; padding:1.15rem;">
           <div style="font-weight:700; color:var(--text-main); font-size:0.95rem; margin-bottom:0.5rem;">
             💾 Copia de Seguridad Completa (Archivo .json)
@@ -8172,7 +8336,7 @@ main, .tab-pane {
     </div>
   </div>
 
-  id="modalInstallPwa" class="modal-overlay">
+  <div id="modalInstallPwa" class="modal-overlay">
     <div class="modal-card" style="max-width:480px; text-align:center;">
       <div style="font-size:3rem; margin-bottom:0.5rem;">📲</div>
       <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:0.5rem;">Instalar como App en tu Celular</h3>
@@ -8312,7 +8476,7 @@ main, .tab-pane {
   </div>
 
   <!-- MODAL PARA VER DETALLE DE MES HISTÓRICO GUARDADO -->
-  <div lass="modal-overlay">
+  <div id="modalVerMes" class="modal-overlay">
     <div class="modal-card" style="max-width:650px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
         <div style="display:flex; align-items:center; gap:0.5rem;">
@@ -8332,9 +8496,8 @@ main, .tab-pane {
     </div>
   </div>
 
-</body>
-</html>
-  <!-- ============================================================== -->
+
+
   <!-- MODAL DE EDICIÓN DE GASTO REGISTRADO                           -->
   <!-- ============================================================== -->
   <div id="modalEditExpense" class="modal-overlay">
@@ -8422,4 +8585,5 @@ main, .tab-pane {
     </div>
   </div>
 
-  
+</body>
+</html>
