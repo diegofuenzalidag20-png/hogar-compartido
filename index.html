@@ -1979,7 +1979,7 @@ main, .tab-pane {
             <button type="button" class="chip-btn" onclick="quickSelectChip('Comida Michis (Promedio)', 42200, 'Diego', 'Mascotas', 'Cuenta Fan', 'Comida Michis')">🐱 Comida Michis</button>
             <button type="button" class="chip-btn" onclick="quickSelectChip('Arena Sanitaria Michis', 20000, 'Diego', 'Mascotas', 'Cuenta Fan', 'Arena Sanitaria Michis')">🐱 Arena Michis</button>
             <button type="button" class="chip-btn" onclick="quickSelectChip('Pasajes Bus Huasco (8 tramos)', 28000, 'Diego', 'Operaciones Huasco', 'Tenpo Diego', 'Pasaje Bus Huasco')">🚌 Pasaje Bus</button>
-            <button type="button" class="chip-btn chip-soledad" onclick="quickSelectChip('Aseo Domiciliario (Cuota Trimestral)', 13841, 'Soledad', 'Servicios Hogar', 'Chequera BancoEstado', 'Aseo Domiciliario')">🧹 Aseo Municipal</button>
+            <button type="button" class="chip-btn" onclick="quickSelectChip('Arriendo Habitación Huasco', 95000, 'Diego', 'Vivienda Huasco', 'Cuenta Fan', 'Arriendo Habitación Huasco')">🏠 Arriendo</button>
             <button type="button" class="chip-btn" onclick="quickSelectChip('', '', 'Diego', 'Otros', 'Cuenta Fan', '')">➕ Otra cuenta...</button>
           </div>
         </div>
@@ -4725,7 +4725,7 @@ main, .tab-pane {
       if (/\bhuasco\b/i.test(query) && (/\bluz\b|\bagua\b|servicios/i.test(query))) {
         return findIndexBySubstr('Pagos Servicios Huasco');
       }
-      if (/\bhuasco\b/i.test(query) && /arriendo|habitaci/i.test(query)) {
+      if (/arriendo|habitaci/i.test(query)) {
         return findIndexBySubstr('Arriendo Habitación Huasco');
       }
       if (/pasaje|bus\b/i.test(query)) {
@@ -8259,7 +8259,7 @@ main, .tab-pane {
 
       // Register PWA Service Worker con actualización forzada v13
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=20261030e').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=20261030f').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
