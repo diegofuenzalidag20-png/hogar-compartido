@@ -3411,24 +3411,28 @@ main, .tab-pane {
       };
 
       currentAuditItems.push(newItem);
+      const customs = currentAuditItems.filter(it => it.isCustom);
+      localStorage.setItem('custom_audit_items', JSON.stringify(customs));
+      const month = document.getElementById('audit-month-select')?.value || '2026-10';
+      localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
       renderAuditTable();
+      triggerAutoSyncToCloud();
       closeAddItemModal();
       document.getElementById('newItemName').value = '';
       document.getElementById('newItemBase').value = '';
       document.getElementById('newItemActual').value = '';
       showToast(`¡Ítem "${name}" agregado con éxito al presupuesto!`);
-
-      // Persistir ítems creados por el usuario
-      const customs = currentAuditItems.filter(it => it.isCustom);
-      localStorage.setItem('custom_audit_items', JSON.stringify(customs));
     }
 
     function deleteAuditItem(id) {
       if (confirm('¿Deseas eliminar este ítem personalizado?')) {
         currentAuditItems = currentAuditItems.filter(it => it.id !== id);
-        renderAuditTable();
         const customs = currentAuditItems.filter(it => it.isCustom);
         localStorage.setItem('custom_audit_items', JSON.stringify(customs));
+        const month = document.getElementById('audit-month-select')?.value || '2026-10';
+        localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
+        renderAuditTable();
+        triggerAutoSyncToCloud();
         showToast('Ítem eliminado con éxito');
       }
     }
@@ -3637,7 +3641,10 @@ main, .tab-pane {
       const item = currentAuditItems.find(it => it.id === id);
       if (item) {
         item.actual = val;
+        const month = document.getElementById('audit-month-select')?.value || '2026-10';
+        localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
         renderAuditTable();
+        triggerAutoSyncToCloud();
       }
     }
 
@@ -3650,7 +3657,8 @@ main, .tab-pane {
     function saveAuditMonth() {
       const month = document.getElementById('audit-month-select').value;
       localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
-      showToast(`¡Cierre de mes ${month} guardado en memoria!`);
+      triggerAutoSyncToCloud(true);
+      showToast(`¡Cierre de mes ${month} guardado y sincronizado en la nube!`);
     }
 
 
@@ -3948,6 +3956,7 @@ main, .tab-pane {
 
     function saveUserProfile() {
       localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
+      triggerAutoSyncToCloud();
     }
 
     // Sincronización bidireccional permanente de sueldos, paneles, cofres y KPIs
@@ -4983,6 +4992,7 @@ main, .tab-pane {
 
     
     // ============================================================
+// ============================================================
     // FIREBASE FIRESTORE REAL-TIME CLOUD ENGINE (HOGAR COMPARTIDO)
     // ============================================================
     const firebaseConfig = {
@@ -4995,9 +5005,11 @@ main, .tab-pane {
       measurementId: "G-1M3GQQE8JE"
     };
 
+    const CLIENT_SESSION_ID = 'sess_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
     let dbFirestore = null;
     let firestoreUnsubscribe = null;
-    let isInternalSyncSave = false;
+    let autoSyncCloudTimer = null;
+    let lastUploadedTimestamp = 0;
 
     function initFirebaseSync() {
       if (typeof firebase === 'undefined') {
@@ -5010,7 +5022,7 @@ main, .tab-pane {
         }
         dbFirestore = firebase.firestore();
 
-        updateCloudStatusBadge(true, '🟢 Nube Conectada');
+        updateCloudStatusBadge(true, '🟢 Nube en Vivo');
         listenToCloudUpdates();
       } catch (err) {
         console.error('Error al inicializar Firebase Firestore:', err);
@@ -5039,8 +5051,8 @@ main, .tab-pane {
       const docRef = dbFirestore.collection('hogar').doc('datos_compartidos');
 
       firestoreUnsubscribe = docRef.onSnapshot((docSnapshot) => {
-        if (isInternalSyncSave) {
-          isInternalSyncSave = false;
+        // Ignorar escrituras pendientes del propio cliente local
+        if (docSnapshot.metadata && docSnapshot.metadata.hasPendingWrites) {
           return;
         }
 
@@ -5053,16 +5065,18 @@ main, .tab-pane {
         const data = docSnapshot.data();
         if (!data) return;
 
-        const localUpdatedAt = parseInt(localStorage.getItem('finanzas_last_local_update') || '0', 10);
-        const remoteUpdatedAt = data.timestamp || 0;
-
-        // Si los datos remotos son más nuevos o no tenemos timestamp, aplicarlos
-        if (remoteUpdatedAt > localUpdatedAt) {
-          console.log('🔄 Sincronizando datos remotos en tiempo real...');
-          applyRemoteDataToApp(data);
-          localStorage.setItem('finanzas_last_local_update', remoteUpdatedAt.toString());
-          showToast('☁️ Datos del hogar actualizados automáticamente desde la nube');
+        // Si el cambio fue originado por esta misma sesión o tiene el timestamp que acabamos de subir, ignorarlo
+        if (data.clientSessionId && data.clientSessionId === CLIENT_SESSION_ID) {
+          return;
         }
+        if (data.timestamp && data.timestamp === lastUploadedTimestamp) {
+          return;
+        }
+
+        console.log('🔄 Sincronizando datos remotos en tiempo real desde Firebase...', data);
+        localStorage.setItem('finanzas_last_local_update', (data.timestamp || Date.now()).toString());
+        applyRemoteDataToApp(data);
+        showToast('☁️ ¡Sincronizado con tu pareja en tiempo real!');
       }, (error) => {
         console.error('Error en listener Firestore:', error);
         updateCloudStatusBadge(false, '⚠️ Error Nube');
@@ -5070,19 +5084,18 @@ main, .tab-pane {
     }
 
     function applyRemoteDataToApp(data) {
+      if (!data) return;
       const month = data.month || data.activeMonth || document.getElementById('audit-month-select')?.value || '2026-10';
 
-      if (Array.isArray(data.auditItems)) {
+      if (Array.isArray(data.auditItems) && data.auditItems.length > 0) {
         currentAuditItems = data.auditItems;
         localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
-        if (typeof renderAuditTable === 'function') renderAuditTable();
       }
 
       if (Array.isArray(data.expenses)) {
         expenses = data.expenses;
         localStorage.setItem('family_expenses', JSON.stringify(expenses));
         localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
-        if (typeof renderExpensesTable === 'function') renderExpensesTable();
       }
 
       if (data.userProfile && typeof data.userProfile === 'object') {
@@ -5090,29 +5103,41 @@ main, .tab-pane {
         localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
         if (userProfile.diegoSalary) localStorage.setItem('diego_salary', userProfile.diegoSalary);
         if (userProfile.soledadSalary) localStorage.setItem('soledad_salary', userProfile.soledadSalary);
-        if (typeof updateHeaderSalaries === 'function') updateHeaderSalaries();
-        if (typeof populateSalaryModalInputs === 'function') populateSalaryModalInputs();
       }
 
       if (Array.isArray(data.customAuditItems)) {
         localStorage.setItem('custom_audit_items', JSON.stringify(data.customAuditItems));
       }
 
-      if (Array.isArray(data.dbMeses)) {
+      if (Array.isArray(data.dbMeses) && data.dbMeses.length > 0) {
         localStorage.setItem('db_historial_meses', JSON.stringify(data.dbMeses));
       }
 
-      if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
-      if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
+      // RE-RENDERIZADO COMPLETO E INMEDIATO DE LA INTERFAZ
+      if (typeof renderExpenses === 'function') renderExpenses();
+      if (typeof renderAuditTable === 'function') renderAuditTable();
+      if (typeof renderChecklist === 'function') renderChecklist();
+      if (typeof updateHeaderSalaries === 'function') updateHeaderSalaries();
+      if (typeof syncProfileToInputs === 'function') syncProfileToInputs();
+      if (typeof populateSalaryModalInputs === 'function') populateSalaryModalInputs();
+      if (typeof updateDiegoColchonDisplay === 'function') updateDiegoColchonDisplay();
+      if (typeof updateSoleMargenDisplay === 'function') updateSoleMargenDisplay();
+      if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();
+      if (typeof renderCardAnalysis === 'function') renderCardAnalysis();
       if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
+      if (typeof renderTablaHistorialMesesBD === 'function') renderTablaHistorialMesesBD();
     }
+
+    // Alias global para máxima compatibilidad
+    window.renderExpensesTable = renderExpenses;
 
     async function pushToFirestore(isSilent = false) {
       if (!dbFirestore) return false;
       try {
-        isInternalSyncSave = true;
         const payload = buildCompleteFamilyPayload();
         payload.timestamp = Date.now();
+        payload.clientSessionId = CLIENT_SESSION_ID;
+        lastUploadedTimestamp = payload.timestamp;
         localStorage.setItem('finanzas_last_local_update', payload.timestamp.toString());
 
         await dbFirestore.collection('hogar').doc('datos_compartidos').set(payload);
@@ -5146,31 +5171,29 @@ main, .tab-pane {
       }
     }
 
-    function triggerAutoSyncToCloud() {
-      if (dbFirestore) {
+    function triggerAutoSyncToCloud(immediate = false) {
+      if (!dbFirestore) return;
+      if (autoSyncCloudTimer) clearTimeout(autoSyncCloudTimer);
+      if (immediate) {
         pushToFirestore(true);
+      } else {
+        autoSyncCloudTimer = setTimeout(() => {
+          pushToFirestore(true);
+        }, 300);
       }
     }
 
     // --- ACCIONES DE NUBE DESDE EL MODAL ---
     function loadSavedCloudSettings() {
       if (dbFirestore) {
-        updateCloudStatusBadge(true, '🟢 Firebase Conectado');
-        const rFb = document.getElementById('radioProviderFirebase');
-        if (rFb) rFb.checked = true;
-        toggleCloudProviderUI();
+        updateCloudStatusBadge(true, '🟢 Nube en Vivo');
       }
     }
 
     async function pushToActiveCloud() {
-      const isVps = document.getElementById('radioProviderVps')?.checked;
-      if (isVps) {
-        const vpsUrl = document.getElementById('vpsEndpointInput')?.value.trim();
+      const vpsUrl = document.getElementById('vpsEndpointInput')?.value.trim();
+      if (vpsUrl) {
         const vpsToken = document.getElementById('vpsTokenInput')?.value.trim();
-        if (!vpsUrl) {
-          alert('Por favor ingresa la URL de tu VPS.');
-          return;
-        }
         showToast('⏳ Conectando con tu VPS...');
         try {
           const payload = buildCompleteFamilyPayload();
@@ -5198,14 +5221,9 @@ main, .tab-pane {
     }
 
     async function pullFromActiveCloud() {
-      const isVps = document.getElementById('radioProviderVps')?.checked;
-      if (isVps) {
-        const vpsUrl = document.getElementById('vpsEndpointInput')?.value.trim();
+      const vpsUrl = document.getElementById('vpsEndpointInput')?.value.trim();
+      if (vpsUrl) {
         const vpsToken = document.getElementById('vpsTokenInput')?.value.trim();
-        if (!vpsUrl) {
-          alert('Por favor ingresa la URL de tu VPS.');
-          return;
-        }
         showToast('⏳ Descargando desde tu VPS...');
         try {
           const cleanUrl = vpsUrl.replace(/\/+$/, '');
@@ -5643,6 +5661,7 @@ main, .tab-pane {
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
       renderExpenses();
       if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();
+      triggerAutoSyncToCloud();
       document.getElementById('expenseForm').reset();
       const expDateEl = document.getElementById('exp-date'); if (expDateEl) expDateEl.valueAsDate = new Date();
       showToast('¡Gasto registrado con éxito!');
@@ -5752,6 +5771,7 @@ main, .tab-pane {
         localStorage.setItem('family_expenses', JSON.stringify(expenses));
         renderExpenses();
         if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();
+        triggerAutoSyncToCloud();
         showToast(`🗑️ Gasto "${deleted?.desc || ''}" eliminado`);
       }
     }
@@ -5921,6 +5941,7 @@ main, .tab-pane {
         chartAportes.update();
       }
 
+      triggerAutoSyncToCloud();
       showToast(`✅ Sueldo de ${target} guardado definitivamente: ${formatCLP(val)}`);
     }
 
@@ -8072,76 +8093,64 @@ main, .tab-pane {
       <!-- PANEL 2: NUBE AUTOMÁTICA (FIREBASE O VPS) -->
       <div id="syncPaneCloud" class="sync-pane" style="display:none;">
         <div style="background:var(--bg-surface-elevated); border:1px solid var(--border-color); border-radius:12px; padding:1.15rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.65rem;">
-            <div style="font-weight:700; color:var(--text-main); font-size:0.95rem;">
-              🌐 Conexión Nube 24/7 (Sincronización en Vivo)
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+            <div style="font-weight:700; color:var(--text-main); font-size:0.95rem; display:flex; align-items:center; gap:0.4rem;">
+              <span>⚡</span> Sincronización Automática en la Nube
             </div>
-            <span id="cloudStatusBadge" class="badge badge-amber" style="font-size:0.75rem;">Configurable</span>
+            <span id="cloudStatusBadge" class="badge badge-emerald" style="font-size:0.75rem; padding:0.25rem 0.6rem;">🟢 Nube en Vivo</span>
           </div>
-          <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.45; margin-bottom:1rem;">
-            Permite guardar y recuperar los gastos automáticamente desde cualquier celular. Puedes usar tu propio <strong>Servidor VPS</strong> (con el script incluido) o la nube gratuita de <strong>Firebase Firestore</strong>.
+
+          <!-- Banner Informativo -->
+          <div style="background:linear-gradient(135deg, rgba(16,185,129,0.12), rgba(59,130,246,0.08)); border:1px solid rgba(16,185,129,0.3); border-radius:10px; padding:0.85rem; margin-bottom:1rem;">
+            <div style="display:flex; align-items:flex-start; gap:0.6rem;">
+              <span style="font-size:1.25rem; line-height:1;">✅</span>
+              <div style="font-size:0.82rem; line-height:1.45; color:var(--text-main);">
+                <strong>Credenciales integradas de fábrica:</strong><br>
+                <span style="color:var(--text-muted);">
+                  Tu base de datos Firebase (<code style="background:rgba(0,0,0,0.25); padding:0.1rem 0.35rem; border-radius:4px; font-size:0.75rem;">finanzas-diego-soledad</code>) ya está conectada y funcionando 24/7. <strong>No necesitas ingresar ninguna clave ni credencial</strong>.
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.1rem;">
+            Cada vez que tú o Soledad ingresan un gasto, modifican un sueldo o marcan una boleta, <strong>se sincroniza automáticamente en el celular de tu pareja en menos de un segundo</strong>.
           </p>
 
-          <!-- Selector de Tipo de Nube -->
-          <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
-            <label style="flex:1; display:flex; align-items:center; gap:0.4rem; font-size:0.82rem; padding:0.5rem 0.75rem; background:rgba(0,0,0,0.25); border:1px solid var(--border-color); border-radius:8px; cursor:pointer;">
-              <input type="radio" name="cloudProvider" value="vps" id="radioProviderVps" checked onchange="toggleCloudProviderUI()">
-              <strong>🖥️ Mi VPS (24/7)</strong>
-            </label>
-            <label style="flex:1; display:flex; align-items:center; gap:0.4rem; font-size:0.82rem; padding:0.5rem 0.75rem; background:rgba(0,0,0,0.25); border:1px solid var(--border-color); border-radius:8px; cursor:pointer;">
-              <input type="radio" name="cloudProvider" value="firebase" id="radioProviderFirebase" onchange="toggleCloudProviderUI()">
-              <strong>🔥 Firebase (Google)</strong>
-            </label>
-          </div>
-
-          <!-- Campos VPS -->
-          <div id="cloudFormVps" style="display:block; margin-bottom:1rem;">
-            <div style="display:flex; flex-direction:column; gap:0.65rem;">
-              <div>
-                <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">URL del VPS (IP o Dominio con Puerto):</label>
-                <input type="text" id="vpsEndpointInput" placeholder="http://tu-vps-ip:8443 o https://tu-dominio.com/sync" style="width:100%; padding:0.5rem 0.75rem; font-size:0.82rem; border-radius:6px;">
-              </div>
-              <div>
-                <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Token Secreto de Acceso (API Key Familiar):</label>
-                <input type="password" id="vpsTokenInput" placeholder="diego-sole-2026" style="width:100%; padding:0.5rem 0.75rem; font-size:0.82rem; border-radius:6px;">
-              </div>
-              <div style="font-size:0.75rem; color:var(--accent-diego); line-height:1.4;">
-                💡 En tu VPS corre el archivo <code>python vps_sync_server.py</code> ya incluido en el proyecto.
-              </div>
-            </div>
-          </div>
-
-          <!-- Campos Firebase -->
-          <div id="cloudFormFirebase" style="display:none; margin-bottom:1rem;">
-            <div style="display:flex; flex-direction:column; gap:0.65rem;">
-              <div>
-                <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Firebase Config (JSON o Project ID):</label>
-                <input type="text" id="firebaseProjectIdInput" placeholder="tu-proyecto-finanzas-hogar" style="width:100%; padding:0.5rem 0.75rem; font-size:0.82rem; border-radius:6px;">
-              </div>
-              <div>
-                <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">API Key de Firebase Web:</label>
-                <input type="password" id="firebaseApiKeyInput" placeholder="AIzaSy..." style="width:100%; padding:0.5rem 0.75rem; font-size:0.82rem; border-radius:6px;">
-              </div>
-            </div>
-          </div>
-
-          <!-- Botones de Acción Nube -->
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.75rem;">
-            <button onclick="pushToActiveCloud()" class="btn-primary" style="justify-content:center; font-size:0.85rem; padding:0.65rem;">
-              <span>⬆️</span> Subir a la Nube
+          <!-- Botones de Acción Manual Rápida -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem; margin-bottom:1rem;">
+            <button type="button" onclick="pushToActiveCloud()" class="btn-primary" style="justify-content:center; font-size:0.85rem; padding:0.75rem; display:flex; align-items:center; gap:0.4rem;">
+              <span>⬆️</span> Subir a la Nube Ahora
             </button>
-            <button onclick="pullFromActiveCloud()" class="btn-secondary" style="justify-content:center; font-size:0.85rem; padding:0.65rem;">
+            <button type="button" onclick="pullFromActiveCloud()" class="btn-secondary" style="justify-content:center; font-size:0.85rem; padding:0.75rem; display:flex; align-items:center; gap:0.4rem;">
               <span>⬇️</span> Descargar de la Nube
             </button>
           </div>
-          <button onclick="saveCloudSettings()" class="btn-secondary" style="width:100%; justify-content:center; font-size:0.8rem; padding:0.45rem;">
-            💾 Guardar Configuración de Conexión
-          </button>
+
+          <!-- Opciones Avanzadas (VPS opcional) -->
+          <details style="border-top:1px solid var(--border-color); padding-top:0.75rem; font-size:0.78rem; color:var(--text-muted);">
+            <summary style="cursor:pointer; font-weight:600; color:var(--text-muted); padding:0.25rem 0;">
+              ⚙️ Opciones avanzadas de conexión (VPS Privado opcional)
+            </summary>
+            <div style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.5rem; background:rgba(0,0,0,0.2); padding:0.75rem; border-radius:8px;">
+              <div>
+                <label style="display:block; font-size:0.72rem; margin-bottom:0.2rem;">URL VPS (opcional):</label>
+                <input type="text" id="vpsEndpointInput" placeholder="http://tu-vps:8443" style="width:100%; font-size:0.78rem; padding:0.4rem;">
+              </div>
+              <div>
+                <label style="display:block; font-size:0.72rem; margin-bottom:0.2rem;">Token Secreto VPS:</label>
+                <input type="password" id="vpsTokenInput" placeholder="diego-sole-2026" style="width:100%; font-size:0.78rem; padding:0.4rem;">
+              </div>
+              <button type="button" onclick="saveCloudSettings()" class="btn-secondary" style="font-size:0.75rem; padding:0.35rem 0.6rem; align-self:flex-start;">
+                💾 Guardar VPS
+              </button>
+            </div>
+          </details>
         </div>
       </div>
 
       <!-- PANEL 3: RESPALDO JSON -->
-      <div id="syncPaneBackup" class="sync-pane" style="display:none;">
+       class="sync-pane" style="display:none;">
         <div style="background:var(--bg-surface-elevated); border:1px solid var(--border-color); border-radius:12px; padding:1.15rem;">
           <div style="font-weight:700; color:var(--text-main); font-size:0.95rem; margin-bottom:0.5rem;">
             💾 Copia de Seguridad Completa (Archivo .json)
