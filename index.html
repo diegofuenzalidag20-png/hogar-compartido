@@ -3189,12 +3189,25 @@ main, .tab-pane {
 
               <!-- Mercado Pago Diego -->
               <div style="background:var(--bg-surface-elevated); padding:0.85rem; border-radius:8px; border:1px solid var(--border-color);">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <strong style="color:var(--text-main); font-size:0.9rem;">4. Mercado Pago (Ahorro Blindado)</strong>
-                  <input type="number" id="inputCofreMP" value="130000" step="1" min="0" oninput="updateDiegoColchonDisplay()" style="font-size:0.95rem; font-weight:700; color:#10B981; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
+                  <div>
+                    <strong style="color:var(--text-main); font-size:0.9rem;">4. Mercado Pago (Ahorro Blindado)</strong>
+                    <div style="font-size:0.72rem; color:var(--text-muted); margin-top:0.15rem;">Fondo de Emergencia con interés diario compuesto</div>
+                  </div>
+                  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem;">
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                      <span style="font-size:0.68rem; color:var(--text-muted);">Aporte mes:</span>
+                      <input type="number" id="inputCofreMP" value="130000" step="1000" min="0" oninput="updateDiegoColchonDisplay()" style="font-size:0.9rem; font-weight:700; color:#10B981; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                      <span style="font-size:0.68rem; color:#6EE7B7; font-weight:600;">Remanente mes pasado:</span>
+                      <input type="number" id="inputRemanenteMPDiego" value="0" step="1000" min="0" oninput="updateDiegoColchonDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:#34D399; background:rgba(16,185,129,0.1); border:1px dashed rgba(16,185,129,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo acumulado que quedó del mes anterior">
+                    </div>
+                  </div>
                 </div>
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
-                  • Fondo de Emergencia con interés diario compuesto en cuenta remunerada
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; padding:0.35rem 0.65rem; background:rgba(16,185,129,0.08); border-radius:6px; border:1px solid rgba(16,185,129,0.25);">
+                  <span style="font-size:0.72rem; color:var(--text-muted);">💰 <strong>Total Ahorro Acumulado:</strong></span>
+                  <strong id="displayTotalAcumuladoMPDiego" style="font-size:0.95rem; color:#10B981; font-family:monospace;">$130.000</strong>
                 </div>
               </div>
             </div>
@@ -3259,17 +3272,48 @@ main, .tab-pane {
                 </div>
               </div>
 
-              <!-- Tarjeta Smart Visa (Cupo Aparte) -->
-              <div style="background:linear-gradient(135deg, rgba(244,63,94,0.06), var(--bg-surface-elevated)); padding:0.85rem; border-radius:8px; border:1px solid rgba(244,63,94,0.3);">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+              <!-- Tarjeta Smart Visa (Control de Crédito & Cupo) -->
+              <div style="background:linear-gradient(135deg, rgba(244,63,94,0.08), var(--bg-surface-elevated)); padding:0.85rem; border-radius:10px; border:1px solid rgba(244,63,94,0.35); box-shadow:0 4px 16px rgba(244,63,94,0.06);">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.4rem; margin-bottom:0.5rem;">
                   <div style="display:flex; align-items:center; gap:0.4rem;">
-                    <strong style="color:var(--text-main); font-size:0.9rem;">💳 Tarjeta Smart Visa (BancoEstado)</strong>
-                    <span class="badge badge-purple" style="font-size:0.68rem; padding:0.2rem 0.45rem;">Cupo de Crédito Aparte</span>
+                    <strong style="color:var(--text-main); font-size:0.92rem;">💳 Tarjeta Smart Visa (BancoEstado)</strong>
+                    <span class="badge badge-rose" style="font-size:0.68rem; padding:0.15rem 0.45rem;">Crédito en Cuotas</span>
                   </div>
-                  <input type="number" id="inputCofreSoleSmart" value="50000" step="1" min="0" oninput="updateSoleMargenDisplay()" style="font-size:0.95rem; font-weight:700; color:#F43F5E; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
                 </div>
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
-                  • <strong>Cupo independiente del sueldo de Soledad:</strong> Línea de crédito para compras en cuotas programadas. No se resta de su dinero débito mensual.
+
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:0.5rem; background:rgba(0,0,0,0.2); padding:0.6rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                  <div>
+                    <label style="font-size:0.68rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Cupo Total Línea:</label>
+                    <input type="number" id="inputSmartVisaCupo" value="500000" step="10000" min="0" oninput="updateSmartVisaDisplay()" style="font-size:0.88rem; font-weight:700; color:#38BDF8; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Cupo total otorgado por el banco">
+                  </div>
+                  <div>
+                    <label style="font-size:0.68rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Cuota Pagada Este Mes:</label>
+                    <input type="number" id="inputCofreSoleSmart" value="50000" step="1000" min="0" oninput="updateSoleMargenDisplay(); updateSmartVisaDisplay();" style="font-size:0.88rem; font-weight:700; color:#F43F5E; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Pago de cuota/deuda facturada este mes">
+                  </div>
+                  <div>
+                    <label style="font-size:0.68rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Deuda Anterior Facturada:</label>
+                    <input type="number" id="inputSmartVisaDeudaPrevia" value="0" step="1000" min="0" oninput="updateSmartVisaDisplay()" placeholder="$0" style="font-size:0.88rem; font-weight:700; color:#FBBF24; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Deuda arrastrada de antes si hubo">
+                  </div>
+                </div>
+
+                <!-- Resumen en vivo de compras y cupo disponible -->
+                <div style="margin-top:0.5rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:0.4rem;">
+                  <div style="background:rgba(244,63,94,0.08); padding:0.35rem 0.5rem; border-radius:6px; border:1px solid rgba(244,63,94,0.2);">
+                    <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase;">🛒 Compras este mes:</div>
+                    <div id="displaySmartVisaGastosMes" style="font-size:0.92rem; font-weight:800; color:#F43F5E; font-family:monospace;">$0</div>
+                  </div>
+                  <div style="background:rgba(245,158,11,0.08); padding:0.35rem 0.5rem; border-radius:6px; border:1px solid rgba(245,158,11,0.2);">
+                    <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase;">📉 Deuda actual:</div>
+                    <div id="displaySmartVisaDeudaActual" style="font-size:0.92rem; font-weight:800; color:#F59E0B; font-family:monospace;">$0</div>
+                  </div>
+                  <div style="background:rgba(16,185,129,0.08); padding:0.35rem 0.5rem; border-radius:6px; border:1px solid rgba(16,185,129,0.2);">
+                    <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase;">💳 Cupo disponible:</div>
+                    <div id="displaySmartVisaCupoDisponible" style="font-size:0.92rem; font-weight:800; color:#10B981; font-family:monospace;">$500.000</div>
+                  </div>
+                </div>
+
+                <div style="font-size:0.71rem; color:var(--text-muted); margin-top:0.4rem;">
+                  • <em>Las compras con Smart Visa se registran en la Caja Rápida seleccionando <strong>"Tarjeta Smart Visa"</strong> como medio de pago.</em>
                 </div>
               </div>
 
@@ -3286,23 +3330,49 @@ main, .tab-pane {
 
               <!-- Mercado Pago Soledad -->
               <div style="background:var(--bg-surface-elevated); padding:0.85rem; border-radius:8px; border:1px solid var(--border-color);">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <strong style="color:var(--text-main); font-size:0.9rem;">4. Mercado Pago Soledad (Ahorro Diario)</strong>
-                  <input type="number" id="inputCofreSoleMP" value="150000" step="1" min="0" oninput="updateSoleMargenDisplay()" style="font-size:0.95rem; font-weight:700; color:#10B981; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
+                  <div>
+                    <strong style="color:var(--text-main); font-size:0.9rem;">4. Mercado Pago Soledad (Ahorro Diario)</strong>
+                    <div style="font-size:0.72rem; color:var(--text-muted); margin-top:0.15rem;">Cuenta remunerada con interés diario para ahorro a corto plazo</div>
+                  </div>
+                  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem;">
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                      <span style="font-size:0.68rem; color:var(--text-muted);">Aporte mes:</span>
+                      <input type="number" id="inputCofreSoleMP" value="150000" step="1000" min="0" oninput="updateSoleMargenDisplay()" style="font-size:0.9rem; font-weight:700; color:#10B981; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                      <span style="font-size:0.68rem; color:#6EE7B7; font-weight:600;">Remanente mes pasado:</span>
+                      <input type="number" id="inputRemanenteMPSole" value="0" step="1000" min="0" oninput="updateSoleMargenDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:#34D399; background:rgba(16,185,129,0.1); border:1px dashed rgba(16,185,129,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo acumulado que quedó del mes anterior">
+                    </div>
+                  </div>
                 </div>
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
-                  • Cuenta remunerada con interés diario para ahorro a corto plazo
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; padding:0.35rem 0.65rem; background:rgba(16,185,129,0.08); border-radius:6px; border:1px solid rgba(16,185,129,0.25);">
+                  <span style="font-size:0.72rem; color:var(--text-muted);">💰 <strong>Total Ahorro Acumulado:</strong></span>
+                  <strong id="displayTotalAcumuladoMPSole" style="font-size:0.95rem; color:#10B981; font-family:monospace;">$150.000</strong>
                 </div>
               </div>
 
               <!-- Cuenta de Ahorro BancoEstado Soledad -->
               <div style="background:var(--bg-surface-elevated); padding:0.85rem; border-radius:8px; border:1px solid var(--border-color);">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <strong style="color:var(--text-main); font-size:0.9rem;">5. Cuenta de Ahorro BancoEstado (Reserva)</strong>
-                  <input type="number" id="inputCofreSoleBanco" value="150000" step="1" min="0" oninput="updateSoleMargenDisplay()" style="font-size:0.95rem; font-weight:700; color:#38BDF8; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
+                  <div>
+                    <strong style="color:var(--text-main); font-size:0.9rem;">5. Cuenta de Ahorro BancoEstado (Reserva)</strong>
+                    <div style="font-size:0.72rem; color:var(--text-muted); margin-top:0.15rem;">Fondo de reserva protegido a mediano y largo plazo en UF/tasa anual</div>
+                  </div>
+                  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem;">
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                      <span style="font-size:0.68rem; color:var(--text-muted);">Aporte mes:</span>
+                      <input type="number" id="inputCofreSoleBanco" value="150000" step="1000" min="0" oninput="updateSoleMargenDisplay()" style="font-size:0.9rem; font-weight:700; color:#38BDF8; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                      <span style="font-size:0.68rem; color:#7DD3FC; font-weight:600;">Remanente mes pasado:</span>
+                      <input type="number" id="inputRemanenteBancoSole" value="0" step="1000" min="0" oninput="updateSoleMargenDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:#38BDF8; background:rgba(56,189,248,0.1); border:1px dashed rgba(56,189,248,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo acumulado que quedó del mes anterior">
+                    </div>
+                  </div>
                 </div>
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
-                  • Fondo de reserva protegido a mediano y largo plazo en UF/tasa anual
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; padding:0.35rem 0.65rem; background:rgba(56,189,248,0.08); border-radius:6px; border:1px solid rgba(56,189,248,0.25);">
+                  <span style="font-size:0.72rem; color:var(--text-muted);">💰 <strong>Total Reserva Acumulada:</strong></span>
+                  <strong id="displayTotalAcumuladoBancoSole" style="font-size:0.95rem; color:#38BDF8; font-family:monospace;">$150.000</strong>
                 </div>
               </div>
             </div>
@@ -4201,6 +4271,16 @@ main, .tab-pane {
         tenpoBolsillo: 150000,
         mpAhorro: 150000,
         bancoReserva: 150000
+      },
+      remanentes: {
+        mpDiego: 0,
+        mpSoledad: 0,
+        bancoSole: 0
+      },
+      smartVisaConfig: {
+        cupoTotal: 500000,
+        deudaPrevia: 0,
+        cuotaMes: 50000
       }
     };
 
@@ -4209,7 +4289,14 @@ main, .tab-pane {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          userProfile = { ...userProfile, ...parsed };
+          userProfile = {
+            ...userProfile,
+            ...parsed,
+            cofresDiego: { ...userProfile.cofresDiego, ...(parsed.cofresDiego || {}) },
+            cofresSoledad: { ...userProfile.cofresSoledad, ...(parsed.cofresSoledad || {}) },
+            remanentes: { ...userProfile.remanentes, ...(parsed.remanentes || {}) },
+            smartVisaConfig: { ...userProfile.smartVisaConfig, ...(parsed.smartVisaConfig || {}) }
+          };
         } catch(e) {}
       }
       const savedDiego = localStorage.getItem('diego_salary');
@@ -4276,6 +4363,22 @@ main, .tab-pane {
       if (elSoleMP) elSoleMP.value = userProfile.cofresSoledad.mpAhorro ?? 150000;
       if (elSoleBanco) elSoleBanco.value = userProfile.cofresSoledad.bancoReserva ?? 150000;
 
+      // 5b. Inputs de Remanentes de Ahorro y Configuración Smart Visa
+      const inRemDiegoMP = document.getElementById('inputRemanenteMPDiego');
+      if (inRemDiegoMP) inRemDiegoMP.value = userProfile.remanentes?.mpDiego ?? 0;
+
+      const inRemSoleMP = document.getElementById('inputRemanenteMPSole');
+      if (inRemSoleMP) inRemSoleMP.value = userProfile.remanentes?.mpSoledad ?? 0;
+
+      const inRemSoleBanco = document.getElementById('inputRemanenteBancoSole');
+      if (inRemSoleBanco) inRemSoleBanco.value = userProfile.remanentes?.bancoSole ?? 0;
+
+      const inSmartCupo = document.getElementById('inputSmartVisaCupo');
+      if (inSmartCupo) inSmartCupo.value = userProfile.smartVisaConfig?.cupoTotal ?? 500000;
+
+      const inSmartDeuda = document.getElementById('inputSmartVisaDeudaPrevia');
+      if (inSmartDeuda) inSmartDeuda.value = userProfile.smartVisaConfig?.deudaPrevia ?? 0;
+
       // 6. Actualizar KPIs del Dashboard Resumen
       const dashIngTotal = document.getElementById('dashKpiIngresosTotal');
       const dashIngSub = document.getElementById('dashKpiIngresosSub');
@@ -4308,9 +4411,10 @@ main, .tab-pane {
       if (dashSoleM) dashSoleM.textContent = (soleMargenEst >= 0 ? '+' : '-') + formatCLP(Math.abs(soleMargenEst));
       if (dashSoleMSub) dashSoleMSub.textContent = `Sueldo ${formatCLP(soleSal)} menos cuentas Limache ($286k)`;
 
-      // 7. Auto-cálculo de Remanentes (Cuenta Fan & Chequera Electrónica)
+      // 7. Auto-cálculo de Remanentes (Cuenta Fan & Chequera Electrónica) y Tarjetas
       updateDiegoColchonDisplay();
       updateSoleMargenDisplay();
+      updateSmartVisaDisplay();
     }
 
         function updateDiegoColchonDisplay() {
@@ -4344,6 +4448,12 @@ main, .tab-pane {
         elColchon.textContent = (colchon >= 0 ? '+' : '-') + formatCLP(Math.abs(colchon));
         elColchon.style.color = colchon >= 0 ? '#10B981' : '#F43F5E';
       }
+
+      // Actualizar cálculo de ahorro total acumulado Diego
+      const remanenteMP = parseInt(document.getElementById('inputRemanenteMPDiego')?.value, 10) || (userProfile.remanentes?.mpDiego ?? 0);
+      const totalAcumuladoMP = remanenteMP + mp;
+      const elDispAcumMP = document.getElementById('displayTotalAcumuladoMPDiego');
+      if (elDispAcumMP) elDispAcumMP.textContent = formatCLP(totalAcumuladoMP);
     }
 
     // CÁLCULO AUTOMÁTICO EN TIEMPO REAL: REMANENTE CHEQUERA & SALDO LIBRE SOLEDAD
@@ -4378,6 +4488,44 @@ main, .tab-pane {
         elMargen.textContent = (remanenteLibre >= 0 ? '+' : '-') + formatCLP(Math.abs(remanenteLibre));
         elMargen.style.color = remanenteLibre >= 0 ? '#10B981' : '#F43F5E';
       }
+
+      // Actualizar cálculo de ahorro total acumulado Soledad
+      const remMP = parseInt(document.getElementById('inputRemanenteMPSole')?.value, 10) || (userProfile.remanentes?.mpSoledad ?? 0);
+      const dispMP = document.getElementById('displayTotalAcumuladoMPSole');
+      if (dispMP) dispMP.textContent = formatCLP(remMP + mp);
+
+      const remBanco = parseInt(document.getElementById('inputRemanenteBancoSole')?.value, 10) || (userProfile.remanentes?.bancoSole ?? 0);
+      const dispBanco = document.getElementById('displayTotalAcumuladoBancoSole');
+      if (dispBanco) dispBanco.textContent = formatCLP(remBanco + banco);
+    }
+
+    // CÁLCULO Y CONTROL EN TIEMPO REAL: TARJETA SMART VISA (BANCOESTADO)
+    function updateSmartVisaDisplay() {
+      const cupo = parseInt(document.getElementById('inputSmartVisaCupo')?.value, 10) || (userProfile.smartVisaConfig?.cupoTotal ?? 500000);
+      const cuota = parseInt(document.getElementById('inputCofreSoleSmart')?.value, 10) || (userProfile.cofresSoledad?.smartVisa ?? 50000);
+      const deudaPrevia = parseInt(document.getElementById('inputSmartVisaDeudaPrevia')?.value, 10) || (userProfile.smartVisaConfig?.deudaPrevia ?? 0);
+
+      // Calcular compras de este mes con Smart Visa en vivo desde expenses
+      let comprasMes = 0;
+      if (Array.isArray(expenses)) {
+        expenses.forEach(item => {
+          if (normalizeAccountKey(item.account) === 'smartVisaSole') {
+            comprasMes += Number(item.amount) || 0;
+          }
+        });
+      }
+
+      const deudaActual = Math.max(0, deudaPrevia + comprasMes - cuota);
+      const cupoDisponible = Math.max(0, cupo - deudaActual);
+
+      const elCompras = document.getElementById('displaySmartVisaGastosMes');
+      if (elCompras) elCompras.textContent = formatCLP(comprasMes);
+
+      const elDeuda = document.getElementById('displaySmartVisaDeudaActual');
+      if (elDeuda) elDeuda.textContent = formatCLP(deudaActual);
+
+      const elCupoDisp = document.getElementById('displaySmartVisaCupoDisponible');
+      if (elCupoDisp) elCupoDisp.textContent = formatCLP(cupoDisponible);
     }
 
     // Modificación de sueldo en vivo al teclear en las casillas de tab-cuentas
@@ -4419,7 +4567,10 @@ main, .tab-pane {
       const mp = parseInt(document.getElementById('inputCofreMP').value, 10) || 130000;
       const fan = Math.max(0, salary - (tenpo + mach + mp));
 
+      const remanenteMP = parseInt(document.getElementById('inputRemanenteMPDiego')?.value, 10) || 0;
       userProfile.cofresDiego = { fanFijos: fan, tenpoHuasco: tenpo, machBolsillo: mach, mpAhorro: mp };
+      userProfile.remanentes = userProfile.remanentes || {};
+      userProfile.remanentes.mpDiego = remanenteMP;
 
       // Sincronizar en la tabla de boletas
       const itemMach = currentAuditItems.find(it => it.name.includes('Bolsillo Mach') || it.id === 'item-15');
@@ -4442,12 +4593,25 @@ main, .tab-pane {
       const banco = parseInt(document.getElementById('inputCofreSoleBanco').value, 10) || 150000;
       const chequera = Math.max(0, salary - (tenpo + mp + banco));
 
+      const remanenteMPSole = parseInt(document.getElementById('inputRemanenteMPSole')?.value, 10) || 0;
+      const remanenteBancoSole = parseInt(document.getElementById('inputRemanenteBancoSole')?.value, 10) || 0;
+      const cupoSmart = parseInt(document.getElementById('inputSmartVisaCupo')?.value, 10) || 500000;
+      const deudaSmart = parseInt(document.getElementById('inputSmartVisaDeudaPrevia')?.value, 10) || 0;
+
       userProfile.cofresSoledad = {
         chequeraHogar: chequera,
         smartVisa: smart,
         tenpoBolsillo: tenpo,
         mpAhorro: mp,
         bancoReserva: banco
+      };
+      userProfile.remanentes = userProfile.remanentes || {};
+      userProfile.remanentes.mpSoledad = remanenteMPSole;
+      userProfile.remanentes.bancoSole = remanenteBancoSole;
+      userProfile.smartVisaConfig = {
+        cupoTotal: cupoSmart,
+        deudaPrevia: deudaSmart,
+        cuotaMes: smart
       };
 
       // Sincronizar Smart Visa en tabla de boletas
@@ -5014,6 +5178,8 @@ main, .tab-pane {
       triggerAutoSyncToCloud();
       if (typeof updateDiegoColchonDisplay === 'function') updateDiegoColchonDisplay();
       if (typeof updateSoleMargenDisplay === 'function') updateSoleMargenDisplay();
+      if (typeof updateSmartVisaDisplay === 'function') updateSmartVisaDisplay();
+      if (typeof renderCardAnalysis === 'function') renderCardAnalysis();
       if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();
 
       limpiarCajaRapida();
@@ -5574,6 +5740,8 @@ main, .tab-pane {
       if (typeof populateSalaryModalInputs === 'function') populateSalaryModalInputs();
       if (typeof updateDiegoColchonDisplay === 'function') updateDiegoColchonDisplay();
       if (typeof updateSoleMargenDisplay === 'function') updateSoleMargenDisplay();
+      if (typeof updateSmartVisaDisplay === 'function') updateSmartVisaDisplay();
+      if (typeof renderCardAnalysis === 'function') renderCardAnalysis();
       if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();
       if (typeof renderCardAnalysis === 'function') renderCardAnalysis();
       if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
@@ -6132,6 +6300,12 @@ main, .tab-pane {
       // Sincronizar automáticamente los gráficos de la pestaña Mes Actual
       if (typeof renderAnalisisMesActual === 'function') {
         renderAnalisisMesActual();
+      }
+      if (typeof renderCardAnalysis === 'function') {
+        renderCardAnalysis();
+      }
+      if (typeof updateSmartVisaDisplay === 'function') {
+        updateSmartVisaDisplay();
       }
     }
 
@@ -7597,7 +7771,7 @@ main, .tab-pane {
         owner: 'Soledad',
         isPrimary: false,
         sourceAccount: 'Cupo BancoEstado',
-        getBudget: () => userProfile.cofresSoledad.smartVisa ?? 50000,
+        getBudget: () => userProfile.smartVisaConfig?.cupoTotal ?? 500000,
         color: '#F43F5E',
         badgeClass: 'badge-rose',
         icon: '💳'
@@ -7655,6 +7829,7 @@ main, .tab-pane {
     }
 
     function renderCardAnalysis() {
+      if (typeof updateSmartVisaDisplay === 'function') updateSmartVisaDisplay();
       const grid = document.getElementById('gridCardDoughnuts');
       if (!grid) return;
 
@@ -7692,9 +7867,29 @@ main, .tab-pane {
           }
         });
 
-        const remaining = budget - totalSpent;
-        const pctUsed = budget > 0 ? Math.min(100, Math.round((totalSpent / budget) * 100)) : 0;
-        const isOverspent = remaining < 0;
+        const isSavingsCard = (cfg.key === 'mpDiego' || cfg.key === 'mpSoledad' || cfg.key === 'reservaSole');
+        const isCreditCard = (cfg.key === 'smartVisaSole');
+
+        // Cálculos especializados para Tarjeta de Crédito Smart Visa
+        const cardCreditCupo = isCreditCard ? (userProfile.smartVisaConfig?.cupoTotal ?? 500000) : 0;
+        const cardCreditDeudaPrevia = isCreditCard ? (userProfile.smartVisaConfig?.deudaPrevia ?? 0) : 0;
+        const cardCreditCuota = isCreditCard ? (userProfile.cofresSoledad?.smartVisa ?? 50000) : 0;
+        const cardCreditDeuda = isCreditCard ? Math.max(0, cardCreditDeudaPrevia + totalSpent - cardCreditCuota) : 0;
+        const cardCreditDisponible = isCreditCard ? Math.max(0, cardCreditCupo - cardCreditDeuda) : 0;
+
+        // Cálculos especializados para Tarjetas de Ahorro con Remanente
+        const cardSavingsRemanente = isSavingsCard ? (
+          cfg.key === 'mpDiego' ? (userProfile.remanentes?.mpDiego ?? 0)
+          : cfg.key === 'mpSoledad' ? (userProfile.remanentes?.mpSoledad ?? 0)
+          : (userProfile.remanentes?.bancoSole ?? 0)
+        ) : 0;
+        const cardSavingsAporte = budget;
+        const cardSavingsTotalAcumulado = isSavingsCard ? Math.max(0, cardSavingsRemanente + cardSavingsAporte - totalSpent) : 0;
+
+        const remaining = isCreditCard ? cardCreditDisponible : isSavingsCard ? cardSavingsTotalAcumulado : (budget - totalSpent);
+        const pctUsed = isCreditCard ? (cardCreditCupo > 0 ? Math.min(100, Math.round((cardCreditDeuda / cardCreditCupo) * 100)) : 0) : (budget > 0 ? Math.min(100, Math.round((totalSpent / budget) * 100)) : 0);
+        const isOverspent = isCreditCard ? (cardCreditDeuda > cardCreditCupo) : (isSavingsCard ? false : remaining < 0);
+        const cardIsOverspent = isOverspent;
 
         // Subtítulo de transferencia interna
         let transferHtml = '';
@@ -7736,22 +7931,50 @@ main, .tab-pane {
               <span class="badge ${cfg.owner === 'Diego' ? 'badge-blue' : 'badge-purple'}" style="font-size:0.68rem;">${cfg.owner}</span>
             </div>
 
-            <!-- Fila de 3 Métricas -->
+            <!-- Fila de 3 Métricas Dinámicas Según Tipo de Tarjeta -->
             <div style="display:flex; gap:0.4rem; margin-top:0.85rem;">
-              <div class="card-metric-pill">
-                <div class="card-metric-label">${cfg.isPrimary ? 'Fondo Neto' : 'Transferido'}</div>
-                <div class="card-metric-val" style="color:var(--text-main);">${formatCLP(budget)}</div>
-              </div>
-              <div class="card-metric-pill">
-                <div class="card-metric-label">Gastado</div>
-                <div class="card-metric-val" style="color:#F43F5E;">${formatCLP(totalSpent)}</div>
-              </div>
-              <div class="card-metric-pill">
-                <div class="card-metric-label">Disponible</div>
-                <div class="card-metric-val" style="color:${isOverspent ? '#F43F5E' : '#10B981'};">
-                  ${isOverspent ? '-' : '+'}${formatCLP(Math.abs(remaining))}
+              ${isCreditCard ? `
+                <div class="card-metric-pill">
+                  <div class="card-metric-label">Cupo Total</div>
+                  <div class="card-metric-val" style="color:#38BDF8;">${formatCLP(cardCreditCupo)}</div>
                 </div>
-              </div>
+                <div class="card-metric-pill">
+                  <div class="card-metric-label">Deuda Actual</div>
+                  <div class="card-metric-val" style="color:#F43F5E;">${formatCLP(cardCreditDeuda)}</div>
+                </div>
+                <div class="card-metric-pill">
+                  <div class="card-metric-label">Cupo Disponible</div>
+                  <div class="card-metric-val" style="color:${cardIsOverspent ? '#F43F5E' : '#10B981'};">${formatCLP(cardCreditDisponible)}</div>
+                </div>
+              ` : isSavingsCard ? `
+                <div class="card-metric-pill">
+                  <div class="card-metric-label">Ahorro Previo</div>
+                  <div class="card-metric-val" style="color:#38BDF8;">${formatCLP(cardSavingsRemanente)}</div>
+                </div>
+                <div class="card-metric-pill">
+                  <div class="card-metric-label">Aporte Mes</div>
+                  <div class="card-metric-val" style="color:#10B981;">+${formatCLP(cardSavingsAporte)}</div>
+                </div>
+                <div class="card-metric-pill">
+                  <div class="card-metric-label">Total Acumulado</div>
+                  <div class="card-metric-val" style="color:#10B981;">${formatCLP(cardSavingsTotalAcumulado)}</div>
+                </div>
+              ` : `
+                <div class="card-metric-pill">
+                  <div class="card-metric-label">${cfg.isPrimary ? 'Fondo Neto' : 'Transferido'}</div>
+                  <div class="card-metric-val" style="color:var(--text-main);">${formatCLP(budget)}</div>
+                </div>
+                <div class="card-metric-pill">
+                  <div class="card-metric-label">Gastado</div>
+                  <div class="card-metric-val" style="color:#F43F5E;">${formatCLP(totalSpent)}</div>
+                </div>
+                <div class="card-metric-pill">
+                  <div class="card-metric-label">Disponible</div>
+                  <div class="card-metric-val" style="color:${isOverspent ? '#F43F5E' : '#10B981'};">
+                    ${isOverspent ? '-' : '+'}${formatCLP(Math.abs(remaining))}
+                  </div>
+                </div>
+              `}
             </div>
 
             <!-- Barra de Progreso de Consumo de la Tarjeta -->
@@ -8378,7 +8601,7 @@ main, .tab-pane {
 
       // Register PWA Service Worker con actualización forzada v13
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=20261030l').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=20261030m').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
