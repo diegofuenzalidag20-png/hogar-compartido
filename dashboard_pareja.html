@@ -7581,6 +7581,32 @@ main, .tab-pane {
       }
     ];
 
+    function getCardExpenseCategory(item, cardKey) {
+      if (cardKey === 'tenpoDiego') {
+        const text = `${item.category || ''} ${item.desc || ''}`.toLowerCase();
+        if (text.includes('pasaje') || text.includes('bus')) {
+          return '🚌 Pasajes Bus';
+        }
+        if (text.includes('snack') || text.includes('galleta') || text.includes('energética') || text.includes('energetica') || text.includes('comida turno')) {
+          return '🥪 Snacks';
+        }
+        if (text.includes('uber') || text.includes('colectivo') || text.includes('taxi') || text.includes('traslado')) {
+          return '🚗 Uber';
+        }
+        if (text.includes('metro') || text.includes('efe') || text.includes('valpara')) {
+          return '🚆 Metro Valparaíso';
+        }
+        if (text.includes('luz') || text.includes('agua') || text.includes('servicio')) {
+          return '💡 Servicios Huasco';
+        }
+        if (item.category && !item.category.includes('Operaciones') && !item.category.includes('Logística') && !item.category.includes('Huasco')) {
+          return item.category;
+        }
+        return '📦 Otros';
+      }
+      return normalizeExpenseCategory(item.category, item.desc);
+    }
+
     function renderCardAnalysis() {
       const grid = document.getElementById('gridCardDoughnuts');
       if (!grid) return;
@@ -7613,7 +7639,7 @@ main, .tab-pane {
           if (accKey === cfg.key) {
             const amt = Number(item.amount) || 0;
             totalSpent += amt;
-            const cat = normalizeExpenseCategory(item.category, item.desc);
+            const cat = getCardExpenseCategory(item, cfg.key);
             categoryMap[cat] = (categoryMap[cat] || 0) + amt;
             recentExpenses.push(item);
           }
@@ -7722,14 +7748,14 @@ main, .tab-pane {
           let labels = [];
           let dataValues = [];
           let bgColors = [];
-          const palette = ['#3B82F6', '#10B981', '#F59E0B', '#A855F7', '#EC4899', '#06B6D4', '#8B5CF6'];
+          const palette = ['#3B82F6', '#10B981', '#F59E0B', '#A855F7', '#EC4899', '#06B6D4', '#8B5CF6', '#F97316', '#14B8A6', '#EAB308'];
 
           const legendEl = document.getElementById(`legend_${canvasId}`);
 
           if (catEntries.length > 0) {
             labels = catEntries.map(([k]) => k);
             dataValues = catEntries.map(([_, v]) => v);
-            bgColors = palette.slice(0, labels.length);
+            bgColors = labels.map((_, i) => palette[i % palette.length]);
 
             if (legendEl) {
               legendEl.innerHTML = catEntries.map(([cat, amt], i) => {
@@ -7804,7 +7830,7 @@ main, .tab-pane {
       const activeEntries = Object.entries(catMap).filter(([_, val]) => val > 0);
       let labels = activeEntries.map(([k]) => k);
       let dataValues = activeEntries.map(([_, v]) => v);
-      let bgColors = palette.slice(0, labels.length);
+      let bgColors = labels.map((_, i) => palette[i % palette.length]);
 
       if (dataValues.length === 0) {
         labels = ['Sin gastos registrados'];
@@ -8305,7 +8331,7 @@ main, .tab-pane {
 
       // Register PWA Service Worker con actualización forzada v13
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=20261030j').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=20261030k').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
