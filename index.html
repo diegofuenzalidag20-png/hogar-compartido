@@ -2799,6 +2799,10 @@ main, .tab-pane {
           <span class="action-icon">💰</span>
           <span>Modificar Sueldo</span>
         </button>
+        <button type="button" class="quick-action-pill" onclick="openSyncModal()">
+          <span class="action-icon">☁️</span>
+          <span>Sincronizar Pareja</span>
+        </button>
         <button type="button" class="quick-action-pill" onclick="switchTab('tab-cuentas', document.querySelectorAll('.tab-btn')[3])">
           <span class="action-icon">💳</span>
           <span>Cuentas & Cofres</span>
@@ -5095,20 +5099,28 @@ main, .tab-pane {
     }
 
     // --- GESTIÓN DE MODAL SYNC & TABS ---
-    function openSyncModal() {
+    function openSyncModal(targetTab) {
       try {
         loadSavedCloudSettings();
       } catch (e) {
         console.warn('Error al preparar modal de sincronización:', e);
       }
       const modal = document.getElementById('modalSync');
-      if (modal) modal.style.display = 'flex';
+      if (modal) {
+        modal.style.display = 'flex';
+        modal.style.opacity = '1';
+      }
+      if (targetTab) {
+        switchSyncTab(targetTab);
+      }
     }
+    window.openSyncModal = openSyncModal;
 
     function closeSyncModal() {
       const modal = document.getElementById('modalSync');
       if (modal) modal.style.display = 'none';
     }
+    window.closeSyncModal = closeSyncModal;
 
     function switchSyncTab(tab) {
       document.querySelectorAll('.sync-tab-btn').forEach(b => {
@@ -5425,8 +5437,8 @@ main, .tab-pane {
       const headerCloudDot = document.getElementById('headerCloudStatus');
       if (headerCloudDot) {
         headerCloudDot.innerHTML = online 
-          ? `<span title="Sincronizado en tiempo real con Firebase" style="display:inline-flex; align-items:center; gap:0.35rem; color:#34D399; font-size:0.75rem; font-weight:700; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); padding:0.2rem 0.55rem; border-radius:20px;"><span style="width:7px; height:7px; border-radius:50%; background:#10B981; box-shadow:0 0 8px #10B981; display:inline-block;"></span> Nube en Vivo</span>`
-          : `<span title="Modo local" style="color:var(--text-muted); font-size:0.75rem;">⚪ Offline</span>`;
+          ? `<span onclick="openSyncModal()" title="Sincronizado en tiempo real con Firebase — Toca para abrir Sincronización" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem; color:#34D399; font-size:0.75rem; font-weight:700; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); padding:0.2rem 0.55rem; border-radius:20px;"><span style="width:7px; height:7px; border-radius:50%; background:#10B981; box-shadow:0 0 8px #10B981; display:inline-block;"></span> Nube en Vivo</span>`
+          : `<span onclick="openSyncModal()" title="Modo local — Toca para conectar" style="cursor:pointer; color:var(--text-muted); font-size:0.75rem;">⚪ Offline</span>`;
       }
     }
 
@@ -8225,9 +8237,19 @@ main, .tab-pane {
       // Iniciar sincronización de nube Firestore (descarga datos remotos en background sin trabas)
       initFirebaseSync();
 
-      // Register PWA Service Worker
+      // Enlazar botones de sincronización explícitamente
+      document.querySelectorAll('.btn-sync-action').forEach(b => {
+        b.addEventListener('click', (e) => {
+          e.preventDefault();
+          openSyncModal();
+        });
+      });
+
+      // Register PWA Service Worker con actualización forzada v13
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
+        navigator.serviceWorker.register('sw.js?v=20261030c').then((reg) => {
+          reg.update().catch(() => {});
+        }).catch(() => {});
       }
     });
   </script>
