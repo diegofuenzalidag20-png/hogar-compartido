@@ -2202,6 +2202,9 @@ main, .tab-pane {
             <button type="button" class="chip-btn btn-expense-filter" id="btnFilterSoledad" onclick="setExpenseFilter('Soledad', this)">
               <span>🟣</span> Solo Soledad
             </button>
+            <button type="button" class="chip-btn" id="btnToggleDateSort" onclick="toggleExpenseDateSort()" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:var(--text-muted); font-size:0.78rem; padding:0.4rem 0.65rem;" title="Alternar orden: más recientes arriba o día 1° arriba">
+              <span id="labelDateSort">📅 Más recientes arriba (31→1)</span>
+            </button>
           </div>
 
           <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; flex:1; max-width:400px; justify-content:flex-end;">
@@ -2220,7 +2223,9 @@ main, .tab-pane {
           <table id="quickExpensesTable" style="margin:0; width:100%;">
             <thead>
               <tr style="position: sticky; top: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); z-index: 2;">
-                <th style="min-width:95px;">Fecha</th>
+                <th style="min-width:115px; cursor:pointer; user-select:none;" onclick="toggleExpenseDateSort()" title="Haz clic para alternar orden de fechas">
+                  Fecha <span id="sortDateIcon">▼</span>
+                </th>
                 <th style="min-width:130px;">Usuario que Pagó</th>
                 <th style="min-width:150px;">Categoría</th>
                 <th>Descripción / Comercio</th>
@@ -5866,6 +5871,18 @@ main, .tab-pane {
 
     let currentExpenseFilter = 'all';
     let currentExpenseSearch = '';
+    let currentExpenseSortOrder = localStorage.getItem('hogar_expense_sort_order') || 'desc';
+
+    function toggleExpenseDateSort() {
+      currentExpenseSortOrder = (currentExpenseSortOrder === 'desc') ? 'asc' : 'desc';
+      localStorage.setItem('hogar_expense_sort_order', currentExpenseSortOrder);
+      renderExpenses();
+      if (typeof showToast === 'function') {
+        showToast(currentExpenseSortOrder === 'desc' 
+          ? '📅 Ordenado: Más recientes arriba (último día primero)' 
+          : '📅 Ordenado: Día 1° arriba (cronológico ascendente)');
+      }
+    }
 
     function setExpenseFilter(filter, btn) {
       currentExpenseFilter = filter;
@@ -5915,7 +5932,17 @@ main, .tab-pane {
       const grandTotalEl = document.getElementById('quickExpensesGrandTotal');
       if (grandTotalEl) grandTotalEl.textContent = formatCLP(totalSum);
 
-      // 2. Filtrado interactivo
+      // 2. Filtrado interactivo y ordenamiento por fecha (predeterminado: más recientes arriba)
+      const sortIcon = document.getElementById('sortDateIcon');
+      if (sortIcon) sortIcon.textContent = currentExpenseSortOrder === 'desc' ? '▼' : '▲';
+
+      const sortBtnLabel = document.getElementById('labelDateSort');
+      if (sortBtnLabel) {
+        sortBtnLabel.textContent = currentExpenseSortOrder === 'desc'
+          ? '📅 Más recientes arriba (31→1)'
+          : '📅 Día 1° arriba (1→31)';
+      }
+
       const filtered = expenses.map((item, originalIndex) => ({ ...item, _origIndex: originalIndex }))
         .filter(item => {
           if (currentExpenseFilter === 'Diego' && item.payer !== 'Diego' && item.payer !== 'Ambos') return false;
@@ -5925,6 +5952,18 @@ main, .tab-pane {
             if (!searchable.includes(currentExpenseSearch)) return false;
           }
           return true;
+        })
+        .sort((a, b) => {
+          const dateA = a.date || '';
+          const dateB = b.date || '';
+          if (dateA !== dateB) {
+            return currentExpenseSortOrder === 'desc'
+              ? dateB.localeCompare(dateA) // Descendente: día más reciente primero (arriba)
+              : dateA.localeCompare(dateB); // Ascendente: día 1° primero (arriba)
+          }
+          return currentExpenseSortOrder === 'desc'
+            ? b._origIndex - a._origIndex
+            : a._origIndex - b._origIndex;
         });
 
             // 3. Renderizar tabla desktop (#quickExpensesTableBody) y tarjetas móviles (#quickExpensesMobileCards)
@@ -8266,7 +8305,7 @@ main, .tab-pane {
 
       // Register PWA Service Worker con actualización forzada v13
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=20261030i').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=20261030j').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
