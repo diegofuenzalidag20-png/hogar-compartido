@@ -5446,17 +5446,21 @@ main, .tab-pane {
 
     // --- CONSTRUCTOR DE PAQUETE COMPLETO FAMILIAR (100% DE LA APP) ---
     function buildCompleteFamilyPayload() {
-      const month = document.getElementById('audit-month-select')?.value || '2026-10';
+      const activeMonthName = typeof currentActiveMonth !== 'undefined' ? currentActiveMonth : (localStorage.getItem('app_active_month') || 'Noviembre 2026');
+      const monthCode = typeof getMonthCode === 'function' ? getMonthCode(activeMonthName) : (document.getElementById('audit-month-select')?.value || 'Nov-26');
       return {
-        v: 2,
+        v: 3,
         timestamp: Date.now(),
         sender: (typeof userProfile !== 'undefined' && userProfile?.lastActiveUser) ? userProfile.lastActiveUser : 'Diego o Soledad',
-        month: month,
+        month: monthCode,
+        activeMonth: activeMonthName,
+        currentActiveMonth: activeMonthName,
         auditItems: currentAuditItems || [],
         expenses: expenses || [],
         userProfile: userProfile || {},
         customAuditItems: JSON.parse(localStorage.getItem('custom_audit_items') || '[]'),
-        dbMeses: JSON.parse(localStorage.getItem('db_historial_meses') || '[]')
+        dbMeses: JSON.parse(localStorage.getItem('db_historial_meses') || '[]'),
+        ultimoCierreBackup: JSON.parse(localStorage.getItem('ultimo_mes_cerrado_backup') || 'null')
       };
     }
 
@@ -5741,19 +5745,39 @@ main, .tab-pane {
 
     function applyRemoteDataToApp(data) {
       if (!data) return;
-      const month = data.month || data.activeMonth || document.getElementById('audit-month-select')?.value || 'Oct-26';
 
+      // 1. SINCRONIZAR MES / PERIODO ACTIVO (DIEGO & SOLEDAD EN EL MISMO MES SIEMPRE)
+      let remoteActiveMonth = data.activeMonth || data.currentActiveMonth;
+      if (!remoteActiveMonth && Array.isArray(data.dbMeses)) {
+        const enCurso = data.dbMeses.find(m => m.estado === 'En Curso');
+        if (enCurso && enCurso.nombre) remoteActiveMonth = enCurso.nombre;
+      }
+
+      if (remoteActiveMonth && remoteActiveMonth !== currentActiveMonth) {
+        console.log(`🔄 Sincronizando mes activo de "${currentActiveMonth}" a "${remoteActiveMonth}"`);
+        currentActiveMonth = remoteActiveMonth;
+        localStorage.setItem('app_active_month', currentActiveMonth);
+        const elTitle = document.getElementById('activeMonthTitle');
+        if (elTitle) elTitle.textContent = currentActiveMonth;
+      }
+
+      const month = data.month || (typeof getMonthCode === 'function' ? getMonthCode(currentActiveMonth) : 'Nov-26');
+
+      // 2. SINCRONIZAR BOLETAS AUDITADAS
       if (Array.isArray(data.auditItems) && data.auditItems.length > 0) {
         currentAuditItems = data.auditItems;
+        localStorage.setItem(`audit_${currentActiveMonth}`, JSON.stringify(currentAuditItems));
         localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
       }
 
+      // 3. SINCRONIZAR GASTOS DIARIOS
       if (Array.isArray(data.expenses)) {
         expenses = data.expenses;
         localStorage.setItem('family_expenses', JSON.stringify(expenses));
         localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
       }
 
+      // 4. SINCRONIZAR PERFIL DE USUARIO Y SUELDOS
       if (data.userProfile && typeof data.userProfile === 'object') {
         userProfile = Object.assign(userProfile || {}, data.userProfile);
         localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
@@ -5761,15 +5785,25 @@ main, .tab-pane {
         if (userProfile.soledadSalary) localStorage.setItem('soledad_salary', userProfile.soledadSalary);
       }
 
+      // 5. SINCRONIZAR ÍTEMS PERSONALIZADOS
       if (Array.isArray(data.customAuditItems)) {
         localStorage.setItem('custom_audit_items', JSON.stringify(data.customAuditItems));
       }
 
+      // 6. SINCRONIZAR BASE DE DATOS DE MESES
       if (Array.isArray(data.dbMeses) && data.dbMeses.length > 0) {
         localStorage.setItem('db_historial_meses', JSON.stringify(data.dbMeses));
+        if (typeof repararYDeduplicarBDMeses === 'function') repararYDeduplicarBDMeses();
       }
 
-      // RE-RENDERIZADO COMPLETO E INMEDIATO DE LA INTERFAZ
+      // 7. SINCRONIZAR RESPALDO DE CIERRE (PARA PODER REABRIR SI SE DESEA)
+      if (data.ultimoCierreBackup) {
+        localStorage.setItem('ultimo_mes_cerrado_backup', JSON.stringify(data.ultimoCierreBackup));
+      } else if (data.ultimoCierreBackup === null) {
+        localStorage.removeItem('ultimo_mes_cerrado_backup');
+      }
+
+      // 8. RE-RENDERIZADO COMPLETO E INMEDIATO DE LA INTERFAZ
       if (typeof renderExpenses === 'function') renderExpenses();
       if (typeof renderAuditTable === 'function') renderAuditTable();
       if (typeof renderChecklist === 'function') renderChecklist();
@@ -5781,9 +5815,11 @@ main, .tab-pane {
       if (typeof updateSmartVisaDisplay === 'function') updateSmartVisaDisplay();
       if (typeof renderCardAnalysis === 'function') renderCardAnalysis();
       if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();
-      if (typeof renderCardAnalysis === 'function') renderCardAnalysis();
       if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
       if (typeof renderTablaHistorialMesesBD === 'function') renderTablaHistorialMesesBD();
+      if (typeof renderDetailedHistoricalTable === 'function') renderDetailedHistoricalTable();
+      if (typeof verificarBotonDeshacerCierre === 'function') verificarBotonDeshacerCierre();
+      if (typeof actualizarSelectPeriodo === 'function') actualizarSelectPeriodo();
     }
 
     window.renderExpensesTable = renderExpenses;
@@ -5801,7 +5837,8 @@ main, .tab-pane {
             appStateJson: { stringValue: JSON.stringify(payload) },
             timestamp: { integerValue: payload.timestamp.toString() },
             sender: { stringValue: payload.sender || 'Diego o Soledad' },
-            month: { stringValue: payload.month || 'Oct-26' }
+            month: { stringValue: payload.month || 'Nov-26' },
+            activeMonth: { stringValue: payload.activeMonth || currentActiveMonth }
           }
         };
 
@@ -7031,7 +7068,61 @@ function getMonthCode(monthLabel) {
       }
     }
 
+    function sincronizarMesActivoConBD() {
+      const raw = localStorage.getItem('db_historial_meses');
+      if (!raw) return;
+      try {
+        const list = JSON.parse(raw);
+        if (!Array.isArray(list) || list.length === 0) return;
+
+        // Detectar si hay un mes con estado "En Curso" en la BD
+        const mesEnCurso = list.find(m => m.estado === 'En Curso');
+        if (mesEnCurso && mesEnCurso.nombre) {
+          if (currentActiveMonth !== mesEnCurso.nombre) {
+            console.log(`🔄 Sincronizando mes activo desde BD: "${currentActiveMonth}" -> "${mesEnCurso.nombre}"`);
+            currentActiveMonth = mesEnCurso.nombre;
+            localStorage.setItem('app_active_month', currentActiveMonth);
+            const elTitle = document.getElementById('activeMonthTitle');
+            if (elTitle) elTitle.textContent = currentActiveMonth;
+            if (typeof verificarBotonDeshacerCierre === 'function') verificarBotonDeshacerCierre();
+            if (typeof actualizarSelectPeriodo === 'function') actualizarSelectPeriodo();
+          }
+        }
+      } catch(e) {
+        console.warn('Error sincronizando mes activo con BD:', e);
+      }
+    }
+
+    function actualizarSelectPeriodo() {
+      const select = document.getElementById('audit-month-select');
+      if (!select) return;
+
+      const code = typeof getMonthCode === 'function' ? getMonthCode(currentActiveMonth) : 'Nov-26';
+      let opt = Array.from(select.options).find(o => o.value.toLowerCase() === code.toLowerCase());
+      if (!opt) {
+        const optgroup = select.querySelector('optgroup');
+        if (optgroup) {
+          Array.from(select.options).forEach(o => {
+            o.textContent = o.textContent.replace(' (Mes Actual en Curso)', '');
+          });
+          const newOpt = document.createElement('option');
+          newOpt.value = code;
+          newOpt.textContent = `${currentActiveMonth} (Mes Actual en Curso)`;
+          optgroup.prepend(newOpt);
+          select.value = code;
+        }
+      } else {
+        Array.from(select.options).forEach(o => {
+          o.textContent = o.textContent.replace(' (Mes Actual en Curso)', '');
+        });
+        opt.textContent = `${currentActiveMonth} (Mes Actual en Curso)`;
+        select.value = code;
+      }
+      if (typeof syncAllGlassSelects === 'function') syncAllGlassSelects();
+    }
+
     function inicializarBDMeses() {
+      sincronizarMesActivoConBD();
       const elTitle = document.getElementById('activeMonthTitle');
       if (elTitle) elTitle.textContent = currentActiveMonth;
 
@@ -9201,7 +9292,7 @@ function getMonthCode(monthLabel) {
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=20261101a').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=20261101b').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
