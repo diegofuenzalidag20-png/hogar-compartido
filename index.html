@@ -1935,7 +1935,7 @@ main, .tab-pane {
             <button type="button" class="btn-secondary" onclick="switchTab('tab-historico', document.querySelectorAll('.tab-btn')[2])" style="padding:0.55rem 0.9rem; font-size:0.85rem;" title="Ver todos los meses guardados">
               <span>📂</span> Ver Base de Datos
             </button>
-            <button type="button" id="btnDeshacerCierre" class="btn-secondary" onclick="deshacerUltimoCierreMes()" style="display:none; border:1px solid #F59E0B; color:#FBBF24; padding:0.55rem 0.9rem; font-size:0.85rem;" title="Reabrir el mes anterior si lo cerraste por error">
+            <button type="button" id="btnDeshacerCierre" class="btn-secondary" onclick="deshacerUltimoCierreMes()" style="display:none; background:rgba(245, 158, 11, 0.15); border:1.5px solid #F59E0B; color:#FDE047; font-weight:700; padding:0.55rem 1rem; font-size:0.85rem; border-radius:8px;" title="Reabrir el mes anterior si lo cerraste por error">
               <span>↩️</span> Reabrir Mes Anterior
             </button>
           </div>
@@ -2940,7 +2940,7 @@ main, .tab-pane {
       <div class="card">
         <div class="card-title">
           <span>📈 Panorama Completo Histórico de Gastos (26 Meses: 2024 — 2026)</span>
-          <span class="badge badge-emerald">26 Meses Auditados (2024-2026)</span>
+          <span class="badge badge-emerald" id="badgeTotalMesesAuditados">26 Meses Auditados (2024-2026)</span>
         </div>
         <div class="card-desc">
           Resumen estadístico y evolución mes a mes con promedios reales, máximos de invierno, mínimos de verano y reajuste UF desde Agosto 2024 hasta Septiembre 2026.
@@ -2950,32 +2950,32 @@ main, .tab-pane {
         <div class="kpi-grid" style="margin-bottom:1.5rem;">
           <div class="kpi-card blue">
             <div class="kpi-header"><span>⚡ Luz Chilquinta</span></div>
-            <div class="kpi-value">$24.041</div>
+            <div class="kpi-value" id="kpiHistLuz">$24.041</div>
             <div class="kpi-sub">Invierno máx: $54.618 (Jul-26) | Verano mín: $12.496</div>
           </div>
           <div class="kpi-card purple">
             <div class="kpi-header"><span>💧 Agua Esval</span></div>
-            <div class="kpi-value">$7.321</div>
+            <div class="kpi-value" id="kpiHistAgua">$7.321</div>
             <div class="kpi-sub">Promedio muy estable (~$7.3k) | Máx: $15.414</div>
           </div>
           <div class="kpi-card amber">
             <div class="kpi-header"><span>🔥 Gas Balón/Red</span></div>
-            <div class="kpi-value">$20.712</div>
+            <div class="kpi-value" id="kpiHistGas">$20.712</div>
             <div class="kpi-sub">Invierno máx: $30.300 | Verano mín: $11.050 (Ene-26)</div>
           </div>
           <div class="kpi-card emerald">
             <div class="kpi-header"><span>🏢 Gasto Común</span></div>
-            <div class="kpi-value">$52.900</div>
+            <div class="kpi-value" id="kpiHistGC">$52.900</div>
             <div class="kpi-sub">Rango histórico: $46.904 — $58.696</div>
           </div>
           <div class="kpi-card rose">
             <div class="kpi-header"><span>🏦 Hipotecario (UF)</span></div>
-            <div class="kpi-value">$360.977</div>
+            <div class="kpi-value" id="kpiHistHipo">$360.977</div>
             <div class="kpi-sub">Nov-24: $346.506 ➔ Sep-26: $374.199 (+8.0%)</div>
           </div>
           <div class="kpi-card blue">
             <div class="kpi-header"><span>🐱 Michis (Comida+Arena)</span></div>
-            <div class="kpi-value">$59.418</div>
+            <div class="kpi-value" id="kpiHistMichis">$59.418</div>
             <div class="kpi-sub">Comida + Arena + Vacunas y Salud</div>
           </div>
         </div>
@@ -3034,7 +3034,7 @@ main, .tab-pane {
 
         <!-- Detailed Historical Table -->
         <div class="table-container" style="max-height:620px; overflow-y:auto;">
-          <table>
+          <table id="tablaHistoricaDetallada">
             <thead style="position:sticky; top:0; z-index:10; background:var(--bg-surface-elevated);">
               <tr>
                 <th>Mes</th>
@@ -3050,7 +3050,7 @@ main, .tab-pane {
                 <th style="text-align:right; font-weight:700;">Total Mes</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="detailedHistoricalTableBody">
 <tr><td><strong>Ago-24</strong></td><td style="text-align:right;">$53.251</td><td style="text-align:right;">$7.610</td><td style="text-align:right;">$28.550</td><td style="text-align:right;">$9.150</td><td style="text-align:right;">$47.000</td><td style="text-align:right;">$105.000</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$50.000</td><td style="text-align:right; font-weight:700;">$300.561</td></tr>
               <tr><td><strong>Sep-24</strong></td><td style="text-align:right;">$22.486</td><td style="text-align:right;">$7.280</td><td style="text-align:right;">$19.500</td><td style="text-align:right;">$9.150</td><td style="text-align:right;">$51.000</td><td style="text-align:right;">$105.000</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$50.000</td><td style="text-align:right; font-weight:700;">$264.416</td></tr>
               <tr><td><strong>Oct-24</strong></td><td style="text-align:right;">$12.930</td><td style="text-align:right;">$6.370</td><td style="text-align:right;">$19.850</td><td style="text-align:right;">$9.208</td><td style="text-align:right;">$52.723</td><td style="text-align:right;">$0</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$97.000</td><td style="text-align:right; font-weight:700;">$198.081</td></tr>
@@ -3515,6 +3515,11 @@ main, .tab-pane {
       // Si entra a tab-auditoria, refrescar tabla y paneles
       if (tabId === 'tab-auditoria') {
         if (typeof renderAuditTable === 'function') renderAuditTable();
+      }
+      // Si entra a tab-historico, refrescar tabla histórica consolidada y BD
+      if (tabId === 'tab-historico') {
+        if (typeof renderDetailedHistoricalTable === 'function') renderDetailedHistoricalTable();
+        if (typeof renderTablaHistorialMesesBD === 'function') renderTablaHistorialMesesBD();
       }
     }
 
@@ -6680,6 +6685,352 @@ main, .tab-pane {
       }
     }
 
+function getMonthCode(monthLabel) {
+      if (!monthLabel) return 'Mes';
+      const parts = monthLabel.trim().split(/\s+/);
+      const m = parts[0];
+      const y = parts[1] ? parts[1].slice(-2) : '26';
+      const shortMap = {
+        'enero': 'Ene', 'febrero': 'Feb', 'marzo': 'Mar', 'abril': 'Abr',
+        'mayo': 'May', 'junio': 'Jun', 'julio': 'Jul', 'agosto': 'Ago',
+        'septiembre': 'Sep', 'octubre': 'Oct', 'noviembre': 'Nov', 'diciembre': 'Dic'
+      };
+      const shortM = shortMap[m.toLowerCase()] || m.substring(0, 3);
+      return `${shortM}-${y}`;
+    }
+
+    function matchMonth(m, targetName) {
+      if (!m || !targetName) return false;
+      const target = targetName.toLowerCase().trim();
+      const mName = (m.nombre || '').toLowerCase().trim();
+      if (mName === target) return true;
+
+      const mId = (m.id || '').toLowerCase().trim();
+      const targetId = ('mes-' + target.replace(/\s+/g, '-')).toLowerCase();
+      if (mId === targetId) return true;
+
+      const codeTarget = getMonthCode(targetName).toLowerCase();
+      if ((m.code || '').toLowerCase() === codeTarget) return true;
+      if (mId === 'mes-' + codeTarget) return true;
+
+      return false;
+    }
+
+    // BASE DE DATOS HISTÓRICA CONSOLIDADA (26 MESES AUDITADOS: AGO-24 A SEP-26)
+    const BASE_HISTORICAL_26_MONTHS = [
+      { code: 'Ago-24', nombre: 'Agosto 2024', luz: 53251, agua: 7610, gas: 28550, claro: 9150, gc: 47000, michis: 105000, hipo: 0, smart: 0, super: 50000, total: 300561 },
+      { code: 'Sep-24', nombre: 'Septiembre 2024', luz: 22486, agua: 7280, gas: 19500, claro: 9150, gc: 51000, michis: 105000, hipo: 0, smart: 0, super: 50000, total: 264416 },
+      { code: 'Oct-24', nombre: 'Octubre 2024', luz: 12930, agua: 6370, gas: 19850, claro: 9208, gc: 52723, michis: 0, hipo: 0, smart: 0, super: 97000, total: 198081 },
+      { code: 'Nov-24', nombre: 'Noviembre 2024', luz: 14081, agua: 6470, gas: 15250, claro: 9208, gc: 49748, michis: 60000, hipo: 346506, smart: 0, super: 50000, total: 551263 },
+      { code: 'Dic-24', nombre: 'Diciembre 2024', luz: 12496, agua: 6420, gas: 15750, claro: 9329, gc: 51273, michis: 28000, hipo: 348108, smart: 0, super: 100000, total: 571376 },
+      { code: 'Ene-25', nombre: 'Enero 2025', luz: 12597, agua: 6440, gas: 15850, claro: 9329, gc: 52426, michis: 66000, hipo: 350320, smart: 0, super: 50000, total: 562962 },
+      { code: 'Feb-25', nombre: 'Febrero 2025', luz: 16010, agua: 7160, gas: 15900, claro: 9329, gc: 58696, michis: 60000, hipo: 352707, smart: 0, super: 0, total: 519802 },
+      { code: 'Mar-25', nombre: 'Marzo 2025', luz: 15512, agua: 8030, gas: 11350, claro: 9429, gc: 54132, michis: 57800, hipo: 354930, smart: 54640, super: 0, total: 565823 },
+      { code: 'Abr-25', nombre: 'Abril 2025', luz: 18206, agua: 7140, gas: 21100, claro: 9434, gc: 46904, michis: 17900, hipo: 356679, smart: 0, super: 139600, total: 626963 },
+      { code: 'May-25', nombre: 'Mayo 2025', luz: 17641, agua: 8020, gas: 20900, claro: 9434, gc: 53670, michis: 57990, hipo: 357554, smart: 0, super: 153000, total: 678209 },
+      { code: 'Jun-25', nombre: 'Junio 2025', luz: 23359, agua: 7134, gas: 20950, claro: 9537, gc: 53476, michis: 60000, hipo: 358261, smart: 23815, super: 123320, total: 679852 },
+      { code: 'Jul-25', nombre: 'Julio 2025', luz: 40631, agua: 6230, gas: 20850, claro: 9539, gc: 53571, michis: 62363, hipo: 357433, smart: 52304, super: 0, total: 602921 },
+      { code: 'Ago-25', nombre: 'Agosto 2025', luz: 28122, agua: 7870, gas: 30300, claro: 9537, gc: 54606, michis: 71700, hipo: 359354, smart: 48994, super: 0, total: 610483 },
+      { code: 'Sep-25', nombre: 'Septiembre 2025', luz: 23762, agua: 7840, gas: 25500, claro: 9600, gc: 56315, michis: 77000, hipo: 360181, smart: 50000, super: 13841, total: 674039 },
+      { code: 'Oct-25', nombre: 'Octubre 2025', luz: 22907, agua: 6920, gas: 25450, claro: 9600, gc: 52365, michis: 25000, hipo: 361131, smart: 50000, super: 0, total: 553373 },
+      { code: 'Nov-25', nombre: 'Noviembre 2025', luz: 17326, agua: 6030, gas: 20700, claro: 9600, gc: 54647, michis: 21000, hipo: 361537, smart: 151336, super: 0, total: 642176 },
+      { code: 'Dic-25', nombre: 'Diciembre 2025', luz: 17031, agua: 6880, gas: 20650, claro: 9670, gc: 53854, michis: 81400, hipo: 362386, smart: 62891, super: 128567, total: 743329 },
+      { code: 'Ene-26', nombre: 'Enero 2026', luz: 17531, agua: 5970, gas: 11050, claro: 9650, gc: 53553, michis: 38000, hipo: 362044, smart: 68921, super: 180267, total: 746986 },
+      { code: 'Feb-26', nombre: 'Febrero 2026', luz: 18196, agua: 5980, gas: 20500, claro: 9650, gc: 52189, michis: 40000, hipo: 362785, smart: 80000, super: 150267, total: 739567 },
+      { code: 'Mar-26', nombre: 'Marzo 2026', luz: 17600, agua: 6960, gas: 15600, claro: 9696, gc: 55858, michis: 88000, hipo: 363277, smart: 40000, super: 185700, total: 782691 },
+      { code: 'Abr-26', nombre: 'Abril 2026', luz: 18185, agua: 15414, gas: 21000, claro: 9696, gc: 53844, michis: 83000, hipo: 365790, smart: 77486, super: 22000, total: 666415 },
+      { code: 'May-26', nombre: 'Mayo 2026', luz: 36223, agua: 0, gas: 27050, claro: 9696, gc: 52254, michis: 127300, hipo: 370390, smart: 92146, super: 22000, total: 737059 },
+      { code: 'Jun-26', nombre: 'Junio 2026', luz: 49690, agua: 5320, gas: 17300, claro: 9914, gc: 55022, michis: 20000, hipo: 372021, smart: 147213, super: 50536, total: 727016 },
+      { code: 'Jul-26', nombre: 'Julio 2026', luz: 54618, agua: 8490, gas: 27800, claro: 9914, gc: 49957, michis: 66900, hipo: 372317, smart: 100000, super: 119800, total: 809796 },
+      { code: 'Ago-26', nombre: 'Agosto 2026', luz: 27604, agua: 7580, gas: 27600, claro: 9914, gc: 52597, michis: 23200, hipo: 372558, smart: 110000, super: 0, total: 631053 },
+      { code: 'Sep-26', nombre: 'Septiembre 2026', luz: 17075, agua: 7460, gas: 22200, claro: 9938, gc: 53728, michis: 42900, hipo: 374199, smart: 110000, super: 0, total: 637500 }
+    ];
+
+    function extractMonthlyBreakdown(monthRecord) {
+      const items = monthRecord.items || [];
+      const gastosDiarios = monthRecord.gastosDiarios || [];
+
+      function getItemAmount(matcher) {
+        const it = items.find(i => matcher((i.name || '').toLowerCase()));
+        if (it) return Number(it.actual || it.base || 0);
+        return 0;
+      }
+
+      function getItemsSum(matcher) {
+        return items.filter(i => matcher((i.name || '').toLowerCase())).reduce((s, i) => s + Number(i.actual || i.base || 0), 0);
+      }
+
+      let luz = getItemAmount(n => n.includes('luz') && !n.includes('huasco'));
+      let agua = getItemAmount(n => n.includes('agua') && !n.includes('huasco'));
+      let gas = getItemAmount(n => n.includes('gas'));
+      let claro = getItemAmount(n => n.includes('claro'));
+      let gc = getItemAmount(n => n.includes('común') || n.includes('comun') || n.includes('condominio'));
+      let michis = getItemsSum(n => n.includes('michi') || n.includes('mascota'));
+      let hipo = getItemsSum(n => n.includes('hipotecario'));
+      let smart = getItemAmount(n => n.includes('smart visa'));
+      const smartExp = gastosDiarios.filter(e => ((e.account || '') + ' ' + (e.category || '')).toLowerCase().includes('smart')).reduce((s, e) => s + Number(e.amount || 0), 0);
+      if (smart === 0 && smartExp > 0) smart = smartExp;
+
+      let superOtros = getItemAmount(n => n.includes('supermercado') || n.includes('alimentación'));
+      let otrosServicios = getItemsSum(n => n.includes('aseo') || n.includes('waldorf') || n.includes('contribución') || n.includes('contribucion'));
+      superOtros += otrosServicios;
+
+      let total = monthRecord.gastosHogar || (luz + agua + gas + claro + gc + michis + hipo + smart + superOtros);
+
+      if (luz === 0 && agua === 0 && gas === 0 && monthRecord.rawItems && Object.keys(monthRecord.rawItems).length > 0) {
+        const raw = monthRecord.rawItems;
+        luz = raw['Luz'] || 0;
+        agua = raw['Agua'] || 0;
+        gas = raw['Gas'] || 0;
+        claro = raw['Plan Claro'] || 0;
+        gc = raw['Gasto Común'] || 0;
+        michis = raw['Michis'] || 0;
+        hipo = raw['Hipotecario'] || 0;
+        smart = raw['Smart Visa'] || 0;
+        superOtros = raw['Super / Otros'] || 0;
+        total = monthRecord.gastosHogar || 0;
+      }
+
+      let code = monthRecord.code;
+      if (!code && monthRecord.nombre) {
+        code = getMonthCode(monthRecord.nombre);
+      }
+
+      return {
+        code: code || 'Oct-26',
+        nombre: monthRecord.nombre || 'Octubre 2026',
+        luz, agua, gas, claro, gc, michis, hipo, smart, super: superOtros, total
+      };
+    }
+
+    function getConsolidatedHistoricalMonths() {
+      const list = [...BASE_HISTORICAL_26_MONTHS];
+      const raw = localStorage.getItem('db_historial_meses');
+      if (!raw) return list;
+      try {
+        const dbList = JSON.parse(raw);
+        if (!Array.isArray(dbList)) return list;
+
+        // Añadir meses cerrados que vengan después de Sep-26
+        dbList.forEach(dbm => {
+          if (dbm.estado === 'Cerrado') {
+            const breakdown = extractMonthlyBreakdown(dbm);
+            const exists = list.findIndex(m => m.code.toLowerCase() === breakdown.code.toLowerCase() || (m.nombre && m.nombre.toLowerCase() === (dbm.nombre || '').toLowerCase()));
+            if (exists === -1) {
+              list.push(breakdown);
+            }
+          }
+        });
+      } catch(e) {
+        console.error('Error consolidando meses históricos:', e);
+      }
+      return list;
+    }
+
+    function renderDetailedHistoricalTable() {
+      const tbody = document.getElementById('detailedHistoricalTableBody');
+      if (!tbody) return;
+
+      const months = getConsolidatedHistoricalMonths();
+      if (!months || months.length === 0) return;
+
+      const badgeTotal = document.getElementById('badgeTotalMesesAuditados');
+      if (badgeTotal) {
+        const lastYear = months[months.length - 1].code.split('-')[1] || '26';
+        badgeTotal.textContent = `${months.length} Meses Auditados (2024 - 20${lastYear})`;
+      }
+
+      const maxLuz = Math.max(...months.map(m => m.luz || 0));
+      const minLuz = Math.min(...months.map(m => m.luz || 999999).filter(v => v > 0));
+      const maxGas = Math.max(...months.map(m => m.gas || 0));
+      const minGas = Math.min(...months.map(m => m.gas || 999999).filter(v => v > 0));
+      const maxGC = Math.max(...months.map(m => m.gc || 0));
+      const minGC = Math.min(...months.map(m => m.gc || 999999).filter(v => v > 0));
+
+      let html = '';
+      let sumLuz = 0, sumAgua = 0, sumGas = 0, sumClaro = 0, sumGC = 0;
+      let sumMichis = 0, sumHipo = 0, sumSmart = 0, sumSuper = 0, sumTotal = 0;
+      let countHipo = 0, countSmart = 0;
+
+      months.forEach(m => {
+        sumLuz += m.luz || 0;
+        sumAgua += m.agua || 0;
+        sumGas += m.gas || 0;
+        sumClaro += m.claro || 0;
+        sumGC += m.gc || 0;
+        sumMichis += m.michis || 0;
+        sumSuper += m.super || 0;
+        sumTotal += m.total || 0;
+
+        if (m.hipo > 0) {
+          sumHipo += m.hipo;
+          countHipo++;
+        }
+        if (m.smart > 0) {
+          sumSmart += m.smart;
+          countSmart++;
+        }
+
+        const luzColor = m.luz === maxLuz ? 'color:#F43F5E;' : (m.luz === minLuz ? 'color:#10B981;' : '');
+        const gasColor = m.gas === maxGas ? 'color:#F43F5E;' : (m.gas === minGas ? 'color:#10B981;' : '');
+        const gcColor = m.gc === maxGC ? 'color:#F43F5E;' : (m.gc === minGC ? 'color:#10B981;' : '');
+
+        html += `
+          <tr>
+            <td><strong>${escapeHtml(m.code)}</strong></td>
+            <td style="text-align:right; ${luzColor}">${formatCLP(m.luz)}</td>
+            <td style="text-align:right;">${formatCLP(m.agua)}</td>
+            <td style="text-align:right; ${gasColor}">${formatCLP(m.gas)}</td>
+            <td style="text-align:right;">${formatCLP(m.claro)}</td>
+            <td style="text-align:right; ${gcColor}">${formatCLP(m.gc)}</td>
+            <td style="text-align:right;">${formatCLP(m.michis)}</td>
+            <td style="text-align:right; ${m.hipo === 0 ? 'color:var(--text-dim);' : ''}">${m.hipo > 0 ? formatCLP(m.hipo) : '-'}</td>
+            <td style="text-align:right; ${m.smart === 0 ? 'color:var(--text-dim);' : ''}">${m.smart > 0 ? formatCLP(m.smart) : '-'}</td>
+            <td style="text-align:right; ${m.super === 0 ? 'color:var(--text-dim);' : ''}">${m.super > 0 ? formatCLP(m.super) : '-'}</td>
+            <td style="text-align:right; font-weight:700;">${formatCLP(m.total)}</td>
+          </tr>
+        `;
+      });
+
+      const n = months.length;
+      const avgLuz = Math.round(sumLuz / n);
+      const avgAgua = Math.round(sumAgua / n);
+      const avgGas = Math.round(sumGas / n);
+      const avgClaro = Math.round(sumClaro / n);
+      const avgGC = Math.round(sumGC / n);
+      const avgMichis = Math.round(sumMichis / n);
+      const avgHipo = countHipo > 0 ? Math.round(sumHipo / countHipo) : 0;
+      const avgSmart = countSmart > 0 ? Math.round(sumSmart / countSmart) : 0;
+      const avgSuper = Math.round(sumSuper / n);
+      const avgTotal = Math.round(sumTotal / n);
+
+      html += `
+        <tr style="background: var(--bg-surface-elevated); font-weight:700; border-top: 2px solid var(--border-glass);">
+          <td><strong>PROMEDIO REAL</strong></td>
+          <td style="text-align:right; color:var(--accent-diego);">${formatCLP(avgLuz)}</td>
+          <td style="text-align:right; color:var(--accent-diego);">${formatCLP(avgAgua)}</td>
+          <td style="text-align:right; color:var(--accent-diego);">${formatCLP(avgGas)}</td>
+          <td style="text-align:right; color:var(--accent-diego);">${formatCLP(avgClaro)}</td>
+          <td style="text-align:right; color:var(--accent-diego);">${formatCLP(avgGC)}</td>
+          <td style="text-align:right; color:var(--accent-diego);">${formatCLP(avgMichis)}</td>
+          <td style="text-align:right; color:var(--accent-diego);">${formatCLP(avgHipo)}</td>
+          <td style="text-align:right; color:var(--accent-diego);">${formatCLP(avgSmart)}</td>
+          <td style="text-align:right; color:var(--accent-diego);">${formatCLP(avgSuper)}</td>
+          <td style="text-align:right; color:var(--accent-emerald); font-size:1.05rem;">${formatCLP(avgTotal)}</td>
+        </tr>
+      `;
+
+      tbody.innerHTML = html;
+
+      const elLuz = document.getElementById('kpiHistLuz');
+      if (elLuz) elLuz.textContent = formatCLP(avgLuz);
+
+      const elAgua = document.getElementById('kpiHistAgua');
+      if (elAgua) elAgua.textContent = formatCLP(avgAgua);
+
+      const elGas = document.getElementById('kpiHistGas');
+      if (elGas) elGas.textContent = formatCLP(avgGas);
+
+      const elGC = document.getElementById('kpiHistGC');
+      if (elGC) elGC.textContent = formatCLP(avgGC);
+
+      const elHipo = document.getElementById('kpiHistHipo');
+      if (elHipo) elHipo.textContent = formatCLP(avgHipo);
+
+      const elMichis = document.getElementById('kpiHistMichis');
+      if (elMichis) elMichis.textContent = formatCLP(avgMichis);
+
+      if (chartHistorico && typeof chartHistorico.update === 'function') {
+        chartHistorico.data.labels = months.map(m => m.code);
+        if (chartHistorico.data.datasets[0]) chartHistorico.data.datasets[0].data = months.map(m => m.luz);
+        if (chartHistorico.data.datasets[1]) chartHistorico.data.datasets[1].data = months.map(m => m.gas);
+        if (chartHistorico.data.datasets[2]) chartHistorico.data.datasets[2].data = months.map(m => m.gc);
+        if (chartHistorico.data.datasets[3]) chartHistorico.data.datasets[3].data = months.map(m => m.agua);
+        chartHistorico.update();
+      }
+    }
+
+    function repararYDeduplicarBDMeses() {
+      const raw = localStorage.getItem('db_historial_meses');
+      if (!raw) return;
+      try {
+        let list = JSON.parse(raw);
+        if (!Array.isArray(list)) return;
+
+        const rawBackup = localStorage.getItem('ultimo_mes_cerrado_backup');
+        let backup = null;
+        if (rawBackup) {
+          try { backup = JSON.parse(rawBackup); } catch(e) {}
+        }
+
+        // 1. Unificar Octubre 2026 si hay duplicados
+        const octobers = list.filter(m => matchMonth(m, 'Octubre 2026'));
+        if (octobers.length > 1) {
+          let richOctober = octobers.find(m => m.items && m.items.length > 0) ||
+                            octobers.find(m => m.estado === 'Cerrado') ||
+                            octobers[0];
+          
+          if (backup && matchMonth({ nombre: backup.closedMonth }, 'Octubre 2026')) {
+            if (!richOctober.items || richOctober.items.length === 0) {
+              richOctober.items = backup.currentAuditItems;
+              richOctober.gastosDiarios = backup.expenses;
+            }
+          }
+
+          richOctober.id = 'mes-oct-26';
+          richOctober.code = 'Oct-26';
+          richOctober.nombre = 'Octubre 2026';
+          richOctober.estado = 'Cerrado';
+
+          list = list.filter(m => !matchMonth(m, 'Octubre 2026'));
+          list.unshift(richOctober);
+        }
+
+        // 2. Si el mes activo es "Noviembre 2026", asegurar que esté al inicio como "En Curso"
+        if (currentActiveMonth === 'Noviembre 2026') {
+          const hasNov = list.some(m => matchMonth(m, 'Noviembre 2026'));
+          if (!hasNov) {
+            const totalHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
+            const fijosDiego = currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
+            const totalIng = (userProfile?.diegoSalary || 1214038) + (userProfile?.soledadSalary || 875000);
+            const superavit = totalIng - (totalHogar + fijosDiego);
+
+            list.unshift({
+              id: 'mes-nov-26',
+              code: 'Nov-26',
+              nombre: 'Noviembre 2026',
+              fecha: '2026-11-01',
+              criterio: 'Mes Actual en Curso',
+              diegoSal: userProfile?.diegoSalary || 1214038,
+              soleSal: userProfile?.soledadSalary || 875000,
+              totalIng: totalIng,
+              gastosHogar: totalHogar,
+              fijosDiego: fijosDiego,
+              superavit: superavit,
+              estado: 'En Curso',
+              items: JSON.parse(JSON.stringify(currentAuditItems)),
+              gastosDiarios: JSON.parse(JSON.stringify(expenses))
+            });
+          }
+        }
+
+        // 3. Deduplicar estrictamente cualquier otro mes repetido
+        const uniqueList = [];
+        const seen = new Set();
+        list.forEach(item => {
+          const key = (item.nombre || item.code || '').toLowerCase().trim();
+          if (!seen.has(key)) {
+            seen.add(key);
+            uniqueList.push(item);
+          }
+        });
+
+        localStorage.setItem('db_historial_meses', JSON.stringify(uniqueList));
+      } catch(e) {
+        console.error('Error reparando BD meses:', e);
+      }
+    }
+
     function inicializarBDMeses() {
       const elTitle = document.getElementById('activeMonthTitle');
       if (elTitle) elTitle.textContent = currentActiveMonth;
@@ -7085,7 +7436,9 @@ main, .tab-pane {
         localStorage.setItem(DB_VERSION_KEY, 'true');
       }
 
+      repararYDeduplicarBDMeses();
       renderTablaHistorialMesesBD();
+      renderDetailedHistoricalTable();
     }
 
     function renderTablaHistorialMesesBD() {
@@ -7108,7 +7461,7 @@ main, .tab-pane {
         const tr = document.createElement('tr');
         const isCerrado = item.estado === 'Cerrado';
         tr.innerHTML = `
-          <td><strong>${item.nombre}</strong></td>
+          <td><strong>${escapeHtml(item.nombre)}</strong></td>
           <td style="text-align:right; color:var(--accent-diego);">${formatCLP(item.diegoSal)}</td>
           <td style="text-align:right; color:var(--accent-soledad);">${formatCLP(item.soleSal)}</td>
           <td style="text-align:right; font-weight:700;">${formatCLP(item.totalIng)}</td>
@@ -7118,7 +7471,7 @@ main, .tab-pane {
             <span class="badge ${isCerrado ? 'badge-emerald' : 'badge-blue'}" style="font-size:0.7rem;">${item.estado}</span>
           </td>
           <td style="text-align:center;">
-            <button type="button" class="btn-secondary" onclick="verDetalleMes('${item.id}')" style="padding:0.25rem 0.6rem; font-size:0.75rem;">
+            <button type="button" class="btn-secondary" onclick="verDetalleMes('${item.id || item.code || item.nombre}')" style="padding:0.25rem 0.6rem; font-size:0.75rem;">
               👁️ Ver
             </button>
           </td>
@@ -7133,15 +7486,18 @@ main, .tab-pane {
 
       const totalHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
       const fijosDiego = currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
-      const totalIng = userProfile.diegoSalary + userProfile.soledadSalary;
+      const totalIng = (userProfile?.diegoSalary || 1214038) + (userProfile?.soledadSalary || 875000);
       const superavit = totalIng - (totalHogar + fijosDiego);
+      const code = getMonthCode(mesNombre);
 
       const snapshot = {
-        id: 'mes-' + mesNombre.toLowerCase().replace(/\s+/g, '-'),
+        id: 'mes-' + code.toLowerCase(),
+        code: code,
         nombre: mesNombre,
         fecha: new Date().toISOString().split('T')[0],
-        diegoSal: userProfile.diegoSalary,
-        soleSal: userProfile.soledadSalary,
+        criterio: isCerrado ? 'Mes Cerrado y Auditado' : 'Registro de boletas en curso',
+        diegoSal: userProfile?.diegoSalary || 1214038,
+        soleSal: userProfile?.soledadSalary || 875000,
         totalIng: totalIng,
         gastosHogar: totalHogar,
         fijosDiego: fijosDiego,
@@ -7151,16 +7507,88 @@ main, .tab-pane {
         estado: isCerrado ? 'Cerrado' : 'Guardado'
       };
 
-      const idx = list.findIndex(m => m.id === snapshot.id);
+      const idx = list.findIndex(m => matchMonth(m, mesNombre));
       if (idx !== -1) {
-        list[idx] = snapshot;
+        list[idx] = {
+          ...list[idx],
+          ...snapshot,
+          estado: isCerrado ? 'Cerrado' : (list[idx].estado || 'Guardado')
+        };
       } else {
         list.unshift(snapshot);
       }
 
-      localStorage.setItem('db_historial_meses', JSON.stringify(list));
+      // Deduplicar lista completa
+      const uniqueList = [];
+      const seen = new Set();
+      list.forEach(item => {
+        const key = (item.nombre || item.code || '').toLowerCase().trim();
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueList.push(item);
+        }
+      });
+
+      localStorage.setItem('db_historial_meses', JSON.stringify(uniqueList));
       renderTablaHistorialMesesBD();
+      renderDetailedHistoricalTable();
       showToast(`💾 ¡Mes "${mesNombre}" guardado con éxito en la Base de Datos!`);
+    }
+
+    function asegurarMesActivoEnBD(mesNombre) {
+      const raw = localStorage.getItem('db_historial_meses');
+      let list = raw ? JSON.parse(raw) : [];
+
+      const code = getMonthCode(mesNombre);
+      const totalHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
+      const fijosDiego = currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
+      const totalIng = (userProfile?.diegoSalary || 1214038) + (userProfile?.soledadSalary || 875000);
+      const superavit = totalIng - (totalHogar + fijosDiego);
+
+      const activeRecord = {
+        id: 'mes-' + code.toLowerCase(),
+        code: code,
+        nombre: mesNombre,
+        fecha: new Date().toISOString().split('T')[0],
+        criterio: 'Mes Actual en Curso',
+        diegoSal: userProfile?.diegoSalary || 1214038,
+        soleSal: userProfile?.soledadSalary || 875000,
+        totalIng: totalIng,
+        gastosHogar: totalHogar,
+        fijosDiego: fijosDiego,
+        superavit: superavit,
+        estado: 'En Curso',
+        items: JSON.parse(JSON.stringify(currentAuditItems)),
+        gastosDiarios: JSON.parse(JSON.stringify(expenses))
+      };
+
+      const idx = list.findIndex(m => matchMonth(m, mesNombre));
+      if (idx !== -1) {
+        list[idx] = { ...list[idx], ...activeRecord };
+      } else {
+        list.unshift(activeRecord);
+      }
+
+      // Asegurar que el mes activo quede primero
+      const activeIdx = list.findIndex(m => matchMonth(m, mesNombre));
+      if (activeIdx > 0) {
+        const [act] = list.splice(activeIdx, 1);
+        list.unshift(act);
+      }
+
+      const uniqueList = [];
+      const seen = new Set();
+      list.forEach(item => {
+        const key = (item.nombre || item.code || '').toLowerCase().trim();
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueList.push(item);
+        }
+      });
+
+      localStorage.setItem('db_historial_meses', JSON.stringify(uniqueList));
+      renderTablaHistorialMesesBD();
+      renderDetailedHistoricalTable();
     }
 
     function abrirModalCerrarMes() {
@@ -7212,12 +7640,13 @@ main, .tab-pane {
     }
 
     function confirmarCierreMes() {
-      guardarMesEnBD(currentActiveMonth, true);
-
       const oldMonth = currentActiveMonth;
       const nextMonth = getNextMonthLabel(currentActiveMonth);
 
-      // CREAR SNAPSHOT DE SEGURIDAD PARA PODER REABRIR O DESHACER
+      // 1. Guardar el mes que se cierra con estado "Cerrado" y todas sus boletas/gastos reales
+      guardarMesEnBD(oldMonth, true);
+
+      // 2. CREAR SNAPSHOT DE SEGURIDAD PARA PODER REABRIR O DESHACER
       const backupSnapshot = {
         closedMonth: oldMonth,
         nextMonth: nextMonth,
@@ -7228,21 +7657,28 @@ main, .tab-pane {
       };
       localStorage.setItem('ultimo_mes_cerrado_backup', JSON.stringify(backupSnapshot));
 
+      // 3. Avanzar al nuevo mes
       currentActiveMonth = nextMonth;
       localStorage.setItem('app_active_month', currentActiveMonth);
 
+      // 4. Reiniciar boletas variables a 0 para el nuevo mes (manteniendo fijos e hipotecario)
       currentAuditItems.forEach(it => {
         const n = it.name.toLowerCase();
-        if (n.includes('luz') || n.includes('agua') || n.includes('gas') || n.includes('gasto común') || n.includes('supermercado')) {
+        if (n.includes('luz') || n.includes('agua') || n.includes('gas') || n.includes('gasto común') || n.includes('gasto comun') || n.includes('supermercado')) {
           it.actual = 0;
         }
       });
       localStorage.setItem(`audit_${currentActiveMonth}`, JSON.stringify(currentAuditItems));
+      localStorage.setItem(`audit_${getMonthCode(currentActiveMonth)}`, JSON.stringify(currentAuditItems));
 
+      // 5. Reiniciar gastos diarios a lista vacía para el nuevo mes
       expenses = [];
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
       localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
       renderExpenses();
+
+      // 6. CREAR O ACTIVAR EL NUEVO MES EN LA BASE DE DATOS (En Curso)
+      asegurarMesActivoEnBD(nextMonth);
 
       const elTitle = document.getElementById('activeMonthTitle');
       if (elTitle) elTitle.textContent = currentActiveMonth;
@@ -7251,13 +7687,14 @@ main, .tab-pane {
       renderAuditTable();
       renderChecklist();
       renderTablaHistorialMesesBD();
+      renderDetailedHistoricalTable();
       if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
       if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
       if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
       verificarBotonDeshacerCierre();
       triggerAutoSyncToCloud();
 
-      showToast(`🎉 ¡Mes "${oldMonth}" cerrado! Bienvenido a ${currentActiveMonth}. Boletas reiniciadas.`);
+      showToast(`🎉 ¡Mes "${oldMonth}" cerrado con éxito! Bienvenido a ${currentActiveMonth}. Boletas del nuevo mes preparadas.`);
     }
 
     function deshacerUltimoCierreMes() {
@@ -7275,17 +7712,62 @@ main, .tab-pane {
 
       currentAuditItems = backup.currentAuditItems;
       localStorage.setItem(`audit_${currentActiveMonth}`, JSON.stringify(currentAuditItems));
+      localStorage.setItem(`audit_${getMonthCode(currentActiveMonth)}`, JSON.stringify(currentAuditItems));
 
       expenses = backup.expenses;
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
       localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
 
-      // Eliminar el mes cerrado del historial BD
+      if (backup.userProfile) {
+        userProfile = Object.assign(userProfile || {}, backup.userProfile);
+        localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
+      }
+
+      // Actualizar historial en la BD
       const rawHistorial = localStorage.getItem('db_historial_meses');
       if (rawHistorial) {
         let list = JSON.parse(rawHistorial);
-        list = list.filter(m => m.id !== backup.closedMonth && m.nombre !== backup.closedMonth);
-        localStorage.setItem('db_historial_meses', JSON.stringify(list));
+        // Quitar el mes que se había creado como nuevo
+        if (backup.nextMonth) {
+          list = list.filter(m => !matchMonth(m, backup.nextMonth));
+        }
+        // Reabrir closedMonth como "En Curso"
+        const mIdx = list.findIndex(m => matchMonth(m, backup.closedMonth));
+        if (mIdx !== -1) {
+          list[mIdx].estado = 'En Curso';
+          list[mIdx].items = JSON.parse(JSON.stringify(currentAuditItems));
+          list[mIdx].gastosDiarios = JSON.parse(JSON.stringify(expenses));
+        } else {
+          const code = getMonthCode(backup.closedMonth);
+          list.unshift({
+            id: 'mes-' + code.toLowerCase(),
+            code: code,
+            nombre: backup.closedMonth,
+            fecha: new Date().toISOString().split('T')[0],
+            criterio: 'Mes Reabierto',
+            diegoSal: userProfile?.diegoSalary || 1214038,
+            soleSal: userProfile?.soledadSalary || 875000,
+            totalIng: (userProfile?.diegoSalary || 1214038) + (userProfile?.soledadSalary || 875000),
+            gastosHogar: currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0),
+            fijosDiego: currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0),
+            superavit: 0,
+            estado: 'En Curso',
+            items: JSON.parse(JSON.stringify(currentAuditItems)),
+            gastosDiarios: JSON.parse(JSON.stringify(expenses))
+          });
+        }
+
+        const uniqueList = [];
+        const seen = new Set();
+        list.forEach(item => {
+          const key = (item.nombre || item.code || '').toLowerCase().trim();
+          if (!seen.has(key)) {
+            seen.add(key);
+            uniqueList.push(item);
+          }
+        });
+
+        localStorage.setItem('db_historial_meses', JSON.stringify(uniqueList));
       }
 
       localStorage.removeItem('ultimo_mes_cerrado_backup');
@@ -7298,6 +7780,7 @@ main, .tab-pane {
       renderExpenses();
       renderChecklist();
       renderTablaHistorialMesesBD();
+      renderDetailedHistoricalTable();
       if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
       if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
       if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
@@ -7308,16 +7791,26 @@ main, .tab-pane {
 
     function verificarBotonDeshacerCierre() {
       const btn = document.getElementById('btnDeshacerCierre');
-      if (btn) {
-        const tieneBackup = !!localStorage.getItem('ultimo_mes_cerrado_backup');
-        btn.style.display = tieneBackup ? 'inline-flex' : 'none';
+      if (!btn) return;
+      const raw = localStorage.getItem('ultimo_mes_cerrado_backup');
+      if (raw) {
+        try {
+          const b = JSON.parse(raw);
+          btn.style.display = 'inline-flex';
+          btn.innerHTML = `<span>↩️</span> Reabrir ${b.closedMonth || 'Mes Anterior'}`;
+          btn.title = `Haz clic para reabrir y restaurar todas las boletas de ${b.closedMonth || 'Mes Anterior'}`;
+        } catch(e) {
+          btn.style.display = 'inline-flex';
+        }
+      } else {
+        btn.style.display = 'none';
       }
     }
     
     function verDetalleMes(id) {
       const raw = localStorage.getItem('db_historial_meses');
       const list = raw ? JSON.parse(raw) : [];
-      const mes = list.find(m => m.id === id);
+      const mes = list.find(m => m.id === id || m.code === id || m.nombre === id || matchMonth(m, id));
       if (!mes) return;
 
       const modal = document.getElementById('modalVerMes');
@@ -7337,7 +7830,7 @@ main, .tab-pane {
         if (displayList.length > 0) {
           itemsHtml = `
             <div style="font-weight:700; margin-top:0.75rem; font-size:0.9rem;">📋 Boletas Pagadas en este Mes:</div>
-            <div style="max-height:220px; overflow-y:auto; border:1px solid var(--border-glass); border-radius:8px; padding:0.5rem; margin-top:0.35rem;">
+            <div style="max-height:200px; overflow-y:auto; border:1px solid var(--border-glass); border-radius:8px; padding:0.5rem; margin-top:0.35rem;">
               <table style="width:100%; font-size:0.8rem;">
                 <thead>
                   <tr style="border-bottom:1px solid var(--border-glass);">
@@ -7349,13 +7842,48 @@ main, .tab-pane {
                 <tbody>
                   ${displayList.map(it => `
                     <tr>
-                      <td style="padding:0.25rem 0.3rem;">${it.name}</td>
-                      <td style="text-align:center; padding:0.25rem 0.3rem;"><span class="badge ${it.resp === 'Diego' ? 'badge-blue' : 'badge-purple'}" style="font-size:0.65rem;">${it.resp}</span></td>
+                      <td style="padding:0.25rem 0.3rem;">${escapeHtml(it.name)}</td>
+                      <td style="text-align:center; padding:0.25rem 0.3rem;"><span class="badge ${it.resp === 'Diego' ? 'badge-blue' : 'badge-purple'}" style="font-size:0.65rem;">${escapeHtml(it.resp)}</span></td>
                       <td style="text-align:right; font-weight:700; padding:0.25rem 0.3rem; color:${it.amount > 0 ? '#10B981' : 'var(--text-muted)'};">${formatCLP(it.amount)}</td>
                     </tr>
                   `).join('')}
                 </tbody>
               </table>
+            </div>
+          `;
+        }
+
+        let gastosHtml = '';
+        if (mes.gastosDiarios && mes.gastosDiarios.length > 0) {
+          const totalGastosDiarios = mes.gastosDiarios.reduce((acc, g) => acc + (Number(g.amount) || 0), 0);
+          gastosHtml = `
+            <div style="margin-top:1rem;">
+              <div style="font-weight:700; font-size:0.9rem; display:flex; justify-content:space-between; align-items:center;">
+                <span>🧾 Gastos Diarios Registrados (${mes.gastosDiarios.length}):</span>
+                <span style="color:#10B981; font-size:0.85rem;">Total: ${formatCLP(totalGastosDiarios)}</span>
+              </div>
+              <div style="max-height:180px; overflow-y:auto; border:1px solid var(--border-glass); border-radius:8px; padding:0.5rem; margin-top:0.35rem;">
+                <table style="width:100%; font-size:0.75rem;">
+                  <thead>
+                    <tr style="border-bottom:1px solid var(--border-glass); color:var(--text-muted);">
+                      <th style="text-align:left; padding:0.2rem;">Fecha</th>
+                      <th style="text-align:left; padding:0.2rem;">Quién</th>
+                      <th style="text-align:left; padding:0.2rem;">Detalle</th>
+                      <th style="text-align:right; padding:0.2rem;">Monto</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${mes.gastosDiarios.map(g => `
+                      <tr>
+                        <td style="padding:0.2rem; color:var(--text-muted); font-size:0.7rem;">${escapeHtml(g.date || '')}</td>
+                        <td style="padding:0.2rem;"><span class="badge ${g.payer === 'Diego' ? 'badge-blue' : 'badge-purple'}" style="font-size:0.65rem;">${escapeHtml(g.payer || '')}</span></td>
+                        <td style="padding:0.2rem;">${escapeHtml(g.desc || g.category || '')}</td>
+                        <td style="text-align:right; font-weight:700; padding:0.2rem; color:#10B981;">${formatCLP(g.amount || 0)}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
             </div>
           `;
         }
@@ -7371,6 +7899,7 @@ main, .tab-pane {
             <div><span style="color:var(--text-muted); font-size:0.75rem;">Superávit Libre:</span> <strong style="color:#10B981; font-size:0.95rem; display:block;">${formatCLP(mes.superavit)}</strong></div>
           </div>
           ${itemsHtml}
+          ${gastosHtml}
         `;
       }
       if (modal) modal.style.display = 'flex';
@@ -8656,6 +9185,8 @@ main, .tab-pane {
       syncProfileToInputs();
       renderAuditTable();
       renderDashboardCharts();
+      renderDetailedHistoricalTable();
+      verificarBotonDeshacerCierre();
 
       // Iniciar sincronización de nube Firestore (descarga datos remotos en background sin trabas)
       initFirebaseSync();
@@ -8668,9 +9199,9 @@ main, .tab-pane {
         });
       });
 
-      // Register PWA Service Worker con actualización forzada v13
+      // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=20261030o').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=20261101a').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
