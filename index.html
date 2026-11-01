@@ -3167,23 +3167,49 @@ main, .tab-pane {
 
               <!-- Tenpo Diego -->
               <div style="background:var(--bg-surface-elevated); padding:0.85rem; border-radius:8px; border:1px solid var(--border-color);">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <strong style="color:var(--text-main); font-size:0.9rem;">2. Tenpo Prepago (Operaciones Huasco)</strong>
-                  <input type="number" id="inputCofreTenpo" value="300000" step="1" min="0" oninput="updateDiegoColchonDisplay()" style="font-size:0.95rem; font-weight:700; color:#F59E0B; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
+                  <div>
+                    <strong style="color:var(--text-main); font-size:0.9rem;">2. Tenpo Prepago (Operaciones Huasco)</strong>
+                    <div style="font-size:0.72rem; color:var(--text-muted); margin-top:0.15rem;">Pasajes Bus, Uber, Metro Valparaíso y Snacks</div>
+                  </div>
+                  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem;">
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                      <span style="font-size:0.68rem; color:var(--text-muted);">Aporte mes:</span>
+                      <input type="number" id="inputCofreTenpo" value="300000" step="1000" min="0" oninput="updateDiegoColchonDisplay()" style="font-size:0.9rem; font-weight:700; color:#F59E0B; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                      <span style="font-size:0.68rem; color:#FCD34D; font-weight:600;">Remanente mes pasado:</span>
+                      <input type="number" id="inputRemanenteTenpoDiego" value="0" step="1000" min="0" oninput="updateDiegoColchonDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:#F59E0B; background:rgba(245,158,11,0.1); border:1px dashed rgba(245,158,11,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo que quedó en la tarjeta el mes anterior">
+                    </div>
+                  </div>
                 </div>
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
-                  • Pasajes Bus (8 tramos $231.5k) + Uber / Metro ($35k) + Snacks turno ($33.5k)
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; padding:0.35rem 0.65rem; background:rgba(245,158,11,0.08); border-radius:6px; border:1px solid rgba(245,158,11,0.25);">
+                  <span style="font-size:0.72rem; color:var(--text-muted);">💰 <strong>Total Fondos Disponibles:</strong></span>
+                  <strong id="displayTotalFondosTenpoDiego" style="font-size:0.95rem; color:#F59E0B; font-family:monospace;">$300.000</strong>
                 </div>
               </div>
 
               <!-- Mach Diego -->
               <div style="background:var(--bg-surface-elevated); padding:0.85rem; border-radius:8px; border:1px solid var(--border-color);">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <strong style="color:var(--text-main); font-size:0.9rem;">3. Mach (Bolsillo Modo Recuperación)</strong>
-                  <input type="number" id="inputCofreMach" value="140000" step="1" min="0" oninput="updateDiegoColchonDisplay()" style="font-size:0.95rem; font-weight:700; color:#06B6D4; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
+                  <div>
+                    <strong style="color:var(--text-main); font-size:0.9rem;">3. Mach Prepago (Bolsillo Semanal)</strong>
+                    <div style="font-size:0.72rem; color:var(--text-muted); margin-top:0.15rem;">Bolsillo semanal $35.000 cada lunes & modo recuperación</div>
+                  </div>
+                  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem;">
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                      <span style="font-size:0.68rem; color:var(--text-muted);">Aporte mes:</span>
+                      <input type="number" id="inputCofreMach" value="140000" step="1000" min="0" oninput="updateDiegoColchonDisplay()" style="font-size:0.9rem; font-weight:700; color:#06B6D4; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                      <span style="font-size:0.68rem; color:#67E8F9; font-weight:600;">Remanente mes pasado:</span>
+                      <input type="number" id="inputRemanenteMachDiego" value="0" step="1000" min="0" oninput="updateDiegoColchonDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:#06B6D4; background:rgba(6,182,212,0.1); border:1px dashed rgba(6,182,212,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo que quedó en Mach el mes anterior">
+                    </div>
+                  </div>
                 </div>
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
-                  • Asignación semanal fija: <strong>$35.000 cada lunes</strong> para gastos personales propios
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; padding:0.35rem 0.65rem; background:rgba(6,182,212,0.08); border-radius:6px; border:1px solid rgba(6,182,212,0.25);">
+                  <span style="font-size:0.72rem; color:var(--text-muted);">💰 <strong>Total Fondos Disponibles:</strong></span>
+                  <strong id="displayTotalFondosMachDiego" style="font-size:0.95rem; color:#06B6D4; font-family:monospace;">$140.000</strong>
                 </div>
               </div>
 
@@ -3319,12 +3345,25 @@ main, .tab-pane {
 
               <!-- Tenpo Soledad -->
               <div style="background:var(--bg-surface-elevated); padding:0.85rem; border-radius:8px; border:1px solid var(--border-color);">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <strong style="color:var(--text-main); font-size:0.9rem;">3. Tenpo Soledad (Bolsillo Propio)</strong>
-                  <input type="number" id="inputCofreSoleTenpo" value="150000" step="1" min="0" oninput="updateSoleMargenDisplay()" style="font-size:0.95rem; font-weight:700; color:#A855F7; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
+                  <div>
+                    <strong style="color:var(--text-main); font-size:0.9rem;">3. Tenpo Prepago Soledad (Bolsillo Personal)</strong>
+                    <div style="font-size:0.72rem; color:var(--text-muted); margin-top:0.15rem;">Bolsillo y gastos personales propios de Soledad</div>
+                  </div>
+                  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem;">
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                      <span style="font-size:0.68rem; color:var(--text-muted);">Aporte mes:</span>
+                      <input type="number" id="inputCofreSoleTenpo" value="150000" step="1000" min="0" oninput="updateSoleMargenDisplay()" style="font-size:0.9rem; font-weight:700; color:#A855F7; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                      <span style="font-size:0.68rem; color:#D8B4FE; font-weight:600;">Remanente mes pasado:</span>
+                      <input type="number" id="inputRemanenteTenpoSole" value="0" step="1000" min="0" oninput="updateSoleMargenDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:#C084FC; background:rgba(168,85,247,0.1); border:1px dashed rgba(168,85,247,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo acumulado que quedó en Tenpo el mes anterior">
+                    </div>
+                  </div>
                 </div>
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
-                  • Tarjeta prepago para sus compras personales, salidas y gustos
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; padding:0.35rem 0.65rem; background:rgba(168,85,247,0.08); border-radius:6px; border:1px solid rgba(168,85,247,0.25);">
+                  <span style="font-size:0.72rem; color:var(--text-muted);">💰 <strong>Total Fondos Disponibles:</strong></span>
+                  <strong id="displayTotalFondosTenpoSole" style="font-size:0.95rem; color:#A855F7; font-family:monospace;">$150.000</strong>
                 </div>
               </div>
 
@@ -4271,7 +4310,7 @@ main, .tab-pane {
         mpAhorro: 130000
       },
       cofresSoledad: {
-        chequeraHogar: 286000,
+        chequeraHogar: 236000,
         smartVisa: 50000,
         tenpoBolsillo: 150000,
         mpAhorro: 150000,
@@ -4280,7 +4319,12 @@ main, .tab-pane {
       remanentes: {
         mpDiego: 0,
         mpSoledad: 0,
-        bancoSole: 0
+        bancoSole: 0,
+        tenpoDiego: 0,
+        machDiego: 0,
+        tenpoSoledad: 0,
+        fanDiego: 0,
+        chequeraSole: 0
       },
       smartVisaConfig: {
         cupoTotal: 500000,
@@ -4309,12 +4353,60 @@ main, .tab-pane {
       const savedSole = localStorage.getItem('soledad_salary');
       if (savedSole) userProfile.soledadSalary = parseInt(savedSole, 10);
 
+      repararRemanentesSiEsNecesario();
       syncProfileToInputs();
     }
 
     function saveUserProfile() {
       localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
       triggerAutoSyncToCloud();
+    }
+
+    // Auto-recuperación de remanentes si se cerró mes previamente pero los remanentes estaban en 0
+    function repararRemanentesSiEsNecesario() {
+      if (!userProfile.remanentes) {
+        userProfile.remanentes = {
+          mpDiego: 0,
+          mpSoledad: 0,
+          bancoSole: 0,
+          tenpoDiego: 0,
+          machDiego: 0,
+          tenpoSoledad: 0
+        };
+      }
+      const vals = Object.values(userProfile.remanentes);
+      const allZero = vals.length === 0 || vals.every(v => !v || v === 0);
+      if (allZero && (currentActiveMonth === 'Noviembre 2026' || currentActiveMonth === 'Nov-26')) {
+        try {
+          const raw = localStorage.getItem('db_historial_meses');
+          if (raw) {
+            const list = JSON.parse(raw);
+            const oct = list.find(m => matchMonth(m, 'Octubre 2026'));
+            if (oct && Array.isArray(oct.gastosDiarios) && oct.gastosDiarios.length > 0) {
+              const spent = {};
+              oct.gastosDiarios.forEach(g => {
+                const k = normalizeAccountKey(g.account);
+                spent[k] = (spent[k] || 0) + (Number(g.amount) || 0);
+              });
+              const baseMPD = userProfile.cofresDiego?.mpAhorro || 130000;
+              const baseMPS = userProfile.cofresSoledad?.mpAhorro || 150000;
+              const baseBancoS = userProfile.cofresSoledad?.bancoReserva || 150000;
+              const baseTenpoD = userProfile.cofresDiego?.tenpoHuasco || 300000;
+              const baseMachD = userProfile.cofresDiego?.machBolsillo || 140000;
+              const baseTenpoS = userProfile.cofresSoledad?.tenpoBolsillo || 150000;
+
+              userProfile.remanentes.mpDiego = Math.max(0, baseMPD - (spent['mpDiego'] || 0));
+              userProfile.remanentes.mpSoledad = Math.max(0, baseMPS - (spent['mpSoledad'] || 0));
+              userProfile.remanentes.bancoSole = Math.max(0, baseBancoS - (spent['reservaSole'] || 0));
+              userProfile.remanentes.tenpoDiego = Math.max(0, baseTenpoD - (spent['tenpoDiego'] || 0));
+              userProfile.remanentes.machDiego = Math.max(0, baseMachD - (spent['machDiego'] || 0));
+              userProfile.remanentes.tenpoSoledad = Math.max(0, baseTenpoS - (spent['tenpoSoledad'] || 0));
+
+              localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
+            }
+          }
+        } catch(e) {}
+      }
     }
 
     // Sincronización bidireccional permanente de sueldos, paneles, cofres y KPIs
@@ -4353,9 +4445,19 @@ main, .tab-pane {
       const elMach = document.getElementById('inputCofreMach');
       const elMP = document.getElementById('inputCofreMP');
 
-      if (elTenpo) elTenpo.value = userProfile.cofresDiego.tenpoHuasco ?? 300000;
-      if (elMach) elMach.value = userProfile.cofresDiego.machBolsillo ?? 140000;
-      if (elMP) elMP.value = userProfile.cofresDiego.mpAhorro ?? 130000;
+      if (elTenpo) elTenpo.value = userProfile.cofresDiego?.tenpoHuasco ?? 300000;
+      if (elMach) elMach.value = userProfile.cofresDiego?.machBolsillo ?? 140000;
+      if (elMP) elMP.value = userProfile.cofresDiego?.mpAhorro ?? 130000;
+
+      // 4b. Inputs de Remanentes Diego
+      const inRemTenpoD = document.getElementById('inputRemanenteTenpoDiego');
+      if (inRemTenpoD) inRemTenpoD.value = userProfile.remanentes?.tenpoDiego ?? 0;
+
+      const inRemMachD = document.getElementById('inputRemanenteMachDiego');
+      if (inRemMachD) inRemMachD.value = userProfile.remanentes?.machDiego ?? 0;
+
+      const inRemDiegoMP = document.getElementById('inputRemanenteMPDiego');
+      if (inRemDiegoMP) inRemDiegoMP.value = userProfile.remanentes?.mpDiego ?? 0;
 
       // 5. Inputs de Cofres Soledad
       const elSoleSmart = document.getElementById('inputCofreSoleSmart');
@@ -4363,14 +4465,14 @@ main, .tab-pane {
       const elSoleMP = document.getElementById('inputCofreSoleMP');
       const elSoleBanco = document.getElementById('inputCofreSoleBanco');
 
-      if (elSoleSmart) elSoleSmart.value = userProfile.cofresSoledad.smartVisa ?? 50000;
-      if (elSoleTenpo) elSoleTenpo.value = userProfile.cofresSoledad.tenpoBolsillo ?? 150000;
-      if (elSoleMP) elSoleMP.value = userProfile.cofresSoledad.mpAhorro ?? 150000;
-      if (elSoleBanco) elSoleBanco.value = userProfile.cofresSoledad.bancoReserva ?? 150000;
+      if (elSoleSmart) elSoleSmart.value = userProfile.cofresSoledad?.smartVisa ?? 50000;
+      if (elSoleTenpo) elSoleTenpo.value = userProfile.cofresSoledad?.tenpoBolsillo ?? 150000;
+      if (elSoleMP) elSoleMP.value = userProfile.cofresSoledad?.mpAhorro ?? 150000;
+      if (elSoleBanco) elSoleBanco.value = userProfile.cofresSoledad?.bancoReserva ?? 150000;
 
-      // 5b. Inputs de Remanentes de Ahorro y Configuración Smart Visa
-      const inRemDiegoMP = document.getElementById('inputRemanenteMPDiego');
-      if (inRemDiegoMP) inRemDiegoMP.value = userProfile.remanentes?.mpDiego ?? 0;
+      // 5b. Inputs de Remanentes Soledad
+      const inRemTenpoS = document.getElementById('inputRemanenteTenpoSole');
+      if (inRemTenpoS) inRemTenpoS.value = userProfile.remanentes?.tenpoSoledad ?? 0;
 
       const inRemSoleMP = document.getElementById('inputRemanenteMPSole');
       if (inRemSoleMP) inRemSoleMP.value = userProfile.remanentes?.mpSoledad ?? 0;
@@ -4396,7 +4498,7 @@ main, .tab-pane {
 
       // Cálculos para KPIs 3, 4, 5
       const diegoGastosEst = 909360;
-      const diegoBolsilloAhorroEst = (userProfile.cofresDiego.machBolsillo || 140000) + (userProfile.cofresDiego.mpAhorro || 130000);
+      const diegoBolsilloAhorroEst = (userProfile.cofresDiego?.machBolsillo || 140000) + (userProfile.cofresDiego?.mpAhorro || 130000);
       const diegoOxigenoEst = diegoSal - (diegoGastosEst + diegoBolsilloAhorroEst);
       const soleGastosEst = 286000;
       const soleMargenEst = soleSal - soleGastosEst;
@@ -4422,11 +4524,14 @@ main, .tab-pane {
       updateSmartVisaDisplay();
     }
 
-        function updateDiegoColchonDisplay() {
+    function updateDiegoColchonDisplay() {
       const salary = userProfile.diegoSalary || 1214038;
       const tenpo = parseInt(document.getElementById('inputCofreTenpo')?.value, 10) || 0;
       const mach = parseInt(document.getElementById('inputCofreMach')?.value, 10) || 0;
       const mp = parseInt(document.getElementById('inputCofreMP')?.value, 10) || 0;
+      const remTenpo = parseInt(document.getElementById('inputRemanenteTenpoDiego')?.value, 10) || 0;
+      const remMach = parseInt(document.getElementById('inputRemanenteMachDiego')?.value, 10) || 0;
+      const remMP = parseInt(document.getElementById('inputRemanenteMPDiego')?.value, 10) || 0;
 
       const totalTransferencias = tenpo + mach + mp;
       // Remanente en Cuenta Fan = Sueldo - Transferencias a Tenpo, Mach y MP
@@ -4442,13 +4547,27 @@ main, .tab-pane {
       userProfile.cofresDiego.machBolsillo = mach;
       userProfile.cofresDiego.mpAhorro = mp;
 
+      userProfile.remanentes = userProfile.remanentes || {};
+      userProfile.remanentes.tenpoDiego = remTenpo;
+      userProfile.remanentes.machDiego = remMach;
+      userProfile.remanentes.mpDiego = remMP;
+
+      // Actualizar displays en tab-cuentas
+      const elDispTenpo = document.getElementById('displayTotalFondosTenpoDiego');
+      if (elDispTenpo) elDispTenpo.textContent = formatCLP(remTenpo + tenpo);
+
+      const elDispMach = document.getElementById('displayTotalFondosMachDiego');
+      if (elDispMach) elDispMach.textContent = formatCLP(remMach + mach);
+
+      const elDispMP = document.getElementById('displayTotalAcumuladoMPDiego');
+      if (elDispMP) elDispMP.textContent = formatCLP(remMP + mp);
+
       const elDesc = document.getElementById('diegoFanFormulaDesc');
       if (elDesc) {
         elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, Mach: ${formatCLP(mach)}, MP: ${formatCLP(mp)})<br>💰 <strong>Saldo disponible restante en Cuenta Fan:</strong> <strong style="color:#60A5FA;">${formatCLP(remanenteFan)}</strong>`;
       }
 
-      // De Cuenta Fan se pagan los gastos fijos de vivienda estimados (~$609.360):
-      // Dividendo ($365k) + Arriendo Huasco ($95k) + Michis ($84.360) + Salud ($50k) + Streaming ($15k) = $609.360
+      // Gastos fijos vivienda estimados (~$609.360)
       const gastosFijosVivienda = 609360;
       const colchon = remanenteFan - gastosFijosVivienda;
 
@@ -4458,11 +4577,8 @@ main, .tab-pane {
         elColchon.style.color = colchon >= 0 ? '#10B981' : '#F43F5E';
       }
 
-      // Actualizar cálculo de ahorro total acumulado Diego
-      const remanenteMP = parseInt(document.getElementById('inputRemanenteMPDiego')?.value, 10) || (userProfile.remanentes?.mpDiego ?? 0);
-      const totalAcumuladoMP = remanenteMP + mp;
-      const elDispAcumMP = document.getElementById('displayTotalAcumuladoMPDiego');
-      if (elDispAcumMP) elDispAcumMP.textContent = formatCLP(totalAcumuladoMP);
+      // Auto-guardado en localStorage silencioso
+      localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
 
       if (typeof updateChartsWithNewSalary === 'function') updateChartsWithNewSalary();
     }
@@ -4470,13 +4586,16 @@ main, .tab-pane {
     // CÁLCULO AUTOMÁTICO EN TIEMPO REAL: REMANENTE CHEQUERA & SALDO LIBRE SOLEDAD
     function updateSoleMargenDisplay() {
       const salary = userProfile.soledadSalary || 875000;
-      const smart = parseInt(document.getElementById('inputCofreSoleSmart')?.value, 10) || (userProfile.cofresSoledad?.smartVisa ?? 50000);
+      const smart = parseInt(document.getElementById('inputCofreSoleSmart')?.value, 10) || 0;
       const tenpo = parseInt(document.getElementById('inputCofreSoleTenpo')?.value, 10) || 0;
       const mp = parseInt(document.getElementById('inputCofreSoleMP')?.value, 10) || 0;
       const banco = parseInt(document.getElementById('inputCofreSoleBanco')?.value, 10) || 0;
+      const remTenpo = parseInt(document.getElementById('inputRemanenteTenpoSole')?.value, 10) || 0;
+      const remMP = parseInt(document.getElementById('inputRemanenteMPSole')?.value, 10) || 0;
+      const remBanco = parseInt(document.getElementById('inputRemanenteBancoSole')?.value, 10) || 0;
 
-      const totalTransferencias = tenpo + mp + banco;
-      // Remanente en Chequera Electrónica = Sueldo Soledad - Transferencias a cofres
+      // Smart Visa cuota ES parte de las transferencias desde Chequera
+      const totalTransferencias = tenpo + mp + banco + smart;
       const remanenteChequera = Math.max(0, salary - totalTransferencias);
 
       const elCheq = document.getElementById('inputCofreSoleChequera');
@@ -4490,13 +4609,27 @@ main, .tab-pane {
       userProfile.cofresSoledad.mpAhorro = mp;
       userProfile.cofresSoledad.bancoReserva = banco;
 
+      userProfile.remanentes = userProfile.remanentes || {};
+      userProfile.remanentes.tenpoSoledad = remTenpo;
+      userProfile.remanentes.mpSoledad = remMP;
+      userProfile.remanentes.bancoSole = remBanco;
+
+      // Actualizar displays en tab-cuentas
+      const elDispTenpo = document.getElementById('displayTotalFondosTenpoSole');
+      if (elDispTenpo) elDispTenpo.textContent = formatCLP(remTenpo + tenpo);
+
+      const elDispMP = document.getElementById('displayTotalAcumuladoMPSole');
+      if (elDispMP) elDispMP.textContent = formatCLP(remMP + mp);
+
+      const elDispBanco = document.getElementById('displayTotalAcumuladoBancoSole');
+      if (elDispBanco) elDispBanco.textContent = formatCLP(remBanco + banco);
+
       const elDesc = document.getElementById('soleChequeraFormulaDesc');
       if (elDesc) {
-        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, MP: ${formatCLP(mp)}, Reserva: ${formatCLP(banco)})<br>💰 <strong>Saldo disponible restante en Chequera:</strong> <strong style="color:#C084FC;">${formatCLP(remanenteChequera)}</strong>`;
+        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, MP: ${formatCLP(mp)}, Reserva: ${formatCLP(banco)}, Smart Visa: ${formatCLP(smart)})<br>💰 <strong>Saldo disponible restante en Chequera:</strong> <strong style="color:#C084FC;">${formatCLP(remanenteChequera)}</strong>`;
       }
 
-      // De Chequera se pagan las cuentas del hogar Limache (~$286.000):
-      // Luz, Agua, Gas, Claro, Gasto Común, Súper + Diferencial Hipotecario = $286.000
+      // De Chequera se pagan las cuentas del hogar Limache (~$286.000)
       const cuentasHogarEstimadas = 286000;
       const remanenteLibre = remanenteChequera - cuentasHogarEstimadas;
 
@@ -4506,14 +4639,8 @@ main, .tab-pane {
         elMargen.style.color = remanenteLibre >= 0 ? '#10B981' : '#F43F5E';
       }
 
-      // Actualizar cálculo de ahorro total acumulado Soledad
-      const remMP = parseInt(document.getElementById('inputRemanenteMPSole')?.value, 10) || (userProfile.remanentes?.mpSoledad ?? 0);
-      const dispMP = document.getElementById('displayTotalAcumuladoMPSole');
-      if (dispMP) dispMP.textContent = formatCLP(remMP + mp);
-
-      const remBanco = parseInt(document.getElementById('inputRemanenteBancoSole')?.value, 10) || (userProfile.remanentes?.bancoSole ?? 0);
-      const dispBanco = document.getElementById('displayTotalAcumuladoBancoSole');
-      if (dispBanco) dispBanco.textContent = formatCLP(remBanco + banco);
+      // Auto-guardado en localStorage silencioso
+      localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
 
       if (typeof updateChartsWithNewSalary === 'function') updateChartsWithNewSalary();
     }
@@ -4537,6 +4664,12 @@ main, .tab-pane {
       const deudaActual = Math.max(0, deudaPrevia + comprasMes - cuota);
       const cupoDisponible = Math.max(0, cupo - deudaActual);
 
+      userProfile.smartVisaConfig = {
+        cupoTotal: cupo,
+        deudaPrevia: deudaPrevia,
+        cuotaMes: cuota
+      };
+
       const elCompras = document.getElementById('displaySmartVisaGastosMes');
       if (elCompras) elCompras.textContent = formatCLP(comprasMes);
 
@@ -4545,6 +4678,8 @@ main, .tab-pane {
 
       const elCupoDisp = document.getElementById('displaySmartVisaCupoDisponible');
       if (elCupoDisp) elCupoDisp.textContent = formatCLP(cupoDisponible);
+
+      localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
     }
 
     // Modificación de sueldo en vivo al teclear en las casillas de tab-cuentas
@@ -4569,14 +4704,6 @@ main, .tab-pane {
         if (elD) elD.textContent = `${formatCLP(val)} / mes`;
         updateSoleMargenDisplay();
       }
-
-      const elTot = document.getElementById('headerTotalSalary');
-      if (elTot) elTot.textContent = `💰 Total: ${formatCLP(userProfile.diegoSalary + userProfile.soledadSalary)}`;
-
-      if (chartAportes && chartAportes.data && chartAportes.data.datasets) {
-        chartAportes.data.datasets[0].data = [userProfile.diegoSalary, userProfile.soledadSalary];
-        chartAportes.update();
-      }
     }
 
     function saveDiegoCofres() {
@@ -4586,9 +4713,14 @@ main, .tab-pane {
       const mp = parseInt(document.getElementById('inputCofreMP').value, 10) || 130000;
       const fan = Math.max(0, salary - (tenpo + mach + mp));
 
+      const remanenteTenpo = parseInt(document.getElementById('inputRemanenteTenpoDiego')?.value, 10) || 0;
+      const remanenteMach = parseInt(document.getElementById('inputRemanenteMachDiego')?.value, 10) || 0;
       const remanenteMP = parseInt(document.getElementById('inputRemanenteMPDiego')?.value, 10) || 0;
+
       userProfile.cofresDiego = { fanFijos: fan, tenpoHuasco: tenpo, machBolsillo: mach, mpAhorro: mp };
       userProfile.remanentes = userProfile.remanentes || {};
+      userProfile.remanentes.tenpoDiego = remanenteTenpo;
+      userProfile.remanentes.machDiego = remanenteMach;
       userProfile.remanentes.mpDiego = remanenteMP;
 
       // Sincronizar en la tabla de boletas
@@ -4610,8 +4742,9 @@ main, .tab-pane {
       const tenpo = parseInt(document.getElementById('inputCofreSoleTenpo').value, 10) || 150000;
       const mp = parseInt(document.getElementById('inputCofreSoleMP').value, 10) || 150000;
       const banco = parseInt(document.getElementById('inputCofreSoleBanco').value, 10) || 150000;
-      const chequera = Math.max(0, salary - (tenpo + mp + banco));
+      const chequera = Math.max(0, salary - (tenpo + mp + banco + smart));
 
+      const remanenteTenpo = parseInt(document.getElementById('inputRemanenteTenpoSole')?.value, 10) || 0;
       const remanenteMPSole = parseInt(document.getElementById('inputRemanenteMPSole')?.value, 10) || 0;
       const remanenteBancoSole = parseInt(document.getElementById('inputRemanenteBancoSole')?.value, 10) || 0;
       const cupoSmart = parseInt(document.getElementById('inputSmartVisaCupo')?.value, 10) || 500000;
@@ -4625,6 +4758,7 @@ main, .tab-pane {
         bancoReserva: banco
       };
       userProfile.remanentes = userProfile.remanentes || {};
+      userProfile.remanentes.tenpoSoledad = remanenteTenpo;
       userProfile.remanentes.mpSoledad = remanenteMPSole;
       userProfile.remanentes.bancoSole = remanenteBancoSole;
       userProfile.smartVisaConfig = {
@@ -4654,7 +4788,7 @@ main, .tab-pane {
         const mach = userProfile.cofresDiego?.machBolsillo ?? 140000;
         const mpD = userProfile.cofresDiego?.mpAhorro ?? 130000;
 
-        const cheq = userProfile.cofresSoledad?.chequeraHogar ?? 425000;
+        const cheq = userProfile.cofresSoledad?.chequeraHogar ?? 236000;
         const smart = userProfile.cofresSoledad?.smartVisa ?? 50000;
         const tenpoS = userProfile.cofresSoledad?.tenpoBolsillo ?? 150000;
         const mpS = userProfile.cofresSoledad?.mpAhorro ?? 150000;
@@ -4686,8 +4820,7 @@ main, .tab-pane {
       if (!val || isNaN(val) || val < 0) return;
       aplicarYGuardarSueldos('Soledad', val);
     }
-
-    // ==============================================================
+// ==============================================================
     // RENDERIZADOR ROBUSTO DE GRÁFICOS DEL DASHBOARD (COFRES & APORTES)
     // ==============================================================
     function renderDashboardCharts() {
@@ -7748,11 +7881,55 @@ function getMonthCode(monthLabel) {
       };
       localStorage.setItem('ultimo_mes_cerrado_backup', JSON.stringify(backupSnapshot));
 
-      // 3. Avanzar al nuevo mes
+      // 3. CALCULAR REMANENTES SOBRANTES DEL MES CERRADO PARA PASAR AL NUEVO MES
+      const spentByAcc = {};
+      if (Array.isArray(expenses)) {
+        expenses.forEach(it => {
+          const k = normalizeAccountKey(it.account);
+          spentByAcc[k] = (spentByAcc[k] || 0) + (Number(it.amount) || 0);
+        });
+      }
+
+      // Saldos restantes no gastados de cada cofre al momento del cierre
+      const saldoRemanenteMPDiego = Math.max(0, (userProfile.remanentes?.mpDiego || 0) + (userProfile.cofresDiego?.mpAhorro || 130000) - (spentByAcc['mpDiego'] || 0));
+      const saldoRemanenteMPSoledad = Math.max(0, (userProfile.remanentes?.mpSoledad || 0) + (userProfile.cofresSoledad?.mpAhorro || 150000) - (spentByAcc['mpSoledad'] || 0));
+      const saldoRemanenteBancoSole = Math.max(0, (userProfile.remanentes?.bancoSole || 0) + (userProfile.cofresSoledad?.bancoReserva || 150000) - (spentByAcc['reservaSole'] || 0));
+      const saldoRemanenteTenpoDiego = Math.max(0, (userProfile.remanentes?.tenpoDiego || 0) + (userProfile.cofresDiego?.tenpoHuasco || 300000) - (spentByAcc['tenpoDiego'] || 0));
+      const saldoRemanenteMachDiego = Math.max(0, (userProfile.remanentes?.machDiego || 0) + (userProfile.cofresDiego?.machBolsillo || 140000) - (spentByAcc['machDiego'] || 0));
+      const saldoRemanenteTenpoSole = Math.max(0, (userProfile.remanentes?.tenpoSoledad || 0) + (userProfile.cofresSoledad?.tenpoBolsillo || 150000) - (spentByAcc['tenpoSoledad'] || 0));
+
+      // Tarjeta Smart Visa: calcular deuda remanente que pasa al siguiente mes
+      const deudaAnteriorSmart = userProfile.smartVisaConfig?.deudaPrevia || 0;
+      const cuotaSmart = userProfile.cofresSoledad?.smartVisa || 50000;
+      const comprasSmartMes = spentByAcc['smartVisaSole'] || 0;
+      const deudaRestanteSmart = Math.max(0, deudaAnteriorSmart + comprasSmartMes - cuotaSmart);
+
+      // Asignar los saldos sobrantes como Remanente Mes Pasado del NUEVO mes
+      userProfile.remanentes = {
+        mpDiego: saldoRemanenteMPDiego,
+        mpSoledad: saldoRemanenteMPSoledad,
+        bancoSole: saldoRemanenteBancoSole,
+        tenpoDiego: saldoRemanenteTenpoDiego,
+        machDiego: saldoRemanenteMachDiego,
+        tenpoSoledad: saldoRemanenteTenpoSole,
+        fanDiego: 0,
+        chequeraSole: 0
+      };
+
+      userProfile.smartVisaConfig = {
+        cupoTotal: userProfile.smartVisaConfig?.cupoTotal || 500000,
+        deudaPrevia: deudaRestanteSmart,
+        cuotaMes: userProfile.cofresSoledad?.smartVisa || 50000
+      };
+
+      // Guardar el perfil con los remanentes actualizados
+      saveUserProfile();
+
+      // 4. Avanzar al nuevo mes
       currentActiveMonth = nextMonth;
       localStorage.setItem('app_active_month', currentActiveMonth);
 
-      // 4. Reiniciar boletas variables a 0 para el nuevo mes (manteniendo fijos e hipotecario)
+      // 5. Reiniciar boletas variables a 0 para el nuevo mes (manteniendo fijos e hipotecario)
       currentAuditItems.forEach(it => {
         const n = it.name.toLowerCase();
         if (n.includes('luz') || n.includes('agua') || n.includes('gas') || n.includes('gasto común') || n.includes('gasto comun') || n.includes('supermercado')) {
@@ -7762,30 +7939,31 @@ function getMonthCode(monthLabel) {
       localStorage.setItem(`audit_${currentActiveMonth}`, JSON.stringify(currentAuditItems));
       localStorage.setItem(`audit_${getMonthCode(currentActiveMonth)}`, JSON.stringify(currentAuditItems));
 
-      // 5. Reiniciar gastos diarios a lista vacía para el nuevo mes
+      // 6. Reiniciar gastos diarios a lista vacía para el nuevo mes
       expenses = [];
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
       localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
       renderExpenses();
 
-      // 6. CREAR O ACTIVAR EL NUEVO MES EN LA BASE DE DATOS (En Curso)
+      // 7. CREAR O ACTIVAR EL NUEVO MES EN LA BASE DE DATOS (En Curso)
       asegurarMesActivoEnBD(nextMonth);
 
       const elTitle = document.getElementById('activeMonthTitle');
       if (elTitle) elTitle.textContent = currentActiveMonth;
 
       cerrarModalCerrarMes();
+      syncProfileToInputs();
       renderAuditTable();
       renderChecklist();
       renderTablaHistorialMesesBD();
       renderDetailedHistoricalTable();
       if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
-      if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
+      if (typeof renderCardAnalysis === 'function') renderCardAnalysis();
       if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
       verificarBotonDeshacerCierre();
       triggerAutoSyncToCloud();
 
-      showToast(`🎉 ¡Mes "${oldMonth}" cerrado con éxito! Bienvenido a ${currentActiveMonth}. Boletas del nuevo mes preparadas.`);
+      showToast(`🎉 ¡Mes "${oldMonth}" cerrado con éxito! Bienvenido a ${currentActiveMonth}. Remanentes transferidos automáticamente.`);
     }
 
     function deshacerUltimoCierreMes() {
@@ -7818,66 +7996,33 @@ function getMonthCode(monthLabel) {
       const rawHistorial = localStorage.getItem('db_historial_meses');
       if (rawHistorial) {
         let list = JSON.parse(rawHistorial);
-        // Quitar el mes que se había creado como nuevo
-        if (backup.nextMonth) {
-          list = list.filter(m => !matchMonth(m, backup.nextMonth));
+        list = list.filter(m => !matchMonth(m, backup.nextMonth));
+        const idxClosed = list.findIndex(m => matchMonth(m, backup.closedMonth));
+        if (idxClosed !== -1) {
+          list[idxClosed].estado = 'En Curso';
+          list[idxClosed].criterio = 'Mes Reabierto tras deshacer cierre';
         }
-        // Reabrir closedMonth como "En Curso"
-        const mIdx = list.findIndex(m => matchMonth(m, backup.closedMonth));
-        if (mIdx !== -1) {
-          list[mIdx].estado = 'En Curso';
-          list[mIdx].items = JSON.parse(JSON.stringify(currentAuditItems));
-          list[mIdx].gastosDiarios = JSON.parse(JSON.stringify(expenses));
-        } else {
-          const code = getMonthCode(backup.closedMonth);
-          list.unshift({
-            id: 'mes-' + code.toLowerCase(),
-            code: code,
-            nombre: backup.closedMonth,
-            fecha: new Date().toISOString().split('T')[0],
-            criterio: 'Mes Reabierto',
-            diegoSal: userProfile?.diegoSalary || 1214038,
-            soleSal: userProfile?.soledadSalary || 875000,
-            totalIng: (userProfile?.diegoSalary || 1214038) + (userProfile?.soledadSalary || 875000),
-            gastosHogar: currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0),
-            fijosDiego: currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0),
-            superavit: 0,
-            estado: 'En Curso',
-            items: JSON.parse(JSON.stringify(currentAuditItems)),
-            gastosDiarios: JSON.parse(JSON.stringify(expenses))
-          });
-        }
-
-        const uniqueList = [];
-        const seen = new Set();
-        list.forEach(item => {
-          const key = (item.nombre || item.code || '').toLowerCase().trim();
-          if (!seen.has(key)) {
-            seen.add(key);
-            uniqueList.push(item);
-          }
-        });
-
-        localStorage.setItem('db_historial_meses', JSON.stringify(uniqueList));
+        localStorage.setItem('db_historial_meses', JSON.stringify(list));
       }
 
       localStorage.removeItem('ultimo_mes_cerrado_backup');
-      verificarBotonDeshacerCierre();
 
       const elTitle = document.getElementById('activeMonthTitle');
       if (elTitle) elTitle.textContent = currentActiveMonth;
 
+      syncProfileToInputs();
       renderAuditTable();
       renderExpenses();
       renderChecklist();
       renderTablaHistorialMesesBD();
       renderDetailedHistoricalTable();
       if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
-      if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
+      if (typeof renderCardAnalysis === 'function') renderCardAnalysis();
       if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
+      verificarBotonDeshacerCierre();
       triggerAutoSyncToCloud();
 
-      showToast(`✅ ¡Mes "${backup.closedMonth}" reabierto con éxito! Todos los datos fueron restaurados.`);
+      showToast(`↩️ ¡Mes "${backup.closedMonth}" reabierto exitosamente! Estado restaurado.`);
     }
 
     function verificarBotonDeshacerCierre() {
@@ -8376,7 +8521,8 @@ function getMonthCode(monthLabel) {
         owner: 'Diego',
         isPrimary: false,
         sourceAccount: 'Cuenta Fan',
-        getBudget: () => userProfile.cofresDiego.tenpoHuasco ?? 300000,
+        getBudget: () => userProfile.cofresDiego?.tenpoHuasco ?? 300000,
+        getRemanente: () => userProfile.remanentes?.tenpoDiego ?? 0,
         color: '#F59E0B',
         badgeClass: 'badge-amber',
         icon: '🚌'
@@ -8388,7 +8534,8 @@ function getMonthCode(monthLabel) {
         owner: 'Diego',
         isPrimary: false,
         sourceAccount: 'Cuenta Fan',
-        getBudget: () => userProfile.cofresDiego.machBolsillo ?? 140000,
+        getBudget: () => userProfile.cofresDiego?.machBolsillo ?? 140000,
+        getRemanente: () => userProfile.remanentes?.machDiego ?? 0,
         color: '#06B6D4',
         badgeClass: 'badge-blue',
         icon: '⚡'
@@ -8400,7 +8547,8 @@ function getMonthCode(monthLabel) {
         owner: 'Diego',
         isPrimary: false,
         sourceAccount: 'Cuenta Fan',
-        getBudget: () => userProfile.cofresDiego.mpAhorro ?? 130000,
+        getBudget: () => userProfile.cofresDiego?.mpAhorro ?? 130000,
+        getRemanente: () => userProfile.remanentes?.mpDiego ?? 0,
         color: '#10B981',
         badgeClass: 'badge-emerald',
         icon: '📈'
@@ -8419,6 +8567,7 @@ function getMonthCode(monthLabel) {
         },
         getTotalSalary: () => userProfile.diegoSalary || 1214038,
         getTotalTransfersOut: () => (userProfile.cofresDiego?.tenpoHuasco ?? 300000) + (userProfile.cofresDiego?.machBolsillo ?? 140000) + (userProfile.cofresDiego?.mpAhorro ?? 130000),
+        getRemanente: () => userProfile.remanentes?.fanDiego ?? 0,
         color: '#3B82F6',
         badgeClass: 'badge-blue',
         icon: '🏦'
@@ -8432,11 +8581,12 @@ function getMonthCode(monthLabel) {
         sourceAccount: 'Sueldo Líquido Soledad',
         getBudget: () => {
           const sal = userProfile.soledadSalary || 875000;
-          const trans = (userProfile.cofresSoledad?.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad?.mpAhorro ?? 150000) + (userProfile.cofresSoledad?.bancoReserva ?? 150000);
+          const trans = (userProfile.cofresSoledad?.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad?.mpAhorro ?? 150000) + (userProfile.cofresSoledad?.bancoReserva ?? 150000) + (userProfile.cofresSoledad?.smartVisa ?? 50000);
           return Math.max(0, sal - trans);
         },
         getTotalSalary: () => userProfile.soledadSalary || 875000,
-        getTotalTransfersOut: () => (userProfile.cofresSoledad?.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad?.mpAhorro ?? 150000) + (userProfile.cofresSoledad?.bancoReserva ?? 150000),
+        getTotalTransfersOut: () => (userProfile.cofresSoledad?.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad?.mpAhorro ?? 150000) + (userProfile.cofresSoledad?.bancoReserva ?? 150000) + (userProfile.cofresSoledad?.smartVisa ?? 50000),
+        getRemanente: () => userProfile.remanentes?.chequeraSole ?? 0,
         color: '#A855F7',
         badgeClass: 'badge-purple',
         icon: '🏡'
@@ -8448,7 +8598,8 @@ function getMonthCode(monthLabel) {
         owner: 'Soledad',
         isPrimary: false,
         sourceAccount: 'Chequera BancoEstado',
-        getBudget: () => userProfile.cofresSoledad.tenpoBolsillo ?? 150000,
+        getBudget: () => userProfile.cofresSoledad?.tenpoBolsillo ?? 150000,
+        getRemanente: () => userProfile.remanentes?.tenpoSoledad ?? 0,
         color: '#C084FC',
         badgeClass: 'badge-purple',
         icon: '👜'
@@ -8461,6 +8612,7 @@ function getMonthCode(monthLabel) {
         isPrimary: false,
         sourceAccount: 'Cupo BancoEstado',
         getBudget: () => userProfile.smartVisaConfig?.cupoTotal ?? 500000,
+        getRemanente: () => userProfile.smartVisaConfig?.deudaPrevia ?? 0,
         color: '#F43F5E',
         badgeClass: 'badge-rose',
         icon: '💳'
@@ -8472,7 +8624,8 @@ function getMonthCode(monthLabel) {
         owner: 'Soledad',
         isPrimary: false,
         sourceAccount: 'Chequera BancoEstado',
-        getBudget: () => userProfile.cofresSoledad.mpAhorro ?? 150000,
+        getBudget: () => userProfile.cofresSoledad?.mpAhorro ?? 150000,
+        getRemanente: () => userProfile.remanentes?.mpSoledad ?? 0,
         color: '#34D399',
         badgeClass: 'badge-emerald',
         icon: '✨'
@@ -8484,7 +8637,8 @@ function getMonthCode(monthLabel) {
         owner: 'Soledad',
         isPrimary: false,
         sourceAccount: 'Chequera BancoEstado',
-        getBudget: () => userProfile.cofresSoledad.bancoReserva ?? 150000,
+        getBudget: () => userProfile.cofresSoledad?.bancoReserva ?? 150000,
+        getRemanente: () => userProfile.remanentes?.bancoSole ?? 0,
         color: '#8B5CF6',
         badgeClass: 'badge-purple',
         icon: '🛡️'
@@ -8541,6 +8695,7 @@ function getMonthCode(monthLabel) {
 
       visibleConfigs.forEach(cfg => {
         const budget = cfg.getBudget();
+        const remanente = typeof cfg.getRemanente === 'function' ? cfg.getRemanente() : 0;
         let totalSpent = 0;
         const categoryMap = {};
         const recentExpenses = [];
@@ -8559,24 +8714,24 @@ function getMonthCode(monthLabel) {
         const isSavingsCard = (cfg.key === 'mpDiego' || cfg.key === 'mpSoledad' || cfg.key === 'reservaSole');
         const isCreditCard = (cfg.key === 'smartVisaSole');
 
-        // Cálculos especializados para Tarjeta de Crédito Smart Visa
+        // Métricas Smart Visa
         const cardCreditCupo = isCreditCard ? (userProfile.smartVisaConfig?.cupoTotal ?? 500000) : 0;
         const cardCreditDeudaPrevia = isCreditCard ? (userProfile.smartVisaConfig?.deudaPrevia ?? 0) : 0;
         const cardCreditCuota = isCreditCard ? (userProfile.cofresSoledad?.smartVisa ?? 50000) : 0;
         const cardCreditDeuda = isCreditCard ? Math.max(0, cardCreditDeudaPrevia + totalSpent - cardCreditCuota) : 0;
         const cardCreditDisponible = isCreditCard ? Math.max(0, cardCreditCupo - cardCreditDeuda) : 0;
 
-        // Cálculos especializados para Tarjetas de Ahorro con Remanente
-        const cardSavingsRemanente = isSavingsCard ? (
-          cfg.key === 'mpDiego' ? (userProfile.remanentes?.mpDiego ?? 0)
-          : cfg.key === 'mpSoledad' ? (userProfile.remanentes?.mpSoledad ?? 0)
-          : (userProfile.remanentes?.bancoSole ?? 0)
-        ) : 0;
+        // Métricas Tarjetas de Ahorro con Remanente
+        const cardSavingsRemanente = remanente;
         const cardSavingsAporte = budget;
         const cardSavingsTotalAcumulado = isSavingsCard ? Math.max(0, cardSavingsRemanente + cardSavingsAporte - totalSpent) : 0;
 
-        const remaining = isCreditCard ? cardCreditDisponible : isSavingsCard ? cardSavingsTotalAcumulado : (budget - totalSpent);
-        const pctUsed = isCreditCard ? (cardCreditCupo > 0 ? Math.min(100, Math.round((cardCreditDeuda / cardCreditCupo) * 100)) : 0) : (budget > 0 ? Math.min(100, Math.round((totalSpent / budget) * 100)) : 0);
+        // Métricas Tarjetas Operativas / Primarias
+        const totalFondos = remanente + budget;
+        const remaining = isCreditCard ? cardCreditDisponible : isSavingsCard ? cardSavingsTotalAcumulado : (totalFondos - totalSpent);
+        const pctUsed = isCreditCard 
+          ? (cardCreditCupo > 0 ? Math.min(100, Math.round((cardCreditDeuda / cardCreditCupo) * 100)) : 0) 
+          : (totalFondos > 0 ? Math.min(100, Math.round((totalSpent / totalFondos) * 100)) : 0);
         const isOverspent = isCreditCard ? (cardCreditDeuda > cardCreditCupo) : (isSavingsCard ? false : remaining < 0);
         const cardIsOverspent = isOverspent;
 
@@ -8590,12 +8745,14 @@ function getMonthCode(monthLabel) {
               <span>🏦 Sueldo: ${formatCLP(sal)}</span>
               <span>•</span>
               <span>🔁 Transferido a cofres: -${formatCLP(transOut)}</span>
+              ${remanente > 0 ? `<span>•</span> <span>⏱️ Remanente: ${formatCLP(remanente)}</span>` : ''}
             </div>
           `;
         } else {
           transferHtml = `
             <div class="card-analysis-badge-transfer" style="background:rgba(16,185,129,0.15); color:#34D399; border:1px solid rgba(16,185,129,0.3);">
               <span>📥 Fondos transferidos desde: <strong>${cfg.sourceAccount}</strong></span>
+              ${remanente > 0 ? `<span>•</span> <span>⏱️ Remanente mes anterior: <strong>${formatCLP(remanente)}</strong></span>` : ''}
             </div>
           `;
         }
@@ -8648,6 +8805,21 @@ function getMonthCode(monthLabel) {
                   <div class="card-metric-label">Total Acumulado</div>
                   <div class="card-metric-val" style="color:#10B981;">${formatCLP(cardSavingsTotalAcumulado)}</div>
                 </div>
+              ` : remanente > 0 ? `
+                <div class="card-metric-pill">
+                  <div class="card-metric-label">Remanente Previo</div>
+                  <div class="card-metric-val" style="color:#38BDF8;">${formatCLP(remanente)}</div>
+                </div>
+                <div class="card-metric-pill">
+                  <div class="card-metric-label">${cfg.isPrimary ? 'Fondo Mes' : 'Transferido'}</div>
+                  <div class="card-metric-val" style="color:#10B981;">+${formatCLP(budget)}</div>
+                </div>
+                <div class="card-metric-pill">
+                  <div class="card-metric-label">Disponible</div>
+                  <div class="card-metric-val" style="color:${isOverspent ? '#F43F5E' : '#10B981'};">
+                    ${isOverspent ? '-' : '+'}${formatCLP(Math.abs(remaining))}
+                  </div>
+                </div>
               ` : `
                 <div class="card-metric-pill">
                   <div class="card-metric-label">${cfg.isPrimary ? 'Fondo Neto' : 'Transferido'}</div>
@@ -8669,7 +8841,7 @@ function getMonthCode(monthLabel) {
             <!-- Barra de Progreso de Consumo de la Tarjeta -->
             <div style="margin-top:0.75rem;">
               <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-bottom:0.25rem;">
-                <span>Consumo: <strong>${pctUsed}%</strong> de fondos</span>
+                <span>Consumo: <strong>${pctUsed}%</strong> de fondos ${remanente > 0 && !isCreditCard && !isSavingsCard ? `(${formatCLP(totalSpent)} / ${formatCLP(totalFondos)})` : ''}</span>
                 <span style="color:${isOverspent ? '#F43F5E' : '#10B981'}; font-weight:700;">
                   ${isOverspent ? '⚠️ Sobregiro' : '🟢 Dentro del margen'}
                 </span>
@@ -8741,7 +8913,8 @@ function getMonthCode(monthLabel) {
             if (legendEl) {
               legendEl.innerHTML = `
                 <div style="color:var(--text-muted); font-style:italic; padding:0.25rem 0;">
-                  ✨ 100% de fondos disponibles (${formatCLP(budget)}) sin compras registradas aún este mes.
+                  ✨ 100% de fondos disponibles (${formatCLP(totalFondos)}) sin compras registradas aún este mes.
+                  ${remanente > 0 ? `<br><span style="font-size:0.68rem; color:#94A3B8;">(Remanente anterior: ${formatCLP(remanente)} + Asignación mes: ${formatCLP(budget)})</span>` : ''}
                 </div>
               `;
             }
@@ -8780,8 +8953,10 @@ function getMonthCode(monthLabel) {
       });
     }
 
-
-    function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette) {
+    function renderCardAnalysisSection() {
+      renderCardAnalysis();
+    }
+function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette) {
       const ctx = document.getElementById(canvasId)?.getContext('2d');
       if (!ctx) return null;
       if (currentChart) currentChart.destroy();
@@ -9252,8 +9427,8 @@ function getMonthCode(monthLabel) {
         }
       }
 
-      // Actualizar análisis de tarjetas si está desplegado
-      if (isCardAnalysisOpen && typeof renderCardAnalysis === 'function') {
+      // Actualizar análisis de tarjetas (siempre sincronizado)
+      if (typeof renderCardAnalysis === 'function') {
         renderCardAnalysis();
       }
     }
@@ -9292,7 +9467,7 @@ function getMonthCode(monthLabel) {
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=20261101b').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=20261101c').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
