@@ -1855,6 +1855,44 @@ main, .tab-pane {
   #tab-mes-actual > .kpi-grid { grid-template-columns: repeat(3, 1fr) !important; }
 }
 
+.hist-chips { display: flex; gap: 0.4rem; overflow-x: auto; padding: 0.15rem 0 0.5rem; scrollbar-width: none; }
+.hist-chips::-webkit-scrollbar { display: none; }
+.hist-chip { flex: 0 0 auto; min-height: 44px; padding: 0 0.85rem; border: 1px solid var(--border-glass); border-radius: 999px; background: var(--bg-surface-elevated); color: var(--text-main); font: inherit; font-size: 0.85rem; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.hist-chip.activa { background: var(--accent-amber); border-color: var(--accent-amber); color: #111827; }
+.hist-chip:disabled { opacity: 0.45; cursor: default; }
+.hist-modos { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.4rem; margin-bottom: 0.75rem; }
+.hist-grupo { display: flex; gap: 0.3rem; }
+.hist-modos .hist-chip { font-size: 0.8rem; padding: 0 0.7rem; }
+.hist-principal { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.6rem; }
+.hist-principal small, .hist-datos small { display: block; color: var(--text-muted); font-size: 0.75rem; }
+.hist-principal strong { font-size: 1.8rem; }
+.hist-principal > span { width: 100%; font-size: 0.85rem; font-weight: 700; }
+.hist-datos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin: 0.65rem 0 0.75rem; }
+.hist-datos > div { min-width: 0; padding: 0.5rem 0.55rem; border: 1px solid var(--border-glass); border-radius: 10px; }
+.hist-datos strong { font-size: 0.95rem; }
+.hist-sube { color: #F43F5E; }
+.hist-baja { color: #10B981; }
+.hist-igual { color: var(--text-muted); }
+.hist-nota { color: var(--text-muted); font-size: 0.85rem; margin: 0 0 0.6rem; }
+.hist-fila { display: grid; grid-template-columns: 1fr auto; gap: 0.1rem 0.75rem; width: 100%; min-height: 44px; padding: 0.6rem 0.4rem; border: 0; border-top: 1px solid var(--border-glass); border-radius: 0; background: none; color: var(--text-main); font: inherit; text-align: left; cursor: pointer; }
+.hist-fila.activa { background: rgba(245, 158, 11, 0.1); }
+.hist-fila-nombre { font-weight: 700; font-size: 0.92rem; }
+.hist-fila strong { text-align: right; font-size: 0.98rem; }
+.hist-fila small { color: var(--text-muted); font-size: 0.75rem; }
+.hist-fila-comp { text-align: right; }
+.hist-fila-comp span { font-weight: 700; }
+.hist-resumen-tabla { min-height: 44px; display: flex; align-items: center; font-weight: 800; cursor: pointer; }
+.mes-fila { display: grid; grid-template-columns: 1fr auto; gap: 0.3rem 0.75rem; align-items: center; width: 100%; padding: 0.7rem 0.75rem; margin-top: 0.5rem; border: 1px solid var(--border-glass); border-radius: 12px; background: var(--bg-surface-elevated); color: var(--text-main); font: inherit; text-align: left; cursor: pointer; }
+.mes-nombre { font-weight: 800; }
+.mes-barra { grid-column: 1 / -1; height: 6px; border-radius: 999px; background: rgba(148, 163, 184, 0.2); overflow: hidden; }
+.mes-barra span { display: block; height: 100%; background: var(--accent-diego); }
+.mes-dato { color: var(--text-muted); font-size: 0.8rem; }
+.mes-dato strong { color: var(--text-main); }
+.mes-dato:last-child { text-align: right; }
+
+#modalVerMesContent { overflow-y: auto; min-height: 0; }
+#modalVerMesContent > * { flex-shrink: 0; }
+
 /* Navegación móvil: barra inferior, cabecera compacta y hoja de registro */
 .bottom-nav, .app-menu, .overlay-backdrop, .header-menu-btn, .sheet-close { display: none; }
 #toast.has-action { pointer-events: auto; display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; }
@@ -1884,7 +1922,9 @@ main, .tab-pane {
   .overlay-backdrop.show { display: block; position: fixed; inset: 0; z-index: 2040; background: rgba(0, 0, 0, 0.55); }
   .app-menu.open { display: flex; flex-direction: column; position: fixed; top: 62px; right: 10px; z-index: 2050; min-width: 240px; padding: 0.4rem; border-radius: 16px; border: 1px solid var(--border-glass); background: #151E31; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5); }
   .period-actions { display: none !important; }
-  .solo-escritorio { display: none !important; }
+  #tablaHistoricaDetallada th:first-child, #tablaHistoricaDetallada td:first-child { position: sticky; left: 0; z-index: 1; background: #111827; }
+  [data-theme="light"] #tablaHistoricaDetallada th:first-child, [data-theme="light"] #tablaHistoricaDetallada td:first-child { background: #FFFFFF; }
+.solo-escritorio { display: none !important; }
   .card-title { flex-wrap: wrap !important; row-gap: 0.4rem !important; }
   button[onclick^="openSalaryModal"] { min-width: 44px; min-height: 44px; }
 .dona-selector { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; }
@@ -2935,66 +2975,35 @@ main, .tab-pane {
     <div id="tab-historico" class="tab-pane">
       <div class="card">
         <div class="card-title">
-          <span>📈 Panorama Completo Histórico de Gastos (26 Meses: 2024 — 2026)</span>
-          <span class="badge badge-emerald" id="badgeTotalMesesAuditados">26 Meses Auditados (2024-2026)</span>
+          <span>📈 Evolución del hogar</span>
+          <span class="badge badge-emerald" id="badgeTotalMesesAuditados">Meses auditados</span>
         </div>
-        <div class="card-desc">
-          Resumen estadístico y evolución mes a mes con promedios reales, máximos de invierno, mínimos de verano y reajuste UF desde Agosto 2024 hasta Septiembre 2026.
+        <div class="card-desc">Elige una cuenta para ver cómo ha cambiado mes a mes.</div>
+
+        <div class="hist-chips" id="histServicios" role="group" aria-label="Cuenta a mostrar"></div>
+        <div class="hist-modos">
+          <div class="hist-grupo" id="histVistas" role="group" aria-label="Tipo de vista"></div>
+          <div class="hist-grupo" id="histRangos" role="group" aria-label="Periodo"></div>
         </div>
 
-        <!-- Metric highlights -->
-        <div class="kpi-grid" style="margin-bottom:1.5rem;">
-          <div class="kpi-card blue">
-            <div class="kpi-header"><span>⚡ Luz Chilquinta</span></div>
-            <div class="kpi-value" id="kpiHistLuz">$24.041</div>
-            <div class="kpi-sub">Invierno máx: $54.618 (Jul-26) | Verano mín: $12.496</div>
-          </div>
-          <div class="kpi-card purple">
-            <div class="kpi-header"><span>💧 Agua Esval</span></div>
-            <div class="kpi-value" id="kpiHistAgua">$7.321</div>
-            <div class="kpi-sub">Promedio muy estable (~$7.3k) | Máx: $15.414</div>
-          </div>
-          <div class="kpi-card amber">
-            <div class="kpi-header"><span>🔥 Gas Balón/Red</span></div>
-            <div class="kpi-value" id="kpiHistGas">$20.712</div>
-            <div class="kpi-sub">Invierno máx: $30.300 | Verano mín: $11.050 (Ene-26)</div>
-          </div>
-          <div class="kpi-card emerald">
-            <div class="kpi-header"><span>🏢 Gasto Común</span></div>
-            <div class="kpi-value" id="kpiHistGC">$52.900</div>
-            <div class="kpi-sub">Rango histórico: $46.904 — $58.696</div>
-          </div>
-          <div class="kpi-card rose">
-            <div class="kpi-header"><span>🏦 Hipotecario (UF)</span></div>
-            <div class="kpi-value" id="kpiHistHipo">$360.977</div>
-            <div class="kpi-sub">Nov-24: $346.506 ➔ Sep-26: $374.199 (+8.0%)</div>
-          </div>
-          <div class="kpi-card blue">
-            <div class="kpi-header"><span>🐱 Michis (Comida+Arena)</span></div>
-            <div class="kpi-value" id="kpiHistMichis">$59.418</div>
-            <div class="kpi-sub">Comida + Arena + Vacunas y Salud</div>
-          </div>
+        <div id="histDestacado"></div>
+        <div class="chart-container" style="height:300px;">
+          <canvas id="chartHistorico"></canvas>
         </div>
+      </div>
 
-        <!-- Seasonality Chart -->
-        <div class="card" style="margin-bottom:1.5rem;">
-          <div class="card-title">
-            <span>Estacionalidad de Servicios Básicos</span>
-            <span>❄️☀️</span>
-          </div>
-          <div class="card-desc">Observa el impacto del invierno en Luz y Gas frente a la estabilidad del Agua y Gastos Comunes</div>
-          <div class="chart-container" style="height:320px;">
-            <canvas id="chartHistorico"></canvas>
-          </div>
-        </div>
+      <div class="card">
+        <div class="card-title"><span>📊 Promedio de cada cuenta</span></div>
+        <div class="card-desc">Toca una cuenta para verla en el gráfico.</div>
+        <div id="histResumen"></div>
+      </div>
 
-        
         <!-- BASE DE DATOS MENSUAL HISTÓRICA (REGISTROS GUARDADOS) -->
         <div class="card" style="margin-bottom:1.5rem; border:2px solid rgba(59,130,246,0.3);">
           <div class="card-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
             <div style="display:flex; align-items:center; gap:0.5rem;">
               <span style="font-size:1.3rem;">💾</span>
-              <strong style="font-size:1.05rem;">Base de Datos de Meses Guardados</strong>
+              <strong style="font-size:1.05rem;">Meses guardados</strong>
             </div>
             <div style="display:flex; align-items:center; gap:0.5rem;">
               <span class="badge badge-blue" id="dbMesesCountBadge">15 Meses Registrados</span>
@@ -3004,10 +3013,11 @@ main, .tab-pane {
             </div>
           </div>
           <div class="card-desc">
-            Registro histórico inmutable de cada periodo mensual cerrado. Puedes consultar el balance exacto, sueldos de Diego y Soledad y boletas reales de cualquier mes:
+            Toca un mes para ver sueldos, boletas y gastos de ese periodo.
           </div>
 
-          <div class="table-container" style="max-height:360px; overflow-y:auto; margin-top:0.75rem;">
+          <div id="dbMesesLista" class="mobile-only-cards"></div>
+          <div class="table-container desktop-only-table" style="max-height:360px; overflow-y:auto; margin-top:0.75rem;">
             <table id="tablaHistorialMesesBD">
               <thead>
                 <tr>
@@ -3028,8 +3038,10 @@ main, .tab-pane {
           </div>
         </div>
 
-        <!-- Detailed Historical Table -->
-        <div class="table-container" style="max-height:620px; overflow-y:auto;">
+        <!-- Tabla completa, plegada para no alargar la pestaña -->
+        <details class="card" id="histTablaCompleta">
+          <summary class="hist-resumen-tabla">📋 Ver tabla completa mes a mes</summary>
+          <div class="table-container" style="max-height:620px; overflow-y:auto; margin-top:0.75rem;">
           <table id="tablaHistoricaDetallada">
             <thead style="position:sticky; top:0; z-index:10; background:var(--bg-surface-elevated);">
               <tr>
@@ -3046,50 +3058,10 @@ main, .tab-pane {
                 <th style="text-align:right; font-weight:700;">Total Mes</th>
               </tr>
             </thead>
-            <tbody id="detailedHistoricalTableBody">
-<tr><td><strong>Ago-24</strong></td><td style="text-align:right;">$53.251</td><td style="text-align:right;">$7.610</td><td style="text-align:right;">$28.550</td><td style="text-align:right;">$9.150</td><td style="text-align:right;">$47.000</td><td style="text-align:right;">$105.000</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$50.000</td><td style="text-align:right; font-weight:700;">$300.561</td></tr>
-              <tr><td><strong>Sep-24</strong></td><td style="text-align:right;">$22.486</td><td style="text-align:right;">$7.280</td><td style="text-align:right;">$19.500</td><td style="text-align:right;">$9.150</td><td style="text-align:right;">$51.000</td><td style="text-align:right;">$105.000</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$50.000</td><td style="text-align:right; font-weight:700;">$264.416</td></tr>
-              <tr><td><strong>Oct-24</strong></td><td style="text-align:right;">$12.930</td><td style="text-align:right;">$6.370</td><td style="text-align:right;">$19.850</td><td style="text-align:right;">$9.208</td><td style="text-align:right;">$52.723</td><td style="text-align:right;">$0</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$97.000</td><td style="text-align:right; font-weight:700;">$198.081</td></tr>
-              <tr><td><strong>Nov-24</strong></td><td style="text-align:right;">$14.081</td><td style="text-align:right;">$6.470</td><td style="text-align:right;">$15.250</td><td style="text-align:right;">$9.208</td><td style="text-align:right;">$49.748</td><td style="text-align:right;">$60.000</td><td style="text-align:right;">$346.506</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$50.000</td><td style="text-align:right; font-weight:700;">$551.263</td></tr>
-              <tr><td><strong>Dic-24</strong></td><td style="text-align:right; color:#10B981;">$12.496</td><td style="text-align:right;">$6.420</td><td style="text-align:right;">$15.750</td><td style="text-align:right;">$9.329</td><td style="text-align:right;">$51.273</td><td style="text-align:right;">$28.000</td><td style="text-align:right;">$348.108</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$100.000</td><td style="text-align:right; font-weight:700;">$571.376</td></tr>
-              <tr><td><strong>Ene-25</strong></td><td style="text-align:right;">$12.597</td><td style="text-align:right;">$6.440</td><td style="text-align:right;">$15.850</td><td style="text-align:right;">$9.329</td><td style="text-align:right;">$52.426</td><td style="text-align:right;">$66.000</td><td style="text-align:right;">$350.320</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$50.000</td><td style="text-align:right; font-weight:700;">$562.962</td></tr>
-              <tr><td><strong>Feb-25</strong></td><td style="text-align:right;">$16.010</td><td style="text-align:right;">$7.160</td><td style="text-align:right;">$15.900</td><td style="text-align:right;">$9.329</td><td style="text-align:right; color:#F43F5E;">$58.696</td><td style="text-align:right;">$60.000</td><td style="text-align:right;">$352.707</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$519.802</td></tr>
-              <tr><td><strong>Mar-25</strong></td><td style="text-align:right;">$15.512</td><td style="text-align:right;">$8.030</td><td style="text-align:right;">$11.350</td><td style="text-align:right;">$9.429</td><td style="text-align:right;">$54.132</td><td style="text-align:right;">$57.800</td><td style="text-align:right;">$354.930</td><td style="text-align:right;">$54.640</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$565.823</td></tr>
-              <tr><td><strong>Abr-25</strong></td><td style="text-align:right;">$18.206</td><td style="text-align:right;">$7.140</td><td style="text-align:right;">$21.100</td><td style="text-align:right;">$9.434</td><td style="text-align:right; color:#10B981;">$46.904</td><td style="text-align:right;">$17.900</td><td style="text-align:right;">$356.679</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$139.600</td><td style="text-align:right; font-weight:700;">$626.963</td></tr>
-              <tr><td><strong>May-25</strong></td><td style="text-align:right;">$17.641</td><td style="text-align:right;">$8.020</td><td style="text-align:right;">$20.900</td><td style="text-align:right;">$9.434</td><td style="text-align:right;">$53.670</td><td style="text-align:right;">$57.990</td><td style="text-align:right;">$357.554</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right;">$153.000</td><td style="text-align:right; font-weight:700;">$678.209</td></tr>
-              <tr><td><strong>Jun-25</strong></td><td style="text-align:right;">$23.359</td><td style="text-align:right;">$7.134</td><td style="text-align:right;">$20.950</td><td style="text-align:right;">$9.537</td><td style="text-align:right;">$53.476</td><td style="text-align:right;">$60.000</td><td style="text-align:right;">$358.261</td><td style="text-align:right;">$23.815</td><td style="text-align:right;">$123.320</td><td style="text-align:right; font-weight:700;">$679.852</td></tr>
-              <tr><td><strong>Jul-25</strong></td><td style="text-align:right;">$40.631</td><td style="text-align:right;">$6.230</td><td style="text-align:right;">$20.850</td><td style="text-align:right;">$9.539</td><td style="text-align:right;">$53.571</td><td style="text-align:right;">$62.363</td><td style="text-align:right;">$357.433</td><td style="text-align:right;">$52.304</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$602.921</td></tr>
-              <tr><td><strong>Ago-25</strong></td><td style="text-align:right;">$28.122</td><td style="text-align:right;">$7.870</td><td style="text-align:right; color:#F43F5E;">$30.300</td><td style="text-align:right;">$9.537</td><td style="text-align:right;">$54.606</td><td style="text-align:right;">$71.700</td><td style="text-align:right;">$359.354</td><td style="text-align:right;">$48.994</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$610.483</td></tr>
-              <tr><td><strong>Sep-25</strong></td><td style="text-align:right;">$23.762</td><td style="text-align:right;">$7.840</td><td style="text-align:right;">$25.500</td><td style="text-align:right;">$9.600</td><td style="text-align:right;">$56.315</td><td style="text-align:right;">$77.000</td><td style="text-align:right;">$360.181</td><td style="text-align:right;">$50.000</td><td style="text-align:right;">$13.841</td><td style="text-align:right; font-weight:700;">$674.039</td></tr>
-              <tr><td><strong>Oct-25</strong></td><td style="text-align:right;">$22.907</td><td style="text-align:right;">$6.920</td><td style="text-align:right;">$25.450</td><td style="text-align:right;">$9.600</td><td style="text-align:right;">$52.365</td><td style="text-align:right;">$25.000</td><td style="text-align:right;">$361.131</td><td style="text-align:right;">$50.000</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$553.373</td></tr>
-              <tr><td><strong>Nov-25</strong></td><td style="text-align:right;">$17.326</td><td style="text-align:right;">$6.030</td><td style="text-align:right;">$20.700</td><td style="text-align:right;">$9.600</td><td style="text-align:right;">$54.647</td><td style="text-align:right;">$21.000</td><td style="text-align:right;">$361.537</td><td style="text-align:right;">$151.336</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$642.176</td></tr>
-              <tr><td><strong>Dic-25</strong></td><td style="text-align:right;">$17.031</td><td style="text-align:right;">$6.880</td><td style="text-align:right;">$20.650</td><td style="text-align:right;">$9.670</td><td style="text-align:right;">$53.854</td><td style="text-align:right;">$81.400</td><td style="text-align:right;">$362.386</td><td style="text-align:right;">$62.891</td><td style="text-align:right;">$128.567</td><td style="text-align:right; font-weight:700;">$743.329</td></tr>
-              <tr><td><strong>Ene-26</strong></td><td style="text-align:right;">$17.531</td><td style="text-align:right;">$5.970</td><td style="text-align:right; color:#10B981;">$11.050</td><td style="text-align:right;">$9.650</td><td style="text-align:right;">$53.553</td><td style="text-align:right;">$38.000</td><td style="text-align:right;">$362.044</td><td style="text-align:right;">$68.921</td><td style="text-align:right;">$180.267</td><td style="text-align:right; font-weight:700;">$746.986</td></tr>
-              <tr><td><strong>Feb-26</strong></td><td style="text-align:right;">$18.196</td><td style="text-align:right;">$5.980</td><td style="text-align:right;">$20.500</td><td style="text-align:right;">$9.650</td><td style="text-align:right;">$52.189</td><td style="text-align:right;">$40.000</td><td style="text-align:right;">$362.785</td><td style="text-align:right;">$80.000</td><td style="text-align:right;">$150.267</td><td style="text-align:right; font-weight:700;">$739.567</td></tr>
-              <tr><td><strong>Mar-26</strong></td><td style="text-align:right;">$17.600</td><td style="text-align:right;">$6.960</td><td style="text-align:right;">$15.600</td><td style="text-align:right;">$9.696</td><td style="text-align:right;">$55.858</td><td style="text-align:right;">$88.000</td><td style="text-align:right;">$363.277</td><td style="text-align:right;">$40.000</td><td style="text-align:right;">$185.700</td><td style="text-align:right; font-weight:700;">$782.691</td></tr>
-              <tr><td><strong>Abr-26</strong></td><td style="text-align:right;">$18.185</td><td style="text-align:right;">$15.414</td><td style="text-align:right;">$21.000</td><td style="text-align:right;">$9.696</td><td style="text-align:right;">$53.844</td><td style="text-align:right;">$83.000</td><td style="text-align:right;">$365.790</td><td style="text-align:right;">$77.486</td><td style="text-align:right;">$22.000</td><td style="text-align:right; font-weight:700;">$666.415</td></tr>
-              <tr><td><strong>May-26</strong></td><td style="text-align:right;">$36.223</td><td style="text-align:right;">$0</td><td style="text-align:right;">$27.050</td><td style="text-align:right;">$9.696</td><td style="text-align:right;">$52.254</td><td style="text-align:right;">$127.300</td><td style="text-align:right;">$370.390</td><td style="text-align:right;">$92.146</td><td style="text-align:right;">$22.000</td><td style="text-align:right; font-weight:700;">$737.059</td></tr>
-              <tr><td><strong>Jun-26</strong></td><td style="text-align:right;">$49.690</td><td style="text-align:right;">$5.320</td><td style="text-align:right;">$17.300</td><td style="text-align:right;">$9.914</td><td style="text-align:right;">$55.022</td><td style="text-align:right;">$20.000</td><td style="text-align:right;">$372.021</td><td style="text-align:right;">$147.213</td><td style="text-align:right;">$50.536</td><td style="text-align:right; font-weight:700;">$727.016</td></tr>
-              <tr><td><strong>Jul-26</strong></td><td style="text-align:right; color:#F43F5E;">$54.618</td><td style="text-align:right;">$8.490</td><td style="text-align:right;">$27.800</td><td style="text-align:right;">$9.914</td><td style="text-align:right;">$49.957</td><td style="text-align:right;">$66.900</td><td style="text-align:right;">$372.317</td><td style="text-align:right;">$100.000</td><td style="text-align:right;">$119.800</td><td style="text-align:right; font-weight:700;">$809.796</td></tr>
-              <tr><td><strong>Ago-26</strong></td><td style="text-align:right;">$27.604</td><td style="text-align:right;">$7.580</td><td style="text-align:right;">$27.600</td><td style="text-align:right;">$9.914</td><td style="text-align:right;">$52.597</td><td style="text-align:right;">$23.200</td><td style="text-align:right;">$372.558</td><td style="text-align:right;">$110.000</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$631.053</td></tr>
-              <tr><td><strong>Sep-26</strong></td><td style="text-align:right;">$17.075</td><td style="text-align:right;">$7.460</td><td style="text-align:right;">$22.200</td><td style="text-align:right;">$9.938</td><td style="text-align:right;">$53.728</td><td style="text-align:right;">$42.900</td><td style="text-align:right;">$374.199</td><td style="text-align:right;">$110.000</td><td style="text-align:right; color:var(--text-dim);">-</td><td style="text-align:right; font-weight:700;">$637.500</td></tr>
-              <tr style="background: var(--bg-surface-elevated); font-weight:700;">
-                <td><strong>PROMEDIO REAL</strong></td>
-                <td style="text-align:right; color:var(--accent-diego);">$24.041</td>
-                <td style="text-align:right; color:var(--accent-diego);">$7.321</td>
-                <td style="text-align:right; color:var(--accent-diego);">$20.712</td>
-                <td style="text-align:right; color:var(--accent-diego);">$9.544</td>
-                <td style="text-align:right; color:var(--accent-diego);">$52.900</td>
-                <td style="text-align:right; color:var(--accent-diego);">$59.418</td>
-                <td style="text-align:right; color:var(--accent-diego);">$360.977</td>
-                <td style="text-align:right; color:var(--accent-diego);">$77.632</td>
-                <td style="text-align:right; color:var(--accent-diego);">$93.661</td>
-                <td style="text-align:right; color:var(--accent-emerald); font-size:1.05rem;">$608.604</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+            <tbody id="detailedHistoricalTableBody"></tbody>
+            </table>
+          </div>
+        </details>
     </div>
 
     <!-- ========================================== -->
@@ -3709,10 +3681,7 @@ main, .tab-pane {
       renderAnalisisMesActual();
       renderDashboardCharts();
       renderCardAnalysis();
-      if (chartHistorico) {
-        chartHistorico.options.plugins.legend.labels.color = chartTextColor();
-        chartHistorico.update();
-      }
+      renderHistoricoPanel();
     }
 
     
@@ -6403,84 +6372,6 @@ main, .tab-pane {
         Chart.defaults.responsive = true;
         Chart.defaults.maintainAspectRatio = false;
       }
-
-      // 3. Chart Histórico 26 Meses (2024 a 2026 Completo)
-      const ctxHist = document.getElementById('chartHistorico')?.getContext('2d');
-      if (ctxHist && !chartHistorico) {
-        chartHistorico = new Chart(ctxHist, {
-          type: 'line',
-          data: {
-            labels: ['Ago-24', 'Sep-24', 'Oct-24', 'Nov-24', 'Dic-24', 'Ene-25', 'Feb-25', 'Mar-25', 'Abr-25', 'May-25', 'Jun-25', 'Jul-25', 'Ago-25', 'Sep-25', 'Oct-25', 'Nov-25', 'Dic-25', 'Ene-26', 'Feb-26', 'Mar-26', 'Abr-26', 'May-26', 'Jun-26', 'Jul-26', 'Ago-26', 'Sep-26'],
-            datasets: [
-              {
-                label: '⚡ Luz (Chilquinta)',
-                data: [53251, 22486, 12930, 14081, 12496, 12597, 16010, 15512, 18206, 17641, 23359, 40631, 28122, 23762, 22907, 17326, 17031, 17531, 18196, 17600, 18185, 36223, 49690, 54618, 27604, 17075],
-                borderColor: '#3B82F6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                tension: 0.3,
-                fill: true,
-                borderWidth: 2
-              },
-              {
-                label: '🔥 Gas',
-                data: [28550, 19500, 19850, 15250, 15750, 15850, 15900, 11350, 21100, 20900, 20950, 20850, 30300, 25500, 25450, 20700, 20650, 11050, 20500, 15600, 21000, 27050, 17300, 27800, 27600, 22200],
-                borderColor: '#F59E0B',
-                backgroundColor: 'transparent',
-                tension: 0.3,
-                borderWidth: 2
-              },
-              {
-                label: '🏢 Gasto Común',
-                data: [47000, 51000, 52723, 49748, 51273, 52426, 58696, 54132, 46904, 53670, 53476, 53571, 54606, 56315, 52365, 54647, 53854, 53553, 52189, 55858, 53844, 52254, 55022, 49957, 52597, 53728],
-                borderColor: '#A855F7',
-                backgroundColor: 'transparent',
-                tension: 0.3,
-                borderWidth: 2
-              },
-              {
-                label: '💧 Agua (Esval)',
-                data: [7610, 7280, 6370, 6470, 6420, 6440, 7160, 8030, 7140, 8020, 7134, 6230, 7870, 7840, 6920, 6030, 6880, 5970, 5980, 6960, 15414, 0, 5320, 8490, 7580, 7460],
-                borderColor: '#10B981',
-                backgroundColor: 'transparent',
-                tension: 0.3,
-                borderWidth: 2
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                ticks: {
-                  color: '#94A3B8',
-                  callback: (val) => '$' + (val / 1000) + 'k'
-                }
-              },
-              x: {
-                grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                ticks: { color: '#94A3B8' }
-              }
-            },
-            plugins: {
-              legend: {
-                position: 'bottom',
-                labels: {
-                  boxWidth: 12,
-                  font: { size: 11 },
-                  color: '#94A3B8'
-                }
-              },
-              tooltip: {
-                callbacks: {
-                  label: (ctx) => ' ' + ctx.dataset.label + ': ' + formatCLP(ctx.raw)
-                }
-              }
-            }
-          }
-        });
-      }
     }
 
     // Dynamic Expense Management
@@ -7278,7 +7169,8 @@ function getMonthCode(monthLabel) {
       } catch(e) {
         console.error('Error consolidando meses históricos:', e);
       }
-      return list;
+      const orden = (m) => { const [mes, anio] = m.code.split('-'); return Number(anio) * 12 + HIST_MESES.indexOf(mes); };
+      return list.sort((a, b) => orden(a) - orden(b));
     }
 
     function renderDetailedHistoricalTable() {
@@ -7306,7 +7198,7 @@ function getMonthCode(monthLabel) {
       let sumMichis = 0, sumHipo = 0, sumSmart = 0, sumSuper = 0, sumTotal = 0;
       let countHipo = 0, countSmart = 0;
 
-      months.forEach(m => {
+      [...months].reverse().forEach(m => {
         sumLuz += m.luz || 0;
         sumAgua += m.agua || 0;
         sumGas += m.gas || 0;
@@ -7376,32 +7268,7 @@ function getMonthCode(monthLabel) {
 
       tbody.innerHTML = html;
 
-      const elLuz = document.getElementById('kpiHistLuz');
-      if (elLuz) elLuz.textContent = formatCLP(avgLuz);
-
-      const elAgua = document.getElementById('kpiHistAgua');
-      if (elAgua) elAgua.textContent = formatCLP(avgAgua);
-
-      const elGas = document.getElementById('kpiHistGas');
-      if (elGas) elGas.textContent = formatCLP(avgGas);
-
-      const elGC = document.getElementById('kpiHistGC');
-      if (elGC) elGC.textContent = formatCLP(avgGC);
-
-      const elHipo = document.getElementById('kpiHistHipo');
-      if (elHipo) elHipo.textContent = formatCLP(avgHipo);
-
-      const elMichis = document.getElementById('kpiHistMichis');
-      if (elMichis) elMichis.textContent = formatCLP(avgMichis);
-
-      if (chartHistorico && typeof chartHistorico.update === 'function') {
-        chartHistorico.data.labels = months.map(m => m.code);
-        if (chartHistorico.data.datasets[0]) chartHistorico.data.datasets[0].data = months.map(m => m.luz);
-        if (chartHistorico.data.datasets[1]) chartHistorico.data.datasets[1].data = months.map(m => m.gas);
-        if (chartHistorico.data.datasets[2]) chartHistorico.data.datasets[2].data = months.map(m => m.gc);
-        if (chartHistorico.data.datasets[3]) chartHistorico.data.datasets[3].data = months.map(m => m.agua);
-        chartHistorico.update();
-      }
+      renderHistoricoPanel();
     }
 
     function repararYDeduplicarBDMeses() {
@@ -7949,8 +7816,25 @@ function getMonthCode(monthLabel) {
       renderDetailedHistoricalTable();
     }
 
+    const HIST_MESES_PAGINA = 6;
+    let histMesesLimite = HIST_MESES_PAGINA;
+
+    // El mes en curso siempre se muestra con los datos actuales, no con su última copia guardada
+    function aplicarCifrasVigentes(mes) {
+      if (!mes || mes.estado === 'Cerrado' || !matchMonth(mes, currentActiveMonth)) return mes;
+      mes.diegoSal = userProfile.diegoSalary;
+      mes.soleSal = userProfile.soledadSalary;
+      mes.totalIng = mes.diegoSal + mes.soleSal;
+      mes.gastosHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
+      const fijosDiego = currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
+      mes.superavit = mes.totalIng - (mes.gastosHogar + fijosDiego);
+      mes.items = currentAuditItems;
+      mes.gastosDiarios = expenses;
+      return mes;
+    }
+
     function renderTablaHistorialMesesBD() {
-      const tbody = document.getElementById('dbMesesTableBody');
+const tbody = document.getElementById('dbMesesTableBody');
       const badge = document.getElementById('dbMesesCountBadge');
       if (!tbody) return;
 
@@ -7965,18 +7849,15 @@ function getMonthCode(monthLabel) {
         return;
       }
 
-      list.forEach(item => {
+      const maximoHogar = Math.max(1, ...list.map(m => Number(m.gastosHogar) || 0));
+      const listaMeses = document.getElementById('dbMesesLista');
+      if (listaMeses) listaMeses.innerHTML = '';
+
+      list.forEach((item, posicion) => {
         const tr = document.createElement('tr');
         const isCerrado = item.estado === 'Cerrado';
-        if (!isCerrado && matchMonth(item, currentActiveMonth)) {
-          item.diegoSal = userProfile.diegoSalary;
-          item.soleSal = userProfile.soledadSalary;
-          item.totalIng = item.diegoSal + item.soleSal;
-          item.gastosHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
-          const fijosDiego = currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
-          item.superavit = item.totalIng - (item.gastosHogar + fijosDiego);
-        }
-        tr.innerHTML = `
+        aplicarCifrasVigentes(item);
+tr.innerHTML = `
           <td><strong>${escapeHtml(item.nombre)}</strong></td>
           <td style="text-align:right; color:var(--accent-diego);">${formatCLP(item.diegoSal)}</td>
           <td style="text-align:right; color:var(--accent-soledad);">${formatCLP(item.soleSal)}</td>
@@ -7993,7 +7874,36 @@ function getMonthCode(monthLabel) {
           </td>
         `;
         tbody.appendChild(tr);
+
+        if (listaMeses && posicion < histMesesLimite) {
+          const fila = document.createElement('button');
+          fila.type = 'button';
+          fila.className = 'mes-fila';
+          fila.addEventListener('click', () => verDetalleMes(item.id || item.code || item.nombre));
+          fila.innerHTML = `
+            <span class="mes-nombre">${escapeHtml(item.nombre)}</span>
+            <span class="badge ${isCerrado ? 'badge-emerald' : 'badge-blue'}">${escapeHtml(item.estado)}</span>
+            <span class="mes-barra"><span style="width:${Math.min(100, Math.round((Number(item.gastosHogar) || 0) / maximoHogar * 100))}%;"></span></span>
+            <span class="mes-dato">Gastos hogar <strong>${formatCLP(item.gastosHogar)}</strong></span>
+            <span class="mes-dato">Superávit <strong>${formatCLP(item.superavit)}</strong></span>`;
+          listaMeses.appendChild(fila);
+        }
       });
+
+      if (listaMeses && (list.length > HIST_MESES_PAGINA)) {
+        const pie = document.createElement('div');
+        pie.className = 'gastos-pie';
+        const quedan = list.length - histMesesLimite;
+        pie.innerHTML = `<span>Mostrando ${Math.min(histMesesLimite, list.length)} de ${list.length}</span>
+          ${quedan > 0 ? `<button type="button" class="btn-secondary" onclick="verMasMesesHist(${HIST_MESES_PAGINA})">Ver ${Math.min(HIST_MESES_PAGINA, quedan)} más</button>` : ''}
+          ${histMesesLimite > HIST_MESES_PAGINA ? `<button type="button" class="btn-secondary" onclick="verMasMesesHist(0)">Ver menos</button>` : ''}`;
+        listaMeses.appendChild(pie);
+      }
+    }
+
+    function verMasMesesHist(cantidad) {
+      histMesesLimite = cantidad ? histMesesLimite + cantidad : HIST_MESES_PAGINA;
+      renderTablaHistorialMesesBD();
     }
 
     function guardarMesEnBD(mesNombre = currentActiveMonth, isCerrado = false) {
@@ -8358,7 +8268,7 @@ function getMonthCode(monthLabel) {
     function verDetalleMes(id) {
       const raw = localStorage.getItem('db_historial_meses');
       const list = parseSeguro(raw, []);
-      const mes = list.find(m => m.id === id || m.code === id || m.nombre === id || matchMonth(m, id));
+      const mes = aplicarCifrasVigentes(list.find(m => m.id === id || m.code === id || m.nombre === id || matchMonth(m, id)));
       if (!mes) return;
 
       const modal = document.getElementById('modalVerMes');
@@ -9433,6 +9343,138 @@ let currentCardAnalysisFilter = 'all';
       document.querySelectorAll('.dona-opcion.activa canvas').forEach(c => Chart.getChart(c)?.resize());
     }
 
+    const HIST_CUENTAS = [
+      { k: 'luz', nombre: 'Luz', icono: '⚡', color: '#3B82F6' },
+      { k: 'gas', nombre: 'Gas', icono: '🔥', color: '#F59E0B' },
+      { k: 'agua', nombre: 'Agua', icono: '💧', color: '#10B981' },
+      { k: 'gc', nombre: 'Gasto Común', icono: '🏢', color: '#A855F7' },
+      { k: 'claro', nombre: 'Plan Claro', icono: '📱', color: '#06B6D4' },
+      { k: 'michis', nombre: 'Michis', icono: '🐱', color: '#EC4899' },
+      { k: 'hipo', nombre: 'Hipotecario', icono: '🏦', color: '#F43F5E' },
+      { k: 'total', nombre: 'Total del mes', icono: '💰', color: '#34D399' }
+    ];
+    const HIST_MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const histEstado = { cuenta: 'luz', vista: 'tiempo', rango: 12 };
+
+    function setHistorico(cambio) {
+      Object.assign(histEstado, cambio);
+      renderHistoricoPanel();
+    }
+
+    // Un mes en $0 es una boleta que no llegó, no un gasto cero: la línea no debe caer
+    function resumenCuentaHist(meses, k) {
+      const validos = meses.filter(m => (m[k] || 0) > 0);
+      if (!validos.length) return null;
+      const orden = [...validos].sort((a, b) => a[k] - b[k]);
+      const ultimo = validos[validos.length - 1];
+      const [mes, anio] = ultimo.code.split('-');
+      const anterior = validos.find(m => m.code === `${mes}-${String(Number(anio) - 1).padStart(2, '0')}`) || null;
+      return { promedio: Math.round(validos.reduce((s, m) => s + m[k], 0) / validos.length), minimo: orden[0], maximo: orden[orden.length - 1], ultimo, anterior };
+    }
+
+    function comparacionHist(r, k) {
+      if (!r.anterior) return '';
+      const pct = Math.round(((r.ultimo[k] - r.anterior[k]) / r.anterior[k]) * 100);
+      if (pct === 0) return `<span class="hist-igual">Igual que ${r.anterior.code}</span>`;
+      return `<span class="${pct > 0 ? 'hist-sube' : 'hist-baja'}">${pct > 0 ? '▲' : '▼'} ${Math.abs(pct)}% ${pct > 0 ? 'más' : 'menos'} que ${r.anterior.code}</span>`;
+    }
+
+    function renderHistoricoPanel() {
+      const cont = document.getElementById('histServicios');
+      if (!cont) return;
+      const meses = getConsolidatedHistoricalMonths();
+      const cuenta = HIST_CUENTAS.find(c => c.k === histEstado.cuenta);
+      const comparar = !cuenta;
+      const vista = comparar ? 'tiempo' : histEstado.vista;
+
+      const boton = (activo, attrs, texto) => `<button type="button" class="hist-chip${activo ? ' activa' : ''}" aria-pressed="${activo}" ${attrs}>${texto}</button>`;
+      cont.innerHTML = HIST_CUENTAS.map(c => boton(c.k === histEstado.cuenta, `onclick="setHistorico({ cuenta: '${c.k}' })"`, `${c.icono} ${c.nombre}`)).join('')
+        + boton(comparar, `onclick="setHistorico({ cuenta: 'comparar' })"`, '📊 Comparar servicios');
+      document.getElementById('histVistas').innerHTML = boton(vista === 'tiempo', `onclick="setHistorico({ vista: 'tiempo' })"`, 'En el tiempo')
+        + boton(vista === 'anios', `${comparar ? 'disabled' : ''} onclick="setHistorico({ vista: 'anios' })"`, 'Por año');
+      document.getElementById('histRangos').innerHTML = vista === 'anios' ? '' : boton(histEstado.rango === 12, `onclick="setHistorico({ rango: 12 })"`, '12 meses') + boton(histEstado.rango === 0, `onclick="setHistorico({ rango: 0 })"`, 'Todo');
+
+      const destacado = document.getElementById('histDestacado');
+      const r = cuenta ? resumenCuentaHist(meses, cuenta.k) : null;
+      destacado.innerHTML = !r ? '<p class="hist-nota">Luz, Gas y Agua juntas, para comparar su temporada alta y baja.</p>' : `
+        <div class="hist-principal"><small>${r.ultimo.code}</small><strong>${formatCLP(r.ultimo[cuenta.k])}</strong>${comparacionHist(r, cuenta.k)}</div>
+        <div class="hist-datos">
+          <div><small>Promedio</small><strong>${formatCLP(r.promedio)}</strong></div>
+          <div><small>Máximo · ${r.maximo.code}</small><strong class="hist-sube">${formatCLP(r.maximo[cuenta.k])}</strong></div>
+          <div><small>Mínimo · ${r.minimo.code}</small><strong class="hist-baja">${formatCLP(r.minimo[cuenta.k])}</strong></div>
+        </div>`;
+
+      document.getElementById('histResumen').innerHTML = HIST_CUENTAS.map(c => {
+        const x = resumenCuentaHist(meses, c.k);
+        if (!x) return '';
+        return `<button type="button" class="hist-fila${c.k === histEstado.cuenta ? ' activa' : ''}" onclick="setHistorico({ cuenta: '${c.k}' }); document.getElementById('histServicios').scrollIntoView({ block: 'center' });">
+          <span class="hist-fila-nombre">${c.icono} ${c.nombre}</span>
+          <strong>${formatCLP(x.promedio)}</strong>
+          <small>Último ${formatCLP(x.ultimo[c.k])} (${x.ultimo.code})</small>
+          <small class="hist-fila-comp">${comparacionHist(x, c.k)}</small>
+        </button>`;
+      }).join('');
+
+      const canvas = document.getElementById('chartHistorico');
+      if (!canvas || !canvas.offsetParent) return;
+      if (chartHistorico) chartHistorico.destroy();
+      const grid = temaClaro() ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.06)';
+      const tick = temaClaro() ? '#475569' : '#94A3B8';
+      const valor = (m, k) => (m[k] || 0) > 0 ? m[k] : null;
+      let labels, datasets;
+
+      if (vista === 'anios') {
+        const anios = [...new Set(meses.map(m => m.code.split('-')[1]))];
+        const tonos = ['#64748B', '#A855F7', cuenta.color, '#F59E0B'];
+        labels = HIST_MESES;
+        datasets = anios.map((a, i) => ({
+          label: `20${a}`,
+          data: HIST_MESES.map(n => { const m = meses.find(x => x.code === `${n}-${a}`); return m ? valor(m, cuenta.k) : null; }),
+          borderColor: i === anios.length - 1 ? cuenta.color : tonos[i % 2],
+          backgroundColor: 'transparent',
+          borderWidth: i === anios.length - 1 ? 3 : 2,
+          tension: 0.3, spanGaps: true, pointRadius: 3
+        }));
+      } else {
+        const visibles = histEstado.rango ? meses.slice(-histEstado.rango) : meses;
+        labels = visibles.map(m => m.code);
+        if (comparar) {
+          datasets = HIST_CUENTAS.filter(c => ['luz', 'gas', 'agua'].includes(c.k)).map(c => ({
+            label: `${c.icono} ${c.nombre}`, data: visibles.map(m => valor(m, c.k)),
+            borderColor: c.color, backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, spanGaps: true, pointRadius: 2
+          }));
+        } else {
+          const datos = visibles.map(m => valor(m, cuenta.k));
+          const validos = datos.filter(v => v !== null);
+          const alto = Math.max(...validos), bajo = Math.min(...validos);
+          const color = (v, base) => v === alto ? '#F43F5E' : v === bajo ? '#10B981' : base;
+          datasets = [
+            { label: cuenta.nombre, data: datos, borderColor: cuenta.color, backgroundColor: `${cuenta.color}22`, fill: true, borderWidth: 3, tension: 0.3, spanGaps: true,
+              pointRadius: datos.map(v => v === alto || v === bajo ? 6 : 3), pointBackgroundColor: datos.map(v => color(v, cuenta.color)), pointBorderColor: datos.map(v => color(v, cuenta.color)) },
+            { label: 'Promedio', data: visibles.map(() => r ? r.promedio : null), borderColor: tick, borderDash: [6, 5], borderWidth: 1.5, pointRadius: 0, fill: false }
+          ];
+        }
+      }
+
+      chartHistorico = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            y: { beginAtZero: cuenta?.k !== 'hipo', grid: { color: grid }, ticks: { color: tick, callback: (v) => `$${Math.round(v / 1000)}k` } },
+            x: { grid: { display: false }, ticks: { color: tick, autoSkip: true, maxTicksLimit: mobileLayout.matches ? 6 : 14, maxRotation: 0 } }
+          },
+          plugins: {
+            legend: { position: 'bottom', labels: { color: chartTextColor(), boxWidth: 14, font: { size: 12 } } },
+            tooltip: { filter: (i) => i.raw !== null, callbacks: { label: (c) => ` ${c.dataset.label}: ${formatCLP(c.raw)}` } }
+          }
+        }
+      });
+    }
+
     function renderCardAnalysisSection() {
       renderCardAnalysis();
     }
@@ -9964,7 +10006,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=36').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=37').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
