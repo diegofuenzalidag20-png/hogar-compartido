@@ -36,4 +36,15 @@ assert.equal(a.getCuentaPrincipalDisponible('Soledad'), -500);
 assert.equal(a.getCuentaPrincipalDisponible('Diego'), 2010 - 365000);
 assert.equal(a.getMetaMensual(), 1000);
 
-console.log('OK: cuota Smart Visa y disponible');
+// Los gastos sueltos salen del presupuesto; lo planificado a mano se respeta
+const quitar = new Function(`${fn('quitarGastosDelPresupuesto')}\nreturn quitarGastosDelPresupuesto;`)();
+const items = [
+  { id: 'a', name: 'Santa isabel', isCustom: true, base: 9000, actual: 12000 },
+  { id: 'b', name: 'Curso planificado', isCustom: true, base: 5000, actual: 5000 },
+  { id: 'c', name: 'Luz', base: 20000, actual: 20000 },
+];
+quitar(items, [{ id: 'b' }]);
+assert.deepEqual(items.map((i) => i.base), [0, 5000, 20000]);
+assert.equal(items[0].fromQuickBill, true);
+
+console.log('OK: cuota Smart Visa, disponible y presupuesto');

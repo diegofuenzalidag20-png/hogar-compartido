@@ -1857,6 +1857,9 @@ main, .tab-pane {
 
   .overlay-backdrop.show { display: block; position: fixed; inset: 0; z-index: 2040; background: rgba(0, 0, 0, 0.55); }
   .app-menu.open { display: flex; flex-direction: column; position: fixed; top: 62px; right: 10px; z-index: 2050; min-width: 240px; padding: 0.4rem; border-radius: 16px; border: 1px solid var(--border-glass); background: #151E31; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5); }
+  .period-actions { display: none !important; }
+  .app-menu.open { max-height: calc(100dvh - 150px); overflow-y: auto; }
+  .app-menu-label { padding: 0.45rem 0.85rem 0.15rem; color: var(--text-muted); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
   .app-menu button { min-height: 48px; padding: 0 0.85rem; border: 0; border-radius: 10px; background: none; color: var(--text-main); font: inherit; font-size: 0.95rem; font-weight: 600; text-align: left; }
 
   #quickBillCard { position: fixed; left: 0; right: 0; bottom: 0; z-index: 2050; max-height: 90dvh; margin: 0 !important; padding: 1rem 0.85rem calc(1rem + env(safe-area-inset-bottom)) !important; overflow-y: auto; border: 0 !important; border-top: 1px solid var(--border-glass) !important; border-radius: 20px 20px 0 0 !important; background: #111827 !important; transform: translateY(105%); transition: transform 0.22s ease; visibility: hidden; }
@@ -1975,7 +1978,7 @@ main, .tab-pane {
             </div>
           </div>
 
-          <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+          <div class="period-actions" style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
             <button type="button" class="btn-primary" onclick="guardarMesEnBD()" style="background:linear-gradient(135deg, #3B82F6, #1D4ED8); font-weight:700; padding:0.55rem 1rem; font-size:0.85rem;" title="Guardar respaldo del mes en la base de datos">
               <span>💾</span> Guardar en Base de Datos
             </button>
@@ -3155,6 +3158,46 @@ main, .tab-pane {
     <!-- 4. TAB CUENTAS & COFRES (DIEGO & SOLEDAD)   -->
     <!-- ========================================== -->
     <div id="tab-cuentas" class="tab-pane">
+      <!-- PANEL CENTRAL DE SUELDOS -->
+      <div class="card" id="salaryCentralCard">
+        <div class="card-title" style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+          <span>💰 Sueldos del mes</span>
+          <button type="button" class="btn-secondary" onclick="openSalaryModal('Diego')" style="padding:0.45rem 0.8rem; font-size:0.8rem;">⏱️ Horas extras y bonos</button>
+        </div>
+          <!-- MODIFICACIÓN DIRECTA DE SUELDO DIEGO (FAIL-SAFE) -->
+          <div style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.3); border-radius:12px; padding:0.75rem 1rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <div style="font-size:0.75rem; text-transform:uppercase; color:var(--accent-diego); font-weight:800; letter-spacing:0.04em;">🔵 Sueldo Líquido Percibido (Diego):</div>
+              <div style="font-size:0.72rem; color:var(--text-muted);">Monto exacto transferido a tu cuenta (sueldo base + horas extras):</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+              <span style="font-weight:800; color:var(--accent-diego); font-size:1.1rem;">$</span>
+              <input type="number" id="directDiegoSalaryInput" value="1214038" step="1" min="0" oninput="onDirectSalaryLiveChange('Diego', this.value)" style="width:140px; font-weight:800; font-size:1.1rem; color:var(--accent-diego); text-align:right; padding:0.35rem 0.5rem;">
+              <button type="button" class="btn-primary" onclick="guardarSueldoDirecto('Diego')" style="padding:0.4rem 0.85rem; font-size:0.8rem; background:linear-gradient(135deg, #3B82F6, #1D4ED8);">
+                💾 Guardar
+              </button>
+            </div>
+          </div>
+          <!-- MODIFICACIÓN DIRECTA DE SUELDO SOLEDAD (FAIL-SAFE) -->
+          <div style="background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.3); border-radius:12px; padding:0.75rem 1rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <div style="font-size:0.75rem; text-transform:uppercase; color:var(--accent-soledad); font-weight:800; letter-spacing:0.04em;">🟣 Sueldo Líquido Percibido (Soledad):</div>
+              <div style="font-size:0.72rem; color:var(--text-muted);">Monto exacto recibido en cuenta bancaria:</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+              <span style="font-weight:800; color:var(--accent-soledad); font-size:1.1rem;">$</span>
+              <input type="number" id="directSoleSalaryInput" value="875000" step="1" min="0" oninput="onDirectSalaryLiveChange('Soledad', this.value)" style="width:140px; font-weight:800; font-size:1.1rem; color:var(--accent-soledad); text-align:right; padding:0.35rem 0.5rem;">
+              <button type="button" class="btn-primary" onclick="guardarSueldoDirecto('Soledad')" style="padding:0.4rem 0.85rem; font-size:0.8rem; background:linear-gradient(135deg, #A855F7, #7C3AED);">
+                💾 Guardar
+              </button>
+            </div>
+          </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; font-weight:800;">
+          <span>Total del hogar</span>
+          <span id="cuentasTotalSalaryDisplay" style="color:var(--accent-emerald); font-size:1.25rem;">$0</span>
+        </div>
+      </div>
+
       <!-- Welcome Header -->
       <div class="banner-highlight">
         <div class="banner-text">
@@ -3181,22 +3224,7 @@ main, .tab-pane {
               <span class="pill-partner pill-diego" id="cuentasDiegoSalaryDisplay">$1.214.038 / mes</span>
             </div>
 
-          <!-- MODIFICACIÓN DIRECTA DE SUELDO DIEGO (FAIL-SAFE) -->
-          <div style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.3); border-radius:12px; padding:0.75rem 1rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-            <div>
-              <div style="font-size:0.75rem; text-transform:uppercase; color:var(--accent-diego); font-weight:800; letter-spacing:0.04em;">🔵 Sueldo Líquido Percibido (Diego):</div>
-              <div style="font-size:0.72rem; color:var(--text-muted);">Monto exacto transferido a tu cuenta (sueldo base + horas extras):</div>
-            </div>
-            <div style="display:flex; align-items:center; gap:0.4rem;">
-              <span style="font-weight:800; color:var(--accent-diego); font-size:1.1rem;">$</span>
-              <input type="number" id="directDiegoSalaryInput" value="1214038" step="1" min="0" oninput="onDirectSalaryLiveChange('Diego', this.value)" style="width:140px; font-weight:800; font-size:1.1rem; color:var(--accent-diego); text-align:right; padding:0.35rem 0.5rem;">
-              <button type="button" class="btn-primary" onclick="guardarSueldoDirecto('Diego')" style="padding:0.4rem 0.85rem; font-size:0.8rem; background:linear-gradient(135deg, #3B82F6, #1D4ED8);">
-                💾 Guardar
-              </button>
-            </div>
-          </div>
-
-            <div class="card-desc">Asigna cuánto dinero destinar a cada una de tus cuentas y metas:</div>
+          <div class="card-desc">Asigna cuánto dinero destinar a cada una de tus cuentas y metas:</div>
 
             <div style="display:flex; flex-direction:column; gap:0.75rem;">
               <!-- Cuenta Fan (Auto-calculada) -->
@@ -3314,22 +3342,7 @@ main, .tab-pane {
               <span class="pill-partner pill-soledad" id="cuentasSoleSalaryDisplay">$875.000 / mes</span>
             </div>
 
-          <!-- MODIFICACIÓN DIRECTA DE SUELDO SOLEDAD (FAIL-SAFE) -->
-          <div style="background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.3); border-radius:12px; padding:0.75rem 1rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-            <div>
-              <div style="font-size:0.75rem; text-transform:uppercase; color:var(--accent-soledad); font-weight:800; letter-spacing:0.04em;">🟣 Sueldo Líquido Percibido (Soledad):</div>
-              <div style="font-size:0.72rem; color:var(--text-muted);">Monto exacto recibido en cuenta bancaria:</div>
-            </div>
-            <div style="display:flex; align-items:center; gap:0.4rem;">
-              <span style="font-weight:800; color:var(--accent-soledad); font-size:1.1rem;">$</span>
-              <input type="number" id="directSoleSalaryInput" value="875000" step="1" min="0" oninput="onDirectSalaryLiveChange('Soledad', this.value)" style="width:140px; font-weight:800; font-size:1.1rem; color:var(--accent-soledad); text-align:right; padding:0.35rem 0.5rem;">
-              <button type="button" class="btn-primary" onclick="guardarSueldoDirecto('Soledad')" style="padding:0.4rem 0.85rem; font-size:0.8rem; background:linear-gradient(135deg, #A855F7, #7C3AED);">
-                💾 Guardar
-              </button>
-            </div>
-          </div>
-
-            <div class="card-desc">Asigna cuánto dinero destinar a tus cuentas operativas y tus 3 cofres propios:</div>
+          <div class="card-desc">Asigna cuánto dinero destinar a tus cuentas operativas y tus 3 cofres propios:</div>
 
             <div style="display:flex; flex-direction:column; gap:0.75rem;">
               <!-- Chequera BancoEstado (Auto-calculada) -->
@@ -3573,6 +3586,12 @@ main, .tab-pane {
   <div id="overlayBackdrop" class="overlay-backdrop" onclick="closeAppMenu(); closeQuickSheet();"></div>
 
   <div id="appMenu" class="app-menu">
+    <div class="app-menu-label">Este mes</div>
+    <button type="button" onclick="closeAppMenu(); guardarMesEnBD()">💾 Guardar en Base de Datos</button>
+    <button type="button" onclick="closeAppMenu(); abrirModalCerrarMes()">🚀 Cerrar mes y pasar al siguiente</button>
+    <button type="button" onclick="closeAppMenu(); goToTab('tab-historico')">📂 Ver Base de Datos</button>
+    <button type="button" id="menuReabrirMes" onclick="closeAppMenu(); deshacerUltimoCierreMes()">↩️ Reabrir mes anterior</button>
+    <div class="app-menu-label">General</div>
     <button type="button" onclick="closeAppMenu(); goToTab('tab-dash')">📊 Resumen general</button>
     <button type="button" onclick="closeAppMenu(); openSyncModal()">☁️ Sincronización</button>
     <button type="button" onclick="closeAppMenu(); goToTab('tab-guia')">📘 Guía de uso</button>
@@ -3655,6 +3674,7 @@ main, .tab-pane {
       const menu = document.getElementById('appMenu');
       const open = !menu.classList.contains('open');
       document.getElementById('menuInstallPwa').style.display = window.matchMedia('(display-mode: standalone)').matches ? 'none' : '';
+      document.getElementById('menuReabrirMes').style.display = localStorage.getItem('ultimo_mes_cerrado_backup') ? '' : 'none';
       menu.classList.toggle('open', open);
       setOverlay(open);
     }
@@ -3749,7 +3769,7 @@ main, .tab-pane {
       };
 
       currentAuditItems.push(newItem);
-      const customs = currentAuditItems.filter(it => it.isCustom);
+      const customs = currentAuditItems.filter(it => it.isCustom && !it.fromQuickBill);
       localStorage.setItem('custom_audit_items', JSON.stringify(customs));
       const month = document.getElementById('audit-month-select')?.value || '2026-10';
       localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
@@ -3765,7 +3785,7 @@ main, .tab-pane {
     function deleteAuditItem(id) {
       if (confirm('¿Deseas eliminar este ítem personalizado?')) {
         currentAuditItems = currentAuditItems.filter(it => it.id !== id);
-        const customs = currentAuditItems.filter(it => it.isCustom);
+        const customs = currentAuditItems.filter(it => it.isCustom && !it.fromQuickBill);
         localStorage.setItem('custom_audit_items', JSON.stringify(customs));
         const month = document.getElementById('audit-month-select')?.value || '2026-10';
         localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
@@ -3828,6 +3848,17 @@ main, .tab-pane {
 
     let currentAuditItems = JSON.parse(JSON.stringify(masterAuditItems));
 
+    // Los gastos sin boleta conocida antes se guardaban también como presupuesto
+    function quitarGastosDelPresupuesto(items, itemsManuales) {
+      const manuales = new Set((itemsManuales || []).map(it => it.id));
+      items.forEach(it => {
+        if (it.isCustom && !it.fromQuickBill && !manuales.has(it.id)) {
+          it.base = 0;
+          it.fromQuickBill = true;
+        }
+      });
+    }
+
     function loadCurrentMonthAudit() {
       const selectEl = document.getElementById('audit-month-select');
       const month = selectEl ? selectEl.value : 'Oct-26';
@@ -3837,6 +3868,7 @@ main, .tab-pane {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
             currentAuditItems = parsed;
+          quitarGastosDelPresupuesto(currentAuditItems, JSON.parse(localStorage.getItem('custom_audit_items') || '[]'));
           }
         } catch(e) {}
       }
@@ -4499,6 +4531,8 @@ main, .tab-pane {
       const elDiegoSalDisplay = document.getElementById('cuentasDiegoSalaryDisplay');
       const elSoleSalDisplay = document.getElementById('cuentasSoleSalaryDisplay');
       if (elDiegoSalDisplay) elDiegoSalDisplay.textContent = `${formatCLP(diegoSal)} / mes`;
+      const elTotalCuentas = document.getElementById('cuentasTotalSalaryDisplay');
+      if (elTotalCuentas) elTotalCuentas.textContent = formatCLP(totalSal);
       if (elSoleSalDisplay) elSoleSalDisplay.textContent = `${formatCLP(soleSal)} / mes`;
 
       const inDiego = document.getElementById('directDiegoSalaryInput');
@@ -4769,6 +4803,7 @@ main, .tab-pane {
         if (elD) elD.textContent = `${formatCLP(val)} / mes`;
         updateSoleMargenDisplay();
       }
+      document.getElementById('cuentasTotalSalaryDisplay').textContent = formatCLP(userProfile.diegoSalary + userProfile.soledadSalary);
     }
 
     function saveDiegoCofres() {
@@ -5387,9 +5422,10 @@ main, .tab-pane {
           cat: cat.replace(/^[^\w\s]+\s*/, ''),
           resp: payer,
           cuenta: account,
-          base: amount,
+          base: 0,
           actual: amount,
-          isCustom: true
+          isCustom: true,
+          fromQuickBill: true
         };
         currentAuditItems.push(newItem);
       }
@@ -5667,6 +5703,8 @@ main, .tab-pane {
     function buildCompleteFamilyPayload() {
       const activeMonthName = typeof currentActiveMonth !== 'undefined' ? currentActiveMonth : (localStorage.getItem('app_active_month') || 'Noviembre 2026');
       const monthCode = typeof getMonthCode === 'function' ? getMonthCode(activeMonthName) : (document.getElementById('audit-month-select')?.value || 'Nov-26');
+      const mesVisto = document.getElementById('audit-month-select')?.value;
+      const boletasMesActivo = mesVisto && mesVisto !== monthCode ? localStorage.getItem(`audit_${monthCode}`) : null;
       return {
         v: 3,
         timestamp: Date.now(),
@@ -5674,7 +5712,7 @@ main, .tab-pane {
         month: monthCode,
         activeMonth: activeMonthName,
         currentActiveMonth: activeMonthName,
-        auditItems: currentAuditItems || [],
+        auditItems: boletasMesActivo ? JSON.parse(boletasMesActivo) : (currentAuditItems || []),
         expenses: expenses || [],
         userProfile: userProfile || {},
         customAuditItems: JSON.parse(localStorage.getItem('custom_audit_items') || '[]'),
@@ -5985,6 +6023,7 @@ main, .tab-pane {
       // 2. SINCRONIZAR BOLETAS AUDITADAS
       if (Array.isArray(data.auditItems) && data.auditItems.length > 0) {
         currentAuditItems = data.auditItems;
+        quitarGastosDelPresupuesto(currentAuditItems, data.customAuditItems);
         localStorage.setItem(`audit_${currentActiveMonth}`, JSON.stringify(currentAuditItems));
         localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
       }
@@ -8116,6 +8155,10 @@ function getMonthCode(monthLabel) {
       // 4. Avanzar al nuevo mes
       currentActiveMonth = nextMonth;
       localStorage.setItem('app_active_month', currentActiveMonth);
+      actualizarSelectPeriodo();
+
+      // Los gastos sueltos pertenecen solo al mes que se cierra
+      currentAuditItems = currentAuditItems.filter(it => !it.fromQuickBill);
 
       // 5. Reiniciar boletas variables a 0 para el nuevo mes (manteniendo fijos e hipotecario)
       currentAuditItems.forEach(it => {
@@ -8166,6 +8209,7 @@ function getMonthCode(monthLabel) {
 
       currentActiveMonth = backup.closedMonth;
       localStorage.setItem('app_active_month', currentActiveMonth);
+      actualizarSelectPeriodo();
 
       currentAuditItems = backup.currentAuditItems;
       localStorage.setItem(`audit_${currentActiveMonth}`, JSON.stringify(currentAuditItems));
@@ -9675,6 +9719,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
       mobileLayout.addEventListener('change', placeQuickCard);
       loadCustomItems();
       loadUserProfile();
+      actualizarSelectPeriodo();
       loadCurrentMonthAudit();
       initAllGlassSelects();
       
@@ -9705,7 +9750,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=31').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=32').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
