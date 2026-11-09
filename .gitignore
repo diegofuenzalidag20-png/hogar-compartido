@@ -3,6 +3,7 @@ scratch/
 *.log
 *.tmp
 __pycache__/
+graphify-out/
 
 # System files
 .DS_Store

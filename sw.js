@@ -1,4 +1,4 @@
-const CACHE_NAME = 'finanzas-pareja-v28';
+const CACHE_NAME = 'finanzas-pareja-v29';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -36,6 +36,8 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
+  // Firestore nunca debe salir de la caché: con una lectura vieja los teléfonos no se ven entre sí
+  if (req.method !== 'GET' || new URL(req.url).hostname === 'firestore.googleapis.com') return;
   const isHtml = req.mode === 'navigate' ||
                  (req.headers.get('accept') && req.headers.get('accept').includes('text/html')) ||
                  req.url.endsWith('.html') ||

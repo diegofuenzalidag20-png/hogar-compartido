@@ -5842,7 +5842,7 @@ main, .tab-pane {
       if (headerCloudDot) {
         headerCloudDot.innerHTML = online 
           ? `<span onclick="openSyncModal()" title="Sincronizado en tiempo real con Firebase — Toca para abrir Sincronización" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem; color:#34D399; font-size:0.75rem; font-weight:700; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); padding:0.2rem 0.55rem; border-radius:20px;"><span style="width:7px; height:7px; border-radius:50%; background:#10B981; box-shadow:0 0 8px #10B981; display:inline-block;"></span> Nube en Vivo</span>`
-          : `<span onclick="openSyncModal()" title="Modo local — Toca para conectar" style="cursor:pointer; color:var(--text-muted); font-size:0.75rem;">⚪ Offline</span>`;
+          : `<span onclick="openSyncModal()" title="Modo local — Toca para conectar" style="cursor:pointer; color:#FBBF24; font-size:0.75rem; font-weight:700;">${text}</span>`;
       }
     }
 
@@ -5937,11 +5937,11 @@ main, .tab-pane {
       }
 
       // 8. RE-RENDERIZADO COMPLETO E INMEDIATO DE LA INTERFAZ
+      if (typeof syncProfileToInputs === 'function') syncProfileToInputs();
       if (typeof renderExpenses === 'function') renderExpenses();
       if (typeof renderAuditTable === 'function') renderAuditTable();
       if (typeof renderChecklist === 'function') renderChecklist();
       if (typeof updateHeaderSalaries === 'function') updateHeaderSalaries();
-      if (typeof syncProfileToInputs === 'function') syncProfileToInputs();
       if (typeof populateSalaryModalInputs === 'function') populateSalaryModalInputs();
       if (typeof updateDiegoColchonDisplay === 'function') updateDiegoColchonDisplay();
       if (typeof updateSoleMargenDisplay === 'function') updateSoleMargenDisplay();
@@ -5957,15 +5957,73 @@ main, .tab-pane {
 
     window.renderExpensesTable = renderExpenses;
 
-    async function pushToFirestore(isSilent = false) {
-      try {
-        const payload = buildCompleteFamilyPayload();
-        payload.timestamp = Date.now();
-        payload.clientSessionId = CLIENT_SESSION_ID;
-        lastUploadedTimestamp = payload.timestamp;
-        localStorage.setItem('finanzas_last_local_update', payload.timestamp.toString());
+    // Sincronización a tres vías: la base es el último estado acordado con la nube.
+    // Comparar contra la base detecta cualquier cambio local, aunque no haya pasado por triggerAutoSyncToCloud.
+    const SYNC_SECTIONS = { auditItems: 'id', expenses: 'id', customAuditItems: 'id', dbMeses: 'nombre', userProfile: 'fields', activeMonth: null, ultimoCierreBackup: null };
+    const SYNC_BASE_KEY = 'finanzas_sync_base';
+    const SYNC_VERSION_KEY = 'finanzas_sync_update_time';
+    let cloudSyncPromise = null;
+    let cloudSyncQueued = false;
 
-        const body = {
+    function mergeThreeWay(base, local, remote) {
+      const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+      // Si ambos lados cambiaron lo mismo, gana el teléfono que está guardando.
+      const pick = (b, l, r) => same(l, b) ? r : l;
+      const merged = {};
+      for (const section in SYNC_SECTIONS) {
+        const idKey = SYNC_SECTIONS[section];
+        const [b, l, r] = [base[section], local[section], remote[section]];
+        if (!idKey) { merged[section] = pick(b, l, r); continue; }
+        const index = (v) => new Map(idKey === 'fields' ? Object.entries(v || {}) : (v || []).map(it => [it[idKey] ?? JSON.stringify(it), it]));
+        const [bm, lm, rm] = [index(b), index(l), index(r)];
+        const out = new Map();
+        for (const key of new Set([...lm.keys(), ...rm.keys()])) {
+          const value = pick(bm.get(key), lm.get(key), rm.get(key));
+          if (value !== undefined) out.set(key, value);
+        }
+        merged[section] = idKey === 'fields' ? Object.fromEntries(out) : [...out.values()];
+      }
+      return merged;
+    }
+
+    function pickSyncState(payload) {
+      const state = {};
+      for (const section in SYNC_SECTIONS) state[section] = payload[section] ?? null;
+      return state;
+    }
+
+    // Primer arranque de esta versión: manda quien escribió por última vez, pero se
+    // rescatan los gastos del mes activo que solo existen en este teléfono.
+    function firstRunBase(local, remote, lastWrite, remoteTs) {
+      if (!remote) return {};
+      if (lastWrite >= remoteTs) return remote;
+      const sameExpense = (a, b) => a.id === b.id || (a.date === b.date && a.amount === b.amount && a.desc === b.desc);
+      const inActiveMonth = (e) => new Date(`${e.date}T12:00:00`).toLocaleDateString('es-CL', { month: 'long', year: 'numeric' }).replace(' de ', ' ').toLowerCase() === String(remote.activeMonth).toLowerCase();
+      const remoteExpenses = remote.expenses || [];
+      const isRescued = (e) => inActiveMonth(e) && !remoteExpenses.some((r) => sameExpense(e, r));
+      return { ...local, expenses: (local.expenses || []).filter((e) => !isRescued(e)) };
+    }
+
+    async function readCloudDoc() {
+      const res = await fetch(FIRESTORE_DOC_URL, { cache: 'no-store' });
+      if (res.status === 404) return { updateTime: null, payload: null };
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const doc = await res.json();
+      let payload = null;
+      if (doc.fields?.appStateJson?.stringValue) {
+        try { payload = JSON.parse(doc.fields.appStateJson.stringValue); } catch (e) {}
+      }
+      if (!payload && doc.fields) payload = parseFirestoreDocFields(doc.fields);
+      return { updateTime: doc.updateTime, payload };
+    }
+
+    // Devuelve null si otro teléfono guardó después de nuestra lectura.
+    async function writeCloudDoc(payload, updateTime) {
+      const precondition = updateTime ? `currentDocument.updateTime=${encodeURIComponent(updateTime)}` : 'currentDocument.exists=false';
+      const res = await fetch(`${FIRESTORE_DOC_URL}&${precondition}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           fields: {
             appStateJson: { stringValue: JSON.stringify(payload) },
             timestamp: { integerValue: payload.timestamp.toString() },
@@ -5973,25 +6031,86 @@ main, .tab-pane {
             month: { stringValue: payload.month || 'Nov-26' },
             activeMonth: { stringValue: payload.activeMonth || currentActiveMonth }
           }
-        };
+        })
+      });
+      if (res.ok) return (await res.json()).updateTime;
+      const error = (await res.json().catch(() => ({}))).error;
+      if (['FAILED_PRECONDITION', 'ALREADY_EXISTS', 'ABORTED'].includes(error?.status)) return null;
+      throw new Error(error?.message || `HTTP ${res.status}`);
+    }
 
-        const res = await fetch(FIRESTORE_DOC_URL, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
+    function rememberSyncedState(state, updateTime, timestamp) {
+      localStorage.setItem(SYNC_BASE_KEY, JSON.stringify(state));
+      localStorage.setItem(SYNC_VERSION_KEY, updateTime);
+      localStorage.setItem('finanzas_last_local_update', String(timestamp));
+    }
 
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error?.message || `HTTP ${res.status}`);
+    async function runCloudSync() {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const { updateTime, payload: remotePayload } = await readCloudDoc();
+        const remote = remotePayload && pickSyncState(remotePayload);
+        const remoteTs = remotePayload?.timestamp || 0;
+        const local = pickSyncState(buildCompleteFamilyPayload());
+        const savedBase = JSON.parse(localStorage.getItem(SYNC_BASE_KEY) || 'null');
+        const lastWrite = parseInt(localStorage.getItem('finanzas_last_local_update') || '0', 10);
+        const base = savedBase || firstRunBase(local, remote, lastWrite, remoteTs);
+        const localChanged = JSON.stringify(local) !== JSON.stringify(base);
+        const remoteChanged = updateTime !== localStorage.getItem(SYNC_VERSION_KEY);
+
+        if (remote && !localChanged) {
+          if (!remoteChanged) return 'idle';
+          applyRemoteDataToApp(remotePayload);
+          rememberSyncedState(pickSyncState(buildCompleteFamilyPayload()), updateTime, remoteTs || Date.now());
+          return 'pulled';
         }
 
+        let merged = false;
+        if (remote && remoteChanged) {
+          const state = mergeThreeWay(base, local, remote);
+          merged = JSON.stringify(state) !== JSON.stringify(local);
+          if (merged) applyRemoteDataToApp({ ...state, currentActiveMonth: state.activeMonth });
+        }
+
+        const payload = buildCompleteFamilyPayload();
+        payload.timestamp = Date.now();
+        payload.clientSessionId = CLIENT_SESSION_ID;
+        const newUpdateTime = await writeCloudDoc(payload, updateTime);
+        if (newUpdateTime === null) continue;
+        rememberSyncedState(pickSyncState(payload), newUpdateTime, payload.timestamp);
+        return merged ? 'merged' : 'pushed';
+      }
+      throw new Error('La nube cambió demasiadas veces seguidas. Se reintentará automáticamente.');
+    }
+
+    // Una sola sincronización a la vez: una subida lenta nunca pisa a otra más nueva.
+    function syncWithCloud() {
+      if (cloudSyncPromise) { cloudSyncQueued = true; return cloudSyncPromise; }
+      cloudSyncPromise = (async () => {
+        try {
+          let result = 'idle';
+          do {
+            cloudSyncQueued = false;
+            const step = await runCloudSync();
+            if (step !== 'idle') result = step;
+          } while (cloudSyncQueued);
+          return result;
+        } finally {
+          cloudSyncPromise = null;
+        }
+      })();
+      return cloudSyncPromise;
+    }
+
+    async function pushToFirestore(isSilent = false) {
+      try {
+        const result = await syncWithCloud();
         updateCloudStatusBadge(true, '🟢 Nube en Vivo');
         if (!isSilent) showToast('☁️ ¡Guardado en la nube de Firebase con éxito!');
+        else if (result === 'pulled' || result === 'merged') showToast('☁️ ¡Sincronizado con tu pareja!');
         return true;
       } catch (err) {
         console.error('Error guardando en Firestore:', err);
-        updateCloudStatusBadge(false, '⚠️ Error Nube');
+        updateCloudStatusBadge(false, '⚠️ Sin guardar en nube');
         if (!isSilent) alert('Error al guardar en Firebase: ' + err.message);
         return false;
       }
@@ -6000,62 +6119,18 @@ main, .tab-pane {
     async function pullFromFirestore(isSilent = false) {
       try {
         if (!isSilent) showToast('⏳ Descargando datos desde Firebase...');
-        const res = await fetch(FIRESTORE_DOC_URL, { cache: 'no-store' });
-        if (!res.ok) {
-          if (res.status === 404) {
-            if (!isSilent) showToast('ℹ️ No hay datos guardados aún en la nube.');
-            return false;
-          }
-          throw new Error(`HTTP ${res.status}`);
-        }
-
-        const doc = await res.json();
-        if (!doc.fields) {
-          if (!isSilent) showToast('ℹ️ Sin registros en la nube aún.');
-          return false;
-        }
-
-        let payload = null;
-        if (doc.fields.appStateJson && doc.fields.appStateJson.stringValue) {
-          try {
-            payload = JSON.parse(doc.fields.appStateJson.stringValue);
-          } catch(e) {}
-        }
-        if (!payload) {
-          payload = parseFirestoreDocFields(doc.fields);
-        }
-
-        if (!payload) {
-          if (!isSilent) showToast('ℹ️ No se pudieron leer los datos.');
-          return false;
-        }
-
-        // Si es sincronización automática silenciosa, ignorar si ya lo tenemos o fue de esta sesión
-        if (isSilent) {
-          if (payload.clientSessionId && payload.clientSessionId === CLIENT_SESSION_ID) {
-            return false;
-          }
-          const currentLocalUpdate = parseInt(localStorage.getItem('finanzas_last_local_update') || '0', 10);
-          if (payload.timestamp && payload.timestamp <= currentLocalUpdate) {
-            return false;
-          }
-        }
-
-        console.log('🔄 Sincronizando datos remotos desde Firebase...', payload);
-        localStorage.setItem('finanzas_last_local_update', (payload.timestamp || Date.now()).toString());
-        applyRemoteDataToApp(payload);
+        const result = await syncWithCloud();
         updateCloudStatusBadge(true, '🟢 Nube en Vivo');
-
         if (!isSilent) {
           showToast('☁️ ¡Datos actualizados desde Firebase!');
           closeSyncModal();
-        } else {
-          showToast('☁️ ¡Sincronizado con tu pareja en tiempo real!');
+        } else if (result === 'pulled' || result === 'merged') {
+          showToast('☁️ ¡Sincronizado con tu pareja!');
         }
         return true;
       } catch (err) {
-        console.error('Error descargando de Firestore:', err);
-        updateCloudStatusBadge(false, '⚠️ Sin Conexión');
+        console.error('Error sincronizando con Firestore:', err);
+        updateCloudStatusBadge(false, '⚠️ Sin guardar en nube');
         if (!isSilent) alert('Error al descargar de Firebase: ' + err.message);
         return false;
       }
@@ -6063,30 +6138,39 @@ main, .tab-pane {
 
     function triggerAutoSyncToCloud(immediate = false) {
       if (autoSyncCloudTimer) clearTimeout(autoSyncCloudTimer);
+      autoSyncCloudTimer = null;
       if (immediate) {
         pushToFirestore(true);
       } else {
         autoSyncCloudTimer = setTimeout(() => {
+          autoSyncCloudTimer = null;
           pushToFirestore(true);
         }, 350);
       }
     }
 
     function initFirebaseSync() {
-      updateCloudStatusBadge(true, '🟢 Nube en Vivo');
       // Descarga inicial automática al abrir la app
       pullFromFirestore(true);
 
-      // Sincronización automática periódica y reactiva
+      // El ciclo periódico también reintenta lo que no se pudo subir
       if (cloudPollInterval) clearInterval(cloudPollInterval);
       cloudPollInterval = setInterval(() => {
         if (!document.hidden) pullFromFirestore(true);
       }, 15000);
 
       window.addEventListener('visibilitychange', () => {
-        if (!document.hidden) pullFromFirestore(true);
+        // Al salir de la app no se puede esperar al temporizador
+        if (document.hidden) {
+          if (autoSyncCloudTimer) triggerAutoSyncToCloud(true);
+        } else {
+          pullFromFirestore(true);
+        }
       });
       window.addEventListener('focus', () => {
+        pullFromFirestore(true);
+      });
+      window.addEventListener('online', () => {
         pullFromFirestore(true);
       });
     }
@@ -6100,7 +6184,6 @@ main, .tab-pane {
         const tokenInput = document.getElementById('vpsTokenInput');
         if (urlInput) urlInput.value = vpsUrl;
         if (tokenInput) tokenInput.value = vpsToken;
-        updateCloudStatusBadge(true, '🟢 Nube en Vivo');
       } catch (e) {
         console.warn('loadSavedCloudSettings warning:', e);
       }
@@ -7756,7 +7839,14 @@ function getMonthCode(monthLabel) {
       localStorage.setItem('db_historial_meses', JSON.stringify(uniqueList));
       renderTablaHistorialMesesBD();
       renderDetailedHistoricalTable();
-      showToast(`💾 ¡Mes "${mesNombre}" guardado con éxito en la Base de Datos!`);
+      if (isCerrado) {
+        showToast(`💾 ¡Mes "${mesNombre}" guardado con éxito en la Base de Datos!`);
+        return;
+      }
+      showToast('⏳ Guardando en la nube...');
+      pushToFirestore(true).then(ok => showToast(ok
+        ? `💾 ¡Mes "${mesNombre}" guardado en la nube!`
+        : `⚠️ "${mesNombre}" quedó solo en este teléfono. Se reintentará automáticamente.`));
     }
 
     function asegurarMesActivoEnBD(mesNombre) {
@@ -8920,6 +9010,7 @@ function getMonthCode(monthLabel) {
             }
           }
 
+          Chart.getChart(ctx.canvas)?.destroy();
           cardDoughnutCharts[cfg.key] = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -9445,10 +9536,10 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
       const qDate = document.getElementById('quickDate');
       if (qDate) qDate.value = getLocalDateISO();
       initCharts();
+      syncProfileToInputs();
       renderExpenses();
       inicializarBDMeses(); 
       updateHeaderSalaries();
-      syncProfileToInputs();
       renderAuditTable();
       renderDashboardCharts();
       renderDetailedHistoricalTable();
@@ -9467,7 +9558,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=20261101c').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=29').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
