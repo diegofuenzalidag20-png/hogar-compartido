@@ -7120,7 +7120,21 @@ function getMonthCode(monthLabel) {
       let otrosServicios = getItemsSum(n => n.includes('aseo') || n.includes('waldorf') || n.includes('contribución') || n.includes('contribucion'));
       superOtros += otrosServicios;
 
-      let total = monthRecord.gastosHogar || (luz + agua + gas + claro + gc + michis + hipo + smart + superOtros);
+      // Lo realmente pagado manda sobre la boleta, que puede haber quedado con su valor por defecto
+      const pagado = (patron) => gastosDiarios.reduce((suma, g) => {
+        const texto = `${g.category || ''} ${g.desc || ''}`;
+        return patron.test(texto) && !/huasco/i.test(texto) ? suma + (Number(g.amount) || 0) : suma;
+      }, 0);
+      const antesDePagos = luz + agua + gas + claro + gc + michis;
+      luz = pagado(/\bluz\b|chilquinta/i) || luz;
+      agua = pagado(/\bagua\b|esval/i) || agua;
+      gas = pagado(/\bgas\b/i) || gas;
+      claro = pagado(/\bclaro\b/i) || claro;
+      gc = pagado(/gasto com[uú]n/i) || gc;
+      michis = pagado(/michi/i) || michis;
+      const ajustePagos = luz + agua + gas + claro + gc + michis - antesDePagos;
+
+      let total = monthRecord.gastosHogar ? monthRecord.gastosHogar + ajustePagos : (luz + agua + gas + claro + gc + michis + hipo + smart + superOtros);
 
       if (luz === 0 && agua === 0 && gas === 0 && monthRecord.rawItems && Object.keys(monthRecord.rawItems).length > 0) {
         const raw = monthRecord.rawItems;
@@ -10006,7 +10020,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=37').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=38').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }

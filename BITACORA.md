@@ -186,6 +186,13 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-09] — Historial Usa lo Realmente Pagado en Meses Cerrados (v38)
+* **Motivo:** Oct-26 mostraba valores por defecto de las boletas en vez de lo pagado.
+* **Regla de negocio:** Hasta septiembre 2026 las cuentas de consumo se guardaban con el título del mes anterior (consumo ahora, pago al mes siguiente). Octubre repite esos valores por decisión de los usuarios, y desde entonces cada gasto se registra en su mes real.
+* **Solución Técnica:** `extractMonthlyBreakdown()` usa la suma de `gastosDiarios` para Luz, Agua, Gas, Plan Claro, Gasto Común y Michis cuando existen; si no hay pagos, usa la boleta. El total del mes se ajusta con la misma diferencia.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `sw.js` (`finanzas-pareja-v38`), `BITACORA.md`.
+* **Impacto:** El Historial refleja lo pagado, y los meses futuros quedan correctos al cerrarlos.
+
 ### [2026-11-09] — Historial Rediseñado: Evolución por Cuenta y Meses en Lista (v37)
 * **Motivo:** El gráfico de servicios mezclaba cuatro líneas y la pestaña dependía de tarjetas con textos fijos y tablas anchas.
 * **Solución Técnica:**
