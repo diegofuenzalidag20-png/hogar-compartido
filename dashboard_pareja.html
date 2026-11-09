@@ -1829,6 +1829,13 @@ main, .tab-pane {
 }
 
 
+.mach-nota { margin-top: 0.45rem; color: var(--text-muted); font-size: 0.75rem; }
+.mach-lunes-fila { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.45rem; }
+.mach-lunes { padding: 0.3rem 0.55rem; border: 1px solid var(--border-glass); border-radius: 999px; background: var(--bg-surface-hover); color: var(--text-main); font: inherit; font-size: 0.78rem; font-weight: 600; }
+.mach-lunes:disabled { opacity: 0.6; }
+.mach-ajuste { display: flex; gap: 0.4rem; margin-top: 0.55rem; }
+.mach-ajuste input { flex: 1; min-width: 0; }
+
 /* Navegación móvil: barra inferior, cabecera compacta y hoja de registro */
 .bottom-nav, .app-menu, .overlay-backdrop, .header-menu-btn, .sheet-close { display: none; }
 #toast.has-action { pointer-events: auto; display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; }
@@ -1858,6 +1865,7 @@ main, .tab-pane {
   .overlay-backdrop.show { display: block; position: fixed; inset: 0; z-index: 2040; background: rgba(0, 0, 0, 0.55); }
   .app-menu.open { display: flex; flex-direction: column; position: fixed; top: 62px; right: 10px; z-index: 2050; min-width: 240px; padding: 0.4rem; border-radius: 16px; border: 1px solid var(--border-glass); background: #151E31; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5); }
   .period-actions { display: none !important; }
+  .mach-lunes { min-height: 44px; }
   .app-menu.open { max-height: calc(100dvh - 150px); overflow-y: auto; }
   .app-menu-label { padding: 0.45rem 0.85rem 0.15rem; color: var(--text-muted); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
   .app-menu button { min-height: 48px; padding: 0 0.85rem; border: 0; border-radius: 10px; background: none; color: var(--text-main); font: inherit; font-size: 0.95rem; font-weight: 600; text-align: left; }
@@ -3273,12 +3281,12 @@ main, .tab-pane {
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
                   <div>
                     <strong style="color:var(--text-main); font-size:0.9rem;">3. Mach Prepago (Bolsillo Semanal)</strong>
-                    <div style="font-size:0.72rem; color:var(--text-muted); margin-top:0.15rem;">Bolsillo semanal $35.000 cada lunes & modo recuperación</div>
+                    <div style="font-size:0.72rem; color:var(--text-muted); margin-top:0.15rem;">Se transfiere cada lunes desde Cuenta Fan, si hay fondos</div>
                   </div>
                   <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem;">
                     <div style="display:flex; align-items:center; gap:0.35rem;">
-                      <span style="font-size:0.68rem; color:var(--text-muted);">Aporte mes:</span>
-                      <input type="number" id="inputCofreMach" value="140000" step="1000" min="0" oninput="updateDiegoColchonDisplay()" style="font-size:0.9rem; font-weight:700; color:#06B6D4; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                      <span style="font-size:0.68rem; color:var(--text-muted);">Cada lunes:</span>
+                      <input type="number" id="inputCofreMach" value="35000" step="1000" min="0" oninput="updateDiegoColchonDisplay()" style="font-size:0.9rem; font-weight:700; color:#06B6D4; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
                     </div>
                     <div style="display:flex; align-items:center; gap:0.35rem;">
                       <span style="font-size:0.68rem; color:#67E8F9; font-weight:600;">Remanente mes pasado:</span>
@@ -3287,8 +3295,13 @@ main, .tab-pane {
                   </div>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; padding:0.35rem 0.65rem; background:rgba(6,182,212,0.08); border-radius:6px; border:1px solid rgba(6,182,212,0.25);">
-                  <span style="font-size:0.72rem; color:var(--text-muted);">💰 <strong>Total Fondos Disponibles:</strong></span>
-                  <strong id="displayTotalFondosMachDiego" style="font-size:0.95rem; color:#06B6D4; font-family:monospace;">$140.000</strong>
+                  <span style="font-size:0.72rem; color:var(--text-muted);">💰 <strong>Disponible hoy en Mach:</strong></span>
+                  <strong id="displayTotalFondosMachDiego" style="font-size:0.95rem; color:#06B6D4; font-family:monospace;">$0</strong>
+                </div>
+                <div id="machSemanasDisplay"></div>
+                <div class="mach-ajuste">
+                  <input type="number" id="inputMachSaldoReal" min="0" step="1" placeholder="Saldo real hoy en Mach" aria-label="Saldo real hoy en Mach">
+                  <button type="button" class="btn-secondary" onclick="ajustarSaldoMach()">Ajustar</button>
                 </div>
               </div>
 
@@ -4546,7 +4559,7 @@ main, .tab-pane {
       const elMP = document.getElementById('inputCofreMP');
 
       if (elTenpo) elTenpo.value = userProfile.cofresDiego?.tenpoHuasco ?? 300000;
-      if (elMach) elMach.value = userProfile.cofresDiego?.machBolsillo ?? 140000;
+      if (elMach) elMach.value = getMachSemanal().monto;
       if (elMP) elMP.value = userProfile.cofresDiego?.mpAhorro ?? 130000;
 
       // 4b. Inputs de Remanentes Diego
@@ -4627,8 +4640,10 @@ main, .tab-pane {
     function updateDiegoColchonDisplay() {
       const salary = userProfile.diegoSalary || 1214038;
       const tenpo = parseInt(document.getElementById('inputCofreTenpo')?.value, 10) || 0;
-      const mach = parseInt(document.getElementById('inputCofreMach')?.value, 10) || 0;
       const mp = parseInt(document.getElementById('inputCofreMP')?.value, 10) || 0;
+      userProfile.machSemanal = { ...(userProfile.machSemanal || {}), monto: readMoney('inputCofreMach', userProfile.machSemanal?.monto ?? 35000) };
+      const machPlan = getMachSemanal(tenpo, mp);
+      const mach = machPlan.liberado;
       const remTenpo = parseInt(document.getElementById('inputRemanenteTenpoDiego')?.value, 10) || 0;
       const remMach = parseInt(document.getElementById('inputRemanenteMachDiego')?.value, 10) || 0;
       const remMP = parseInt(document.getElementById('inputRemanenteMPDiego')?.value, 10) || 0;
@@ -4657,7 +4672,9 @@ main, .tab-pane {
       if (elDispTenpo) elDispTenpo.textContent = formatCLP(remTenpo + tenpo);
 
       const elDispMach = document.getElementById('displayTotalFondosMachDiego');
-      if (elDispMach) elDispMach.textContent = formatCLP(remMach + mach);
+      if (elDispMach) elDispMach.textContent = formatCLP(remMach + mach + machPlan.ajuste - machPlan.gastado);
+      renderMachSemanal(machPlan);
+      sincronizarItemMach(machPlan);
 
       const elDispMP = document.getElementById('displayTotalAcumuladoMPDiego');
       if (elDispMP) elDispMP.textContent = formatCLP(remMP + mp);
@@ -4809,8 +4826,9 @@ main, .tab-pane {
     function saveDiegoCofres() {
       const salary = userProfile.diegoSalary || 1214038;
       const tenpo = readMoney('inputCofreTenpo', userProfile.cofresDiego?.tenpoHuasco ?? 0);
-      const mach = readMoney('inputCofreMach', userProfile.cofresDiego?.machBolsillo ?? 0);
       const mp = readMoney('inputCofreMP', userProfile.cofresDiego?.mpAhorro ?? 0);
+      userProfile.machSemanal = { ...(userProfile.machSemanal || {}), monto: readMoney('inputCofreMach', userProfile.machSemanal?.monto ?? 35000) };
+      const mach = getMachSemanal(tenpo, mp).liberado;
       const fan = Math.max(0, salary - (tenpo + mach + mp));
 
       const remanenteTenpo = parseInt(document.getElementById('inputRemanenteTenpoDiego')?.value, 10) || 0;
@@ -4824,8 +4842,6 @@ main, .tab-pane {
       userProfile.remanentes.mpDiego = remanenteMP;
 
       // Sincronizar en la tabla de boletas
-      const itemMach = currentAuditItems.find(it => it.name.includes('Bolsillo Mach') || it.id === 'item-15');
-      if (itemMach) { itemMach.base = mach; itemMach.actual = mach; }
 
       const itemMP = currentAuditItems.find(it => it.name.includes('Mercado Pago') || it.id === 'item-16');
       if (itemMP) { itemMP.base = mp; itemMP.actual = mp; }
@@ -8122,7 +8138,7 @@ function getMonthCode(monthLabel) {
       const saldoRemanenteMPSoledad = Math.max(0, (userProfile.remanentes?.mpSoledad || 0) + (userProfile.cofresSoledad?.mpAhorro ?? 0) - (spentByAcc['mpSoledad'] || 0));
       const saldoRemanenteBancoSole = Math.max(0, (userProfile.remanentes?.bancoSole || 0) + (userProfile.cofresSoledad?.bancoReserva ?? 0) - (spentByAcc['reservaSole'] || 0));
       const saldoRemanenteTenpoDiego = Math.max(0, (userProfile.remanentes?.tenpoDiego || 0) + (userProfile.cofresDiego?.tenpoHuasco ?? 0) - (spentByAcc['tenpoDiego'] || 0));
-      const saldoRemanenteMachDiego = Math.max(0, (userProfile.remanentes?.machDiego || 0) + (userProfile.cofresDiego?.machBolsillo ?? 0) - (spentByAcc['machDiego'] || 0));
+      const saldoRemanenteMachDiego = Math.max(0, getMachSemanal().disponible);
       const saldoRemanenteTenpoSole = Math.max(0, (userProfile.remanentes?.tenpoSoledad || 0) + (userProfile.cofresSoledad?.tenpoBolsillo ?? 0) - (spentByAcc['tenpoSoledad'] || 0));
 
       // Tarjeta Smart Visa: calcular deuda remanente que pasa al siguiente mes
@@ -8148,6 +8164,9 @@ function getMonthCode(monthLabel) {
         deudaPrevia: deudaRestanteSmart,
         cuotaMes: userProfile.cofresSoledad?.smartVisa ?? 0
       };
+
+      // El ajuste y las excepciones valen solo para el mes que se cierra
+      userProfile.machSemanal = { monto: getMachSemanal().monto };
 
       // Guardar el perfil con los remanentes actualizados
       saveUserProfile();
@@ -8776,6 +8795,92 @@ function getMonthCode(monthLabel) {
       return asignado > sueldo ? `<br><strong style="color:#F43F5E;">⚠️ Asignaste ${formatCLP(asignado - sueldo)} más que el sueldo.</strong>` : '';
     }
 
+    // Mach recibe una transferencia cada lunes desde Cuenta Fan, solo si Fan tenía fondos ese día
+    function getMachSemanal(tenpo = userProfile.cofresDiego?.tenpoHuasco ?? 0, mp = userProfile.cofresDiego?.mpAhorro ?? 0) {
+      const cfg = userProfile.machSemanal || {};
+      const monto = cfg.monto ?? 35000;
+      const ajuste = cfg.ajuste ?? 0;
+      const excepciones = cfg.excepciones || {};
+      const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+      const [nombreMes, anioMes] = String(currentActiveMonth).trim().split(/\s+/);
+      const mes = meses.indexOf(String(nombreMes).toLowerCase());
+      const anio = parseInt(anioMes, 10);
+      const hoy = getLocalDateISO();
+      const fondoFan = (userProfile.diegoSalary || 0) - tenpo - mp;
+      const gastosFan = expenses.filter(e => normalizeAccountKey(e.account) === 'fanDiego');
+      const lunes = [];
+      let liberado = 0;
+      for (let d = new Date(anio, mes, 1); d.getMonth() === mes; d.setDate(d.getDate() + 1)) {
+        if (d.getDay() !== 1) continue;
+        const fecha = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const futuro = fecha > hoy;
+        const gastadoAntes = gastosFan.reduce((acc, e) => e.date < fecha ? acc + (Number(e.amount) || 0) : acc, 0);
+        const automatico = fondoFan - gastadoAntes - liberado >= monto;
+        const transferido = !futuro && (excepciones[fecha] ?? automatico);
+        if (transferido) liberado += monto;
+        lunes.push({ fecha, etiqueta: d.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' }), futuro, transferido, automatico });
+      }
+      const pendientes = lunes.filter(l => l.futuro);
+      const gastado = expenses.reduce((acc, e) => normalizeAccountKey(e.account) === 'machDiego' ? acc + (Number(e.amount) || 0) : acc, 0);
+      return {
+        monto, ajuste, lunes, liberado, gastado,
+        porLiberar: pendientes.length * monto,
+        totalMes: liberado + pendientes.length * monto,
+        proximo: pendientes[0] || null,
+        disponible: (userProfile.remanentes?.machDiego ?? 0) + liberado + ajuste - gastado
+      };
+    }
+
+    function sincronizarItemMach(plan) {
+      const item = currentAuditItems.find(it => it.id === 'item-15' || it.name.includes('Bolsillo Mach'));
+      if (!item || (item.base === plan.totalMes && item.actual === plan.liberado)) return;
+      item.base = plan.totalMes;
+      item.actual = plan.liberado;
+      item.name = 'Bolsillo Mach (semanal)';
+      const code = getMonthCode(currentActiveMonth);
+      if (document.getElementById('audit-month-select')?.value === code) {
+        localStorage.setItem(`audit_${code}`, JSON.stringify(currentAuditItems));
+      }
+    }
+
+    function renderMachSemanal(plan) {
+      const cont = document.getElementById('machSemanasDisplay');
+      if (!cont) return;
+      const chips = plan.lunes.map(l => {
+        const icono = l.futuro ? '⏳' : l.transferido ? '✅' : '❌';
+        return `<button type="button" class="mach-lunes" ${l.futuro ? 'disabled' : `onclick="toggleMachLunes('${l.fecha}')"`}>${l.etiqueta} ${icono}</button>`;
+      }).join('');
+      const proximo = plan.proximo ? ` · Próximo: ${plan.proximo.etiqueta}` : '';
+      const ajuste = plan.ajuste ? `<div class="mach-nota">Ajuste a saldo real: ${plan.ajuste > 0 ? '+' : '-'}${formatCLP(Math.abs(plan.ajuste))}</div>` : '';
+      cont.innerHTML = `<div class="mach-nota">Liberado ${formatCLP(plan.liberado)} · Por liberar ${formatCLP(plan.porLiberar)}${proximo}</div><div class="mach-lunes-fila">${chips}</div>${ajuste}<div class="mach-nota">Toca un lunes pasado si la transferencia no coincide.</div>`;
+    }
+
+    function toggleMachLunes(fecha) {
+      const item = getMachSemanal().lunes.find(l => l.fecha === fecha);
+      if (!item || item.futuro) return;
+      const excepciones = { ...(userProfile.machSemanal?.excepciones || {}) };
+      const nuevo = !item.transferido;
+      if (nuevo === item.automatico) delete excepciones[fecha];
+      else excepciones[fecha] = nuevo;
+      userProfile.machSemanal = { ...(userProfile.machSemanal || {}), excepciones };
+      syncProfileToInputs();
+      saveUserProfile();
+    }
+
+    function ajustarSaldoMach() {
+      const real = readMoney('inputMachSaldoReal', null);
+      if (real === null || real < 0) {
+        alert('Escribe cuánto tienes hoy en Mach.');
+        return;
+      }
+      const plan = getMachSemanal();
+      userProfile.machSemanal = { ...(userProfile.machSemanal || {}), ajuste: plan.ajuste + real - plan.disponible };
+      document.getElementById('inputMachSaldoReal').value = '';
+      syncProfileToInputs();
+      saveUserProfile();
+      showToast(`💰 Saldo de Mach ajustado a ${formatCLP(real)}`);
+    }
+
     function normalizeAccountKey(acc) {
       const a = (acc || '').toLowerCase().trim();
       if (a.includes('tenpo') && (a.includes('diego') || a.includes('huasco') || (!a.includes('soledad') && !a.includes('sole')))) return 'tenpoDiego';
@@ -8814,8 +8919,8 @@ function getMonthCode(monthLabel) {
         owner: 'Diego',
         isPrimary: false,
         sourceAccount: 'Cuenta Fan',
-        getBudget: () => userProfile.cofresDiego?.machBolsillo ?? 140000,
-        getRemanente: () => userProfile.remanentes?.machDiego ?? 0,
+        getBudget: () => getMachSemanal().liberado,
+        getRemanente: () => (userProfile.remanentes?.machDiego ?? 0) + Math.max(0, getMachSemanal().ajuste),
         color: '#06B6D4',
         badgeClass: 'badge-blue',
         icon: '⚡'
@@ -8842,11 +8947,11 @@ function getMonthCode(monthLabel) {
         sourceAccount: 'Sueldo Líquido Diego',
         getBudget: () => {
           const sal = userProfile.diegoSalary || 1214038;
-          const trans = (userProfile.cofresDiego?.tenpoHuasco ?? 300000) + (userProfile.cofresDiego?.machBolsillo ?? 140000) + (userProfile.cofresDiego?.mpAhorro ?? 130000);
+          const trans = (userProfile.cofresDiego?.tenpoHuasco ?? 300000) + getMachSemanal().liberado + (userProfile.cofresDiego?.mpAhorro ?? 130000);
           return Math.max(0, sal - trans);
         },
         getTotalSalary: () => userProfile.diegoSalary || 1214038,
-        getTotalTransfersOut: () => (userProfile.cofresDiego?.tenpoHuasco ?? 300000) + (userProfile.cofresDiego?.machBolsillo ?? 140000) + (userProfile.cofresDiego?.mpAhorro ?? 130000),
+        getTotalTransfersOut: () => (userProfile.cofresDiego?.tenpoHuasco ?? 300000) + getMachSemanal().liberado + (userProfile.cofresDiego?.mpAhorro ?? 130000),
         getRemanente: () => userProfile.remanentes?.fanDiego ?? 0,
         color: '#3B82F6',
         badgeClass: 'badge-blue',
@@ -8990,6 +9095,12 @@ function getMonthCode(monthLabel) {
           }
         });
 
+        const machPlan = cfg.key === 'machDiego' ? getMachSemanal() : null;
+        if (machPlan && machPlan.ajuste < 0) {
+          totalSpent -= machPlan.ajuste;
+          categoryMap['Sin registrar'] = -machPlan.ajuste;
+        }
+
         const isSavingsCard = (cfg.key === 'mpDiego' || cfg.key === 'mpSoledad' || cfg.key === 'reservaSole');
         const isCreditCard = (cfg.key === 'smartVisaSole');
 
@@ -9031,6 +9142,7 @@ function getMonthCode(monthLabel) {
           transferHtml = `
             <div class="card-analysis-badge-transfer" style="background:rgba(16,185,129,0.15); color:#34D399; border:1px solid rgba(16,185,129,0.3);">
               <span>📥 Fondos transferidos desde: <strong>${cfg.sourceAccount}</strong></span>
+              ${machPlan ? `<span>•</span> <span>🗓️ ${machPlan.lunes.filter(l => l.transferido).length} de ${machPlan.lunes.length} lunes${machPlan.proximo ? ` · Próximo ${machPlan.proximo.etiqueta} +${formatCLP(machPlan.monto)}` : ''}</span>` : ''}
               ${remanente > 0 ? `<span>•</span> <span>⏱️ Remanente mes anterior: <strong>${formatCLP(remanente)}</strong></span>` : ''}
             </div>
           `;
@@ -9750,7 +9862,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=32').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=33').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
