@@ -26,6 +26,12 @@ assert.equal(mergeThreeWay(estado({ expenses: [gasto('a', 1)] }), estado({ expen
 // El perfil se combina por campo
 assert.deepEqual(mergeThreeWay(estado({ userProfile: { diegoSalary: 1, soledadSalary: 1 } }), estado({ userProfile: { diegoSalary: 2, soledadSalary: 1 } }), estado({ userProfile: { diegoSalary: 1, soledadSalary: 3 } })).userProfile, { diegoSalary: 2, soledadSalary: 3 });
 
+// Dentro de un campo del perfil, cada teléfono conserva lo suyo
+assert.deepEqual(
+  mergeThreeWay(estado({ userProfile: {} }), estado({ userProfile: { machSemanal: { monto: 35000 } } }), estado({ userProfile: { machSemanal: { ajuste: -43880, monto: 35000 } } })).userProfile.machSemanal,
+  { monto: 35000, ajuste: -43880 },
+);
+
 // Mes cerrado en el otro teléfono: se adopta el mes nuevo y no vuelven los gastos viejos
 const cierre = mergeThreeWay(estado({ expenses: [gasto('a')] }), estado({ expenses: [gasto('a'), gasto('b')] }), estado({ activeMonth: 'Diciembre 2026', expenses: [] }));
 assert.equal(cierre.activeMonth, 'Diciembre 2026');

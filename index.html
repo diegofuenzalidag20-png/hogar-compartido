@@ -1836,6 +1836,21 @@ main, .tab-pane {
 .mach-ajuste { display: flex; gap: 0.4rem; margin-top: 0.55rem; }
 .mach-ajuste input { flex: 1; min-width: 0; }
 
+.dona-selector { display: none; }
+.cofre-fila { display: grid; grid-template-columns: 1fr auto; gap: 0.25rem 0.75rem; align-items: center; width: 100%; min-height: 44px; padding: 0; border: 0; background: none; color: var(--text-main); font: inherit; text-align: left; cursor: pointer; }
+.cofre-nombre { font-weight: 700; font-size: 0.92rem; }
+.cofre-monto { font-size: 1.05rem; font-family: monospace; }
+.cofre-barra { grid-column: 1 / -1; height: 6px; border-radius: 999px; background: rgba(148, 163, 184, 0.2); overflow: hidden; }
+.cofre-barra span { display: block; height: 100%; }
+.cofre-sub { grid-column: 1 / -1; color: var(--text-muted); font-size: 0.75rem; }
+.card-detalle { margin-top: 0.85rem; }
+.meta-real-fila { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.4rem 0; border-top: 1px solid var(--border-glass); font-size: 0.85rem; }
+.meta-real-fila small { color: var(--text-muted); font-weight: 500; }
+#metaRealLista { margin-top: 0.75rem; }
+.gastos-pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 0; color: var(--text-muted); font-size: 0.82rem; }
+.gastos-pie span { width: 100%; text-align: center; }
+.gastos-pie button { min-height: 44px; }
+
 /* Navegación móvil: barra inferior, cabecera compacta y hoja de registro */
 .bottom-nav, .app-menu, .overlay-backdrop, .header-menu-btn, .sheet-close { display: none; }
 #toast.has-action { pointer-events: auto; display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; }
@@ -1865,7 +1880,17 @@ main, .tab-pane {
   .overlay-backdrop.show { display: block; position: fixed; inset: 0; z-index: 2040; background: rgba(0, 0, 0, 0.55); }
   .app-menu.open { display: flex; flex-direction: column; position: fixed; top: 62px; right: 10px; z-index: 2050; min-width: 240px; padding: 0.4rem; border-radius: 16px; border: 1px solid var(--border-glass); background: #151E31; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5); }
   .period-actions { display: none !important; }
-  .mach-lunes { min-height: 44px; }
+  .dona-selector { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; }
+  .dona-selector button { flex: 1; min-height: 44px; }
+  .dona-selector button.activa { background: var(--accent-amber) !important; color: #111827 !important; }
+  .dona-opcion:not(.activa) { display: none !important; }
+  .dona-opcion canvas { min-height: 0; }
+  #tab-mes-actual > .kpi-grid { grid-template-columns: 1fr 1fr !important; gap: 0.5rem !important; }
+  #tab-mes-actual > .kpi-grid .kpi-card { padding: 0.75rem !important; min-width: 0; }
+  #tab-mes-actual > .kpi-grid .kpi-value { font-size: 1.15rem !important; }
+  #tab-mes-actual > .kpi-grid .kpi-sub { font-size: 0.72rem !important; }
+  #tab-mes-actual .btn-primary[onclick="renderAnalisisMesActual()"] { display: none !important; }
+.mach-lunes { min-height: 44px; }
   .app-menu.open { max-height: calc(100dvh - 150px); overflow-y: auto; }
   .app-menu-label { padding: 0.45rem 0.85rem 0.15rem; color: var(--text-muted); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
   .app-menu button { min-height: 48px; padding: 0 0.85rem; border: 0; border-radius: 10px; background: none; color: var(--text-main); font: inherit; font-size: 0.95rem; font-weight: 600; text-align: left; }
@@ -1946,9 +1971,6 @@ main, .tab-pane {
       </button>
       <button class="tab-btn" onclick="switchTab('tab-mes-actual', this)">
         <span>📈</span> Análisis Mes Actual
-      </button>
-      <button class="tab-btn" onclick="switchTab('tab-dash', this)">
-        <span>📊</span> Dashboard Resumen
       </button>
       <button class="tab-btn" onclick="switchTab('tab-historico', this)">
         <span>💾</span> Base de Datos & Histórico
@@ -2640,6 +2662,49 @@ main, .tab-pane {
           <div class="kpi-value" id="kpiMesSuperavit">$747.036</div>
           <div class="kpi-sub" id="kpiMesSuperavitSub">33.8% de capacidad de ahorro libre</div>
         </div>
+        <div class="kpi-card amber">
+          <div class="kpi-header"><span>Disponible Diego</span><span class="kpi-arrow-btn">🛡️</span></div>
+          <div class="kpi-value" id="dashKpiOxigenoDiego">$151.426</div>
+          <div class="kpi-sub" id="dashKpiOxigenoDiegoSub">Fondos de Cuenta Fan menos gastos registrados</div>
+        </div>
+
+        <div class="kpi-card purple">
+          <div class="kpi-header"><span>Disponible Soledad</span><span class="kpi-arrow-btn">🟣</span></div>
+          <div class="kpi-value" id="dashKpiMargenSoledad">$678.839</div>
+          <div class="kpi-sub" id="dashKpiMargenSoledadSub">Fondos de la Chequera menos gastos registrados</div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN INFERIOR: DIAGNÓSTICO INTELIGENTE & TOP 5 GASTOS -->
+      <div class="grid-bottom-diagnostics" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap:1.25rem; width:100%; max-width:100%; box-sizing:border-box;">
+        
+        <!-- Diagnóstico Semáforo del Mes -->
+        <div class="card" style="border-top: 4px solid var(--accent-emerald);">
+          <div class="card-title" style="color:#10B981;">
+            <span>🩺 Diagnóstico & Semáforo del Mes Actual</span>
+          </div>
+          <div class="card-desc">Evaluación automática del comportamiento de las cuentas de este mes:</div>
+          <div id="analisisMesAlertasContainer" style="display:flex; flex-direction:column; gap:0.6rem; margin-top:0.75rem;">
+            <!-- Se llena dinámicamente -->
+          </div>
+        </div>
+      </div>
+
+      <!-- GRID DE LOS OTROS 3 GRÁFICOS ANALÍTICOS DEL MES -->
+      <div class="grid-analytical-charts" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap:1.25rem; margin-bottom:1.5rem; width:100%; max-width:100%; box-sizing:border-box;">
+        
+        <!-- Gráfico 4: Presupuesto Meta vs Real por Rubro este Mes -->
+        <div class="card" style="display:flex; flex-direction:column; justify-content:space-between;">
+          <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>📊 Presupuesto Meta vs Real en Tabla</span>
+            <span class="badge badge-purple" style="font-size:0.7rem;">Comparativa</span>
+          </div>
+          <div class="card-desc">Compara lo planificado (azul) contra lo pagado efectivamente en la tabla (púrpura).</div>
+          <div style="position:relative; height:260px; margin-top:0.75rem;">
+            <canvas id="chartMesPresupuestoVsReal"></canvas>
+          </div>
+          <div id="metaRealLista"></div>
+        </div>
       </div>
 
       <!-- SECCIÓN: 3 DONAS DE DESGLOSE DE GASTOS (GLOBAL, DIEGO, SOLEDAD) -->
@@ -2655,10 +2720,15 @@ main, .tab-pane {
           <span class="badge badge-purple" style="font-size:0.75rem;">3 Vistas Comparativas</span>
         </div>
 
+        <div class="dona-selector">
+          <button type="button" class="chip-btn activa" data-dona="global" onclick="elegirDona('global')">Todos</button>
+          <button type="button" class="chip-btn" data-dona="diego" onclick="elegirDona('diego')">Diego</button>
+          <button type="button" class="chip-btn" data-dona="soledad" onclick="elegirDona('soledad')">Soledad</button>
+        </div>
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1.25rem;">
-          
+
           <!-- Dona 1: Global Familiar -->
-          <div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-top: 4px solid var(--accent-emerald);">
+          <div class="card dona-opcion activa" data-dona="global" style="display:flex; flex-direction:column; justify-content:space-between; border-top: 4px solid var(--accent-emerald);">
             <div>
               <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
                 <span>🌐 Desglose Global Familiar</span>
@@ -2672,7 +2742,7 @@ main, .tab-pane {
           </div>
 
           <!-- Dona 2: Gastos Diego -->
-          <div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-top: 4px solid var(--accent-diego);">
+          <div class="card dona-opcion" data-dona="diego" style="display:flex; flex-direction:column; justify-content:space-between; border-top: 4px solid var(--accent-diego);">
             <div>
               <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
                 <span>🔵 Gastos Pagados por Diego</span>
@@ -2686,7 +2756,7 @@ main, .tab-pane {
           </div>
 
           <!-- Dona 3: Gastos Soledad -->
-          <div class="card" style="display:flex; flex-direction:column; justify-content:space-between; border-top: 4px solid var(--accent-soledad);">
+          <div class="card dona-opcion" data-dona="soledad" style="display:flex; flex-direction:column; justify-content:space-between; border-top: 4px solid var(--accent-soledad);">
             <div>
               <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
                 <span>🟣 Gastos Pagados por Soledad</span>
@@ -2722,13 +2792,13 @@ main, .tab-pane {
             </div>
           </div>
           <button type="button" id="btnToggleCardAnalysis" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.4); color:#93C5FD; border-radius:20px; padding:0.45rem 1rem; font-size:0.82rem; font-weight:700; display:flex; align-items:center; gap:0.5rem; cursor:pointer; transition:all 0.25s; flex-shrink:0;">
-            <span id="iconToggleCardAnalysis" style="transition:transform 0.3s ease;">▼</span>
-            <span id="textToggleCardAnalysis">Ver Análisis por Tarjeta</span>
+            <span id="iconToggleCardAnalysis" style="transition:transform 0.3s ease; transform:rotate(180deg);">▼</span>
+            <span id="textToggleCardAnalysis">Ocultar Análisis por Tarjeta</span>
           </button>
         </div>
 
         <!-- Contenedor Desplegable (Oculto por defecto para optimizar espacio vertical) -->
-        <div id="containerCardAnalysisContent" style="display:none; margin-top:1.25rem; border-top:1px solid var(--border-color); padding-top:1.25rem;">
+        <div id="containerCardAnalysisContent" style="display:block; margin-top:1.25rem; border-top:1px solid var(--border-color); padding-top:1.25rem;">
           
           <!-- Banner Explicativo de Transferencias Internas -->
           <div style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.25); border-radius:10px; padding:0.75rem 1rem; margin-bottom:1.25rem; display:flex; align-items:center; gap:0.6rem; font-size:0.82rem; color:#93C5FD;">
@@ -2761,18 +2831,6 @@ main, .tab-pane {
       <!-- GRID DE LOS OTROS 3 GRÁFICOS ANALÍTICOS DEL MES -->
       <div class="grid-analytical-charts" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap:1.25rem; margin-bottom:1.5rem; width:100%; max-width:100%; box-sizing:border-box;">
         
-        <!-- Gráfico 4: Presupuesto Meta vs Real por Rubro este Mes -->
-        <div class="card" style="display:flex; flex-direction:column; justify-content:space-between;">
-          <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
-            <span>📊 Presupuesto Meta vs Real en Tabla</span>
-            <span class="badge badge-purple" style="font-size:0.7rem;">Comparativa</span>
-          </div>
-          <div class="card-desc">Compara lo planificado (azul) contra lo pagado efectivamente en la tabla (púrpura).</div>
-          <div style="position:relative; height:260px; margin-top:0.75rem;">
-            <canvas id="chartMesPresupuestoVsReal"></canvas>
-          </div>
-        </div>
-
         <!-- Gráfico 5: Aporte & Carga Real por Integrante -->
         <div class="card" style="display:flex; flex-direction:column; justify-content:space-between;">
           <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
@@ -2798,21 +2856,7 @@ main, .tab-pane {
         </div>
       </div>
 
-      <!-- SECCIÓN INFERIOR: DIAGNÓSTICO INTELIGENTE & TOP 5 GASTOS -->
-      <div class="grid-bottom-diagnostics" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap:1.25rem; width:100%; max-width:100%; box-sizing:border-box;">
-        
-        <!-- Diagnóstico Semáforo del Mes -->
-        <div class="card" style="border-top: 4px solid var(--accent-emerald);">
-          <div class="card-title" style="color:#10B981;">
-            <span>🩺 Diagnóstico & Semáforo del Mes Actual</span>
-          </div>
-          <div class="card-desc">Evaluación automática del comportamiento de las cuentas de este mes:</div>
-          <div id="analisisMesAlertasContainer" style="display:flex; flex-direction:column; gap:0.6rem; margin-top:0.75rem;">
-            <!-- Se llena dinámicamente -->
-          </div>
-        </div>
-
-        <!-- Top 5 Mayores Desembolsos del Mes -->
+      <!-- Top 5 Mayores Desembolsos del Mes -->
         <div class="card" style="border-top: 4px solid var(--accent-diego);">
           <div class="card-title" style="color:var(--accent-diego);">
             <span>🏆 Top 5 Mayores Desembolsos del Mes</span>
@@ -2822,11 +2866,11 @@ main, .tab-pane {
             <!-- Se llena dinámicamente -->
           </div>
         </div>
-      </div>
 
-    </div>
+      <details class="card" id="detalleResumen" ontoggle="if (this.open) renderDashboardCharts()">
+        <summary style="cursor:pointer; font-weight:800; min-height:44px; display:flex; align-items:center;">📊 Más detalle del mes</summary>
+        <div style="margin-top:1rem;">
 
-    <div id="tab-dash" class="tab-pane">
       <!-- KPI Scorecards -->
       <div class="kpi-grid">
         <div class="kpi-card blue">
@@ -2846,46 +2890,6 @@ main, .tab-pane {
           <div class="kpi-value" id="dashKpiSuperavit">$832.875</div>
           <div class="kpi-sub" id="dashKpiSuperavitSub">36.3% de tasa de ahorro libre del hogar</div>
         </div>
-
-        <div class="kpi-card amber">
-          <div class="kpi-header"><span>Disponible Diego</span><span class="kpi-arrow-btn">🛡️</span></div>
-          <div class="kpi-value" id="dashKpiOxigenoDiego">$151.426</div>
-          <div class="kpi-sub" id="dashKpiOxigenoDiegoSub">Fondos de Cuenta Fan menos gastos registrados</div>
-        </div>
-
-        <div class="kpi-card purple">
-          <div class="kpi-header"><span>Disponible Soledad</span><span class="kpi-arrow-btn">🟣</span></div>
-          <div class="kpi-value" id="dashKpiMargenSoledad">$678.839</div>
-          <div class="kpi-sub" id="dashKpiMargenSoledadSub">Fondos de la Chequera menos gastos registrados</div>
-        </div>
-      </div>
-
-      <!-- BOTONES DE ACCIÓN RÁPIDA GLASS (Reference Image 1: Transfer, Bill, Salary) -->
-      <div class="quick-glass-actions">
-        <button type="button" class="quick-action-pill" onclick="openQuickEntry()">
-          <span class="action-icon">📥</span>
-          <span>Anotar Boleta</span>
-        </button>
-        <button type="button" class="quick-action-pill" onclick="openSalaryModal('Diego')">
-          <span class="action-icon">💰</span>
-          <span>Modificar Sueldo</span>
-        </button>
-        <button type="button" class="quick-action-pill" onclick="openSyncModal()">
-          <span class="action-icon">☁️</span>
-          <span>Sincronizar Pareja</span>
-        </button>
-        <button type="button" class="quick-action-pill" onclick="switchTab('tab-cuentas', document.querySelectorAll('.tab-btn')[3])">
-          <span class="action-icon">💳</span>
-          <span>Cuentas & Cofres</span>
-        </button>
-        <button type="button" class="quick-action-pill" onclick="openQuickEntry()">
-          <span class="action-icon">📥</span>
-          <span>Ingreso Rápido & Gastos</span>
-        </button>
-        <button type="button" class="quick-action-pill" onclick="guardarMesEnBD()">
-          <span class="action-icon">💾</span>
-          <span>Guardar en BD</span>
-        </button>
       </div>
 
       <!-- Charts Row -->
@@ -2912,88 +2916,11 @@ main, .tab-pane {
           </div>
         </div>
       </div>
+        </div>
+      </details>
 
-      <!-- Cofres Summary Table -->
-      <div class="card">
-        <div class="card-title">
-          <span>Resumen de Cuentas y Cofres del Hogar</span>
-          <span style="font-size: 0.85rem; color: var(--accent-emerald); font-weight: 600;">● Todo Sincronizado</span>
-        </div>
-        <div class="card-desc">Estructura financiera acordada basada en el promedio de los 14 meses</div>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Cofre / Destino</th>
-                <th>Responsable</th>
-                <th>Cuenta / Medio</th>
-                <th>Monto Mensual</th>
-                <th>% del Ingreso Total</th>
-                <th>Margen / Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>1. Vivienda & Gastos Fijos</strong></td>
-                <td><span class="pill-partner pill-diego" style="display:inline-flex;">Diego</span></td>
-                <td>Cuenta Fan</td>
-                <td><strong>$609.360</strong></td>
-                <td>29.2%</td>
-                <td><span class="badge badge-blue">Hipotecario + Mascotas</span></td>
-              </tr>
-              <tr>
-                <td><strong>2. Operaciones & Logística Huasco</strong></td>
-                <td><span class="pill-partner pill-diego" style="display:inline-flex;">Diego</span></td>
-                <td>Tenpo</td>
-                <td><strong>$300.000</strong></td>
-                <td>14.4%</td>
-                <td><span class="badge badge-amber">Pasajes + Turnos</span></td>
-              </tr>
-              <tr>
-                <td><strong>3. Bolsillo Personal Diego</strong></td>
-                <td><span class="pill-partner pill-diego" style="display:inline-flex;">Diego</span></td>
-                <td>Mach</td>
-                <td><strong>$140.000</strong></td>
-                <td>6.7%</td>
-                <td><span class="badge badge-blue">$35.000 semanales</span></td>
-              </tr>
-              <tr>
-                <td><strong>4. Ahorro Blindado Mercado Pago</strong></td>
-                <td><span class="pill-partner pill-diego" style="display:inline-flex;">Diego</span></td>
-                <td>Mercado Pago</td>
-                <td><strong>$130.000</strong></td>
-                <td>6.2%</td>
-                <td><span class="badge badge-emerald">Fondo Emergencia</span></td>
-              </tr>
-              <tr>
-                <td><strong>5. Gastos Básicos Hogar Limache</strong></td>
-                <td><span class="pill-partner pill-soledad" style="display:inline-flex;">Soledad</span></td>
-                <td>BancoEstado</td>
-                <td><strong>$238.575</strong></td>
-                <td>11.4%</td>
-                <td><span class="badge badge-purple">Luz/Agua/Gas/GC/Super</span></td>
-              </tr>
-              <tr>
-                <td><strong>6. Tarjeta Smart Visa</strong></td>
-                <td><span class="pill-partner pill-soledad" style="display:inline-flex;">Soledad</span></td>
-                <td>BancoEstado</td>
-                <td><strong>$45.951</strong></td>
-                <td>2.2%</td>
-                <td><span class="badge badge-rose">Cuota promedio real</span></td>
-              </tr>
-              <tr style="background: rgba(16, 185, 129, 0.08); font-weight:700;">
-                <td><strong>7. Margen Libre Familiar (Superávit)</strong></td>
-                <td><span class="pill-partner pill-total" style="display:inline-flex;">Ambos</span></td>
-                <td>Cuentas Propias</td>
-                <td><strong style="color:var(--accent-emerald);">$626.288</strong></td>
-                <td><strong>30.0%</strong></td>
-                <td><span class="badge badge-emerald">💎 Capacidad Ahorro Real</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
+
 
     <!-- ========================================== -->
     <!-- 3. TAB HISTÓRICO 14 MESES (2024-2025)       -->
@@ -3605,7 +3532,6 @@ main, .tab-pane {
     <button type="button" onclick="closeAppMenu(); goToTab('tab-historico')">📂 Ver Base de Datos</button>
     <button type="button" id="menuReabrirMes" onclick="closeAppMenu(); deshacerUltimoCierreMes()">↩️ Reabrir mes anterior</button>
     <div class="app-menu-label">General</div>
-    <button type="button" onclick="closeAppMenu(); goToTab('tab-dash')">📊 Resumen general</button>
     <button type="button" onclick="closeAppMenu(); openSyncModal()">☁️ Sincronización</button>
     <button type="button" onclick="closeAppMenu(); goToTab('tab-guia')">📘 Guía de uso</button>
     <button type="button" id="menuInstallPwa" onclick="closeAppMenu(); triggerPwaInstall()">📲 Instalar app</button>
@@ -3628,6 +3554,24 @@ main, .tab-pane {
   </footer>
 
   <script>
+    function parseSeguro(texto, respaldo) {
+      if (texto === null || texto === undefined || texto === '') return respaldo;
+      try { return JSON.parse(texto) ?? respaldo; } catch (e) { return respaldo; }
+    }
+    function leerJSON(clave, respaldo) { return parseSeguro(localStorage.getItem(clave), respaldo); }
+
+    const storageSetItemOriginal = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (clave, valor) {
+      try {
+        return storageSetItemOriginal.call(this, clave, valor);
+      } catch (e) {
+        console.error('Almacenamiento lleno:', e);
+        if (typeof showToast === 'function') showToast('⚠️ La memoria del teléfono está llena; este cambio podría no guardarse aquí.');
+      }
+    };
+
+    function nuevoId(prefijo) { return `${prefijo}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`; }
+
     // Formatter CLP
     const formatCLP = (num) => '$' + Math.round(num).toLocaleString('es-CL');
 
@@ -3641,7 +3585,7 @@ main, .tab-pane {
       if (btn) btn.classList.add('active');
 
       // Si entra a tab-dash, renderizar y asegurar gráficos de cofres y KPIs
-      if (tabId === 'tab-dash') {
+      if (tabId === 'tab-mes-actual' && document.getElementById('detalleResumen')?.open) {
         if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
       }
       // Si entra a tab-cuentas, sincronizar valores de sueldos y cofres inmediatamente
@@ -3771,7 +3715,7 @@ main, .tab-pane {
       const cuenta = document.getElementById('newItemCuenta').value;
 
       const newItem = {
-        id: 'custom-' + Date.now(),
+        id: nuevoId('custom'),
         name: name,
         cat: cat,
         resp: resp,
@@ -3881,7 +3825,7 @@ main, .tab-pane {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
             currentAuditItems = parsed;
-          quitarGastosDelPresupuesto(currentAuditItems, JSON.parse(localStorage.getItem('custom_audit_items') || '[]'));
+          quitarGastosDelPresupuesto(currentAuditItems, leerJSON('custom_audit_items', []));
           }
         } catch(e) {}
       }
@@ -3928,8 +3872,8 @@ main, .tab-pane {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>
-            <strong>${item.name}</strong>${deleteBtn}
-            <div style="font-size:0.75rem; color:var(--text-dim);">${item.cat}</div>
+            <strong>${escapeHtml(item.name)}</strong>${deleteBtn}
+            <div style="font-size:0.75rem; color:var(--text-dim);">${escapeHtml(item.cat)}</div>
           </td>
           <td style="text-align:center;">${respBadge}</td>
           <td style="text-align:right; font-weight:600; color:var(--text-muted);">${formatCLP(item.base)}</td>
@@ -4641,7 +4585,8 @@ main, .tab-pane {
       const salary = userProfile.diegoSalary || 1214038;
       const tenpo = parseInt(document.getElementById('inputCofreTenpo')?.value, 10) || 0;
       const mp = parseInt(document.getElementById('inputCofreMP')?.value, 10) || 0;
-      userProfile.machSemanal = { ...(userProfile.machSemanal || {}), monto: readMoney('inputCofreMach', userProfile.machSemanal?.monto ?? 35000) };
+      const montoMach = readMoney('inputCofreMach', userProfile.machSemanal?.monto ?? 35000);
+      if (montoMach !== (userProfile.machSemanal?.monto ?? 35000)) userProfile.machSemanal = { ...(userProfile.machSemanal || {}), monto: montoMach };
       const machPlan = getMachSemanal(tenpo, mp);
       const mach = machPlan.liberado;
       const remTenpo = parseInt(document.getElementById('inputRemanenteTenpoDiego')?.value, 10) || 0;
@@ -4799,7 +4744,7 @@ main, .tab-pane {
     // Modificación de sueldo en vivo al teclear en las casillas de tab-cuentas
     function onDirectSalaryLiveChange(target, valStr) {
       const val = parseInt(valStr, 10);
-      if (isNaN(val) || val < 0) return;
+      if (isNaN(val) || val <= 0) return;
 
       if (target === 'Diego') {
         userProfile.diegoSalary = val;
@@ -4827,7 +4772,8 @@ main, .tab-pane {
       const salary = userProfile.diegoSalary || 1214038;
       const tenpo = readMoney('inputCofreTenpo', userProfile.cofresDiego?.tenpoHuasco ?? 0);
       const mp = readMoney('inputCofreMP', userProfile.cofresDiego?.mpAhorro ?? 0);
-      userProfile.machSemanal = { ...(userProfile.machSemanal || {}), monto: readMoney('inputCofreMach', userProfile.machSemanal?.monto ?? 35000) };
+      const montoMach = readMoney('inputCofreMach', userProfile.machSemanal?.monto ?? 35000);
+      if (montoMach !== (userProfile.machSemanal?.monto ?? 35000)) userProfile.machSemanal = { ...(userProfile.machSemanal || {}), monto: montoMach };
       const mach = getMachSemanal(tenpo, mp).liberado;
       const fan = Math.max(0, salary - (tenpo + mach + mp));
 
@@ -5382,6 +5328,8 @@ main, .tab-pane {
       syncAllGlassSelects();
     }
 
+    let ultimoRegistro = { firma: '', hora: 0 };
+
     function handleQuickBillSubmit(e) {
       e.preventDefault();
       const date = document.getElementById('quickDate').value || getLocalDateISO();
@@ -5412,6 +5360,10 @@ main, .tab-pane {
         return;
       }
 
+      const firmaRegistro = [date, payer, cat, amount, account, desc].join('|');
+      if (firmaRegistro === ultimoRegistro.firma && Date.now() - ultimoRegistro.hora < 2500) return;
+      ultimoRegistro = { firma: firmaRegistro, hora: Date.now() };
+
       // 1. Sincronizar en auditoría mensual y checklist
       const descLower = desc.toLowerCase();
       let matched = currentAuditItems.find(it => 
@@ -5433,7 +5385,7 @@ main, .tab-pane {
         matched.resp = payer;
       } else {
         const newItem = {
-          id: 'custom-' + Date.now(),
+          id: nuevoId('custom'),
           name: desc,
           cat: cat.replace(/^[^\w\s]+\s*/, ''),
           resp: payer,
@@ -5449,13 +5401,15 @@ main, .tab-pane {
 
       // 2. Registrar en la tabla de Gastos Diarios
       const newExp = {
-        id: 'exp-' + Date.now(),
+        id: nuevoId('exp'),
         date: date,
         payer: payer,
         category: cat.replace(/^[^\w\s]+\s*/, ''),
         amount: amount,
         account: account,
-        desc: desc
+        desc: desc,
+        auditId: auditId,
+        auditBefore: auditBefore
       };
       expenses.unshift(newExp);
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
@@ -5611,8 +5565,8 @@ main, .tab-pane {
 
         div.innerHTML = `
           <div>
-            <div style="font-weight:600; font-size:0.83rem;">${item.name}</div>
-            <div style="font-size:0.72rem; color:${respColor}; font-weight:600;">${item.resp} • ${item.cuenta}</div>
+            <div style="font-weight:600; font-size:0.83rem;">${escapeHtml(item.name)}</div>
+            <div style="font-size:0.72rem; color:${respColor}; font-weight:600;">${escapeHtml(item.resp)} • ${escapeHtml(item.cuenta)}</div>
           </div>
           <div style="text-align:right;">
             <div style="font-size:0.82rem; font-weight:700; color:${isDone ? 'var(--accent-emerald)' : 'var(--accent-amber)'};">
@@ -5728,12 +5682,12 @@ main, .tab-pane {
         month: monthCode,
         activeMonth: activeMonthName,
         currentActiveMonth: activeMonthName,
-        auditItems: boletasMesActivo ? JSON.parse(boletasMesActivo) : (currentAuditItems || []),
+        auditItems: parseSeguro(boletasMesActivo, currentAuditItems || []),
         expenses: expenses || [],
         userProfile: userProfile || {},
-        customAuditItems: JSON.parse(localStorage.getItem('custom_audit_items') || '[]'),
-        dbMeses: JSON.parse(localStorage.getItem('db_historial_meses') || '[]'),
-        ultimoCierreBackup: JSON.parse(localStorage.getItem('ultimo_mes_cerrado_backup') || 'null')
+        customAuditItems: leerJSON('custom_audit_items', []),
+        dbMeses: leerJSON('db_historial_meses', []),
+        ultimoCierreBackup: leerJSON('ultimo_mes_cerrado_backup', null)
       };
     }
 
@@ -6108,8 +6062,19 @@ main, .tab-pane {
 
     function mergeThreeWay(base, local, remote) {
       const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-      // Si ambos lados cambiaron lo mismo, gana el teléfono que está guardando.
-      const pick = (b, l, r) => same(l, b) ? r : l;
+      const esObjeto = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+      // Si ambos lados cambiaron lo mismo, gana el teléfono que está guardando. Los objetos se combinan campo a campo.
+      const pick = (b, l, r) => {
+        if (esObjeto(l) && esObjeto(r)) {
+          const out = {};
+          for (const k of new Set([...Object.keys(l), ...Object.keys(r)])) {
+            const v = pick(esObjeto(b) ? b[k] : undefined, l[k], r[k]);
+            if (v !== undefined) out[k] = v;
+          }
+          return out;
+        }
+        return same(l, b) ? r : l;
+      };
       const merged = {};
       for (const section in SYNC_SECTIONS) {
         const idKey = SYNC_SECTIONS[section];
@@ -6152,9 +6117,12 @@ main, .tab-pane {
       const doc = await res.json();
       let payload = null;
       if (doc.fields?.appStateJson?.stringValue) {
-        try { payload = JSON.parse(doc.fields.appStateJson.stringValue); } catch (e) {}
+        payload = parseSeguro(doc.fields.appStateJson.stringValue, null);
+        if (!payload) throw new Error('Los datos de la nube están ilegibles');
+      } else if (doc.fields) {
+        payload = parseFirestoreDocFields(doc.fields);
       }
-      if (!payload && doc.fields) payload = parseFirestoreDocFields(doc.fields);
+      if (payload && !Array.isArray(payload.expenses)) throw new Error('Los datos de la nube están incompletos');
       return { updateTime: doc.updateTime, payload };
     }
 
@@ -6192,7 +6160,7 @@ main, .tab-pane {
         const remote = remotePayload && pickSyncState(remotePayload);
         const remoteTs = remotePayload?.timestamp || 0;
         const local = pickSyncState(buildCompleteFamilyPayload());
-        const savedBase = JSON.parse(localStorage.getItem(SYNC_BASE_KEY) || 'null');
+        const savedBase = leerJSON(SYNC_BASE_KEY, null);
         const lastWrite = parseInt(localStorage.getItem('finanzas_last_local_update') || '0', 10);
         const base = savedBase || firstRunBase(local, remote, lastWrite, remoteTs);
         const localChanged = JSON.stringify(local) !== JSON.stringify(base);
@@ -6212,7 +6180,8 @@ main, .tab-pane {
           if (merged) applyRemoteDataToApp({ ...state, currentActiveMonth: state.activeMonth });
         }
 
-        const payload = buildCompleteFamilyPayload();
+        // Copia: un gasto registrado durante la subida no debe contarse como ya enviado
+        const payload = JSON.parse(JSON.stringify(buildCompleteFamilyPayload()));
         payload.timestamp = Date.now();
         payload.clientSessionId = CLIENT_SESSION_ID;
         const newUpdateTime = await writeCloudDoc(payload, updateTime);
@@ -6502,7 +6471,7 @@ main, .tab-pane {
       { date: '2026-10-20', payer: 'Diego', category: 'Supermercado', desc: 'Lider Limache - Compra semanal', account: 'Cuenta Fan', amount: 34500 }
     ];
 
-    let expenses = JSON.parse(localStorage.getItem('hogar_gastos') || localStorage.getItem('family_expenses')) || initialExpenses;
+    let expenses = [leerJSON('hogar_gastos', null), leerJSON('family_expenses', null)].find(Array.isArray) || initialExpenses;
 
     function escapeHtml(str) {
       if (str === null || str === undefined) return '';
@@ -6538,8 +6507,17 @@ main, .tab-pane {
       renderExpenses();
     }
 
+    const EXPENSE_PAGE = 8;
+    let expenseVisibleLimit = EXPENSE_PAGE;
+
+    function verMasGastos(cantidad) {
+      expenseVisibleLimit = cantidad ? expenseVisibleLimit + cantidad : EXPENSE_PAGE;
+      renderExpenses();
+      if (!cantidad) document.getElementById('quickExpensesMobileCards')?.scrollIntoView({ block: 'start' });
+    }
+
     function renderExpenses() {
-      // 1. Totales generales consolidados para Badges y Mini-Cards
+// 1. Totales generales consolidados para Badges y Mini-Cards
       let totalCount = expenses.length;
       let totalSum = 0;
       let diegoSum = 0;
@@ -6636,7 +6614,7 @@ main, .tab-pane {
           `;
         }
       } else {
-        filtered.forEach(item => {
+        filtered.forEach((item, posicion) => {
           // Payer badge
           let payerHtml = '';
           let payerMobileHtml = '';
@@ -6670,7 +6648,7 @@ main, .tab-pane {
           }
 
           // 2. Mobile Card (100% Legible en Celulares)
-          if (mobileCards) {
+          if (mobileCards && (currentExpenseSearch || posicion < expenseVisibleLimit)) {
             const card = document.createElement('div');
             card.className = 'mobile-exp-card';
             card.className = 'mobile-exp-card';
@@ -6707,6 +6685,16 @@ main, .tab-pane {
             mobileCards.appendChild(card);
           }
         });
+
+        if (mobileCards && !currentExpenseSearch && (filtered.length > EXPENSE_PAGE || expenseVisibleLimit > EXPENSE_PAGE)) {
+          const quedan = Math.max(0, filtered.length - expenseVisibleLimit);
+          const pie = document.createElement('div');
+          pie.className = 'gastos-pie';
+          pie.innerHTML = `<span>Mostrando ${Math.min(expenseVisibleLimit, filtered.length)} de ${filtered.length}</span>
+            ${quedan > 0 ? `<button type="button" class="btn-secondary" onclick="verMasGastos(${EXPENSE_PAGE})">Ver ${Math.min(EXPENSE_PAGE, quedan)} más</button>` : ''}
+            ${expenseVisibleLimit > EXPENSE_PAGE ? `<button type="button" class="btn-secondary" onclick="verMasGastos(0)">Ver menos</button>` : ''}`;
+          mobileCards.appendChild(pie);
+        }
       }
 
       const legacyTbody = document.getElementById('expensesBody');
@@ -6716,7 +6704,7 @@ main, .tab-pane {
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${item.date}</td>
-            <td><span class="pill-partner ${item.payer === 'Diego' ? 'pill-diego' : 'pill-soledad'}" style="display:inline-flex;">${item.payer}</span></td>
+            <td><span class="pill-partner ${item.payer === 'Diego' ? 'pill-diego' : 'pill-soledad'}" style="display:inline-flex;">${escapeHtml(item.payer)}</span></td>
             <td>${escapeHtml(item.category)}</td>
             <td>${escapeHtml(item.desc)}</td>
             <td>${escapeHtml(item.account)}</td>
@@ -6767,7 +6755,10 @@ main, .tab-pane {
     // ==============================================================
     // MODIFICAR Y EDITAR GASTO REGISTRADO
     // ==============================================================
+    let editingExpenseId = null;
+
     function openEditExpenseModal(index) {
+      editingExpenseId = expenses[index]?.id ?? null;
       if (index < 0 || index >= expenses.length) return;
       const exp = expenses[index];
       document.getElementById('editExpIndex').value = index;
@@ -6820,7 +6811,16 @@ main, .tab-pane {
 
     function saveEditedExpense(e) {
       e.preventDefault();
-      const idx = parseInt(document.getElementById('editExpIndex').value, 10);
+      let idx = parseInt(document.getElementById('editExpIndex').value, 10);
+      // La posición puede cambiar si el otro teléfono sincroniza mientras se edita
+      if (editingExpenseId) {
+        idx = expenses.findIndex(g => g.id === editingExpenseId);
+        if (idx < 0) {
+          alert('Ese gasto fue eliminado desde el otro teléfono.');
+          closeEditExpenseModal();
+          return;
+        }
+      }
       if (isNaN(idx) || idx < 0 || idx >= expenses.length) return;
 
       const date = document.getElementById('editExpDate').value;
@@ -6835,6 +6835,7 @@ main, .tab-pane {
         return;
       }
 
+      const boletaEditada = itemDeGasto(expenses[idx]);
       expenses[idx] = {
         ...expenses[idx],
         date: date,
@@ -6844,6 +6845,11 @@ main, .tab-pane {
         amount: amount,
         account: account
       };
+      if (boletaEditada) {
+        boletaEditada.actual = amount;
+        if (boletaEditada.fromQuickBill) boletaEditada.name = desc;
+        persistirBoletasActivas();
+      }
 
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
       localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
@@ -6858,11 +6864,31 @@ main, .tab-pane {
       showToast(`✅ Gasto "${desc}" modificado y sincronizado`);
     }
 
+    function itemDeGasto(gasto) {
+      if (gasto.auditId) return currentAuditItems.find(it => it.id === gasto.auditId) || null;
+      if (expenses.filter(e => e.desc === gasto.desc).length !== 1) return null;
+      return currentAuditItems.find(it => it.fromQuickBill && it.name === gasto.desc) || null;
+    }
+
+    function persistirBoletasActivas() {
+      const datos = JSON.stringify(currentAuditItems);
+      localStorage.setItem(`audit_${getMonthCode(currentActiveMonth)}`, datos);
+      localStorage.setItem(`audit_${currentActiveMonth}`, datos);
+      renderAuditTable();
+      renderChecklist();
+    }
+
     function deleteExpense(idx) {
       if (idx < 0 || idx >= expenses.length) return;
       const target = expenses[idx];
       if (confirm(`¿Deseas eliminar el gasto "${target.desc || target.category}" por ${formatCLP(target.amount)}?`)) {
-        const deleted = expenses.splice(idx, 1)[0];
+        const boleta = itemDeGasto(target);
+      const deleted = expenses.splice(idx, 1)[0];
+      if (boleta) {
+        if (boleta.fromQuickBill) currentAuditItems = currentAuditItems.filter(it => it.id !== boleta.id);
+        else if (target.auditBefore) Object.assign(boleta, target.auditBefore);
+        persistirBoletasActivas();
+      }
         localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
         localStorage.setItem('family_expenses', JSON.stringify(expenses));
         renderExpenses();
@@ -6894,7 +6920,8 @@ main, .tab-pane {
     function exportToCSV() {
       let csv = 'Fecha,Pagador,Categoria,Detalle,Cuenta,Monto\n';
       expenses.forEach(e => {
-        csv += `${e.date},${e.payer},"${e.category}","${e.desc}",${e.account},${e.amount}\n`;
+        const celda = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+        csv += `${e.date},${e.payer},${celda(e.category)},${celda(e.desc)},${celda(e.account)},${e.amount}\n`;
       });
 
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -7907,7 +7934,7 @@ function getMonthCode(monthLabel) {
       if (!tbody) return;
 
       const raw = localStorage.getItem('db_historial_meses');
-      const list = raw ? JSON.parse(raw) : [];
+      const list = parseSeguro(raw, []);
 
       if (badge) badge.textContent = `${list.length} Meses Registrados`;
       tbody.innerHTML = '';
@@ -7942,7 +7969,7 @@ function getMonthCode(monthLabel) {
 
     function guardarMesEnBD(mesNombre = currentActiveMonth, isCerrado = false) {
       const raw = localStorage.getItem('db_historial_meses');
-      let list = raw ? JSON.parse(raw) : [];
+      let list = parseSeguro(raw, []);
 
       const totalHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
       const fijosDiego = currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
@@ -8004,7 +8031,7 @@ function getMonthCode(monthLabel) {
 
     function asegurarMesActivoEnBD(mesNombre) {
       const raw = localStorage.getItem('db_historial_meses');
-      let list = raw ? JSON.parse(raw) : [];
+      let list = parseSeguro(raw, []);
 
       const code = getMonthCode(mesNombre);
       const totalHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
@@ -8106,7 +8133,11 @@ function getMonthCode(monthLabel) {
       confirmarCierreMes();
     }
 
+    let ultimoCierreMes = 0;
+
     function confirmarCierreMes() {
+      if (Date.now() - ultimoCierreMes < 400) return;
+      ultimoCierreMes = Date.now();
       const oldMonth = currentActiveMonth;
       const nextMonth = getNextMonthLabel(currentActiveMonth);
 
@@ -8222,7 +8253,8 @@ function getMonthCode(monthLabel) {
         alert('No hay un cierre reciente disponible para deshacer.');
         return;
       }
-      const backup = JSON.parse(raw);
+      const backup = parseSeguro(raw, null);
+      if (!backup) { alert('El respaldo del último cierre está dañado y no se puede reabrir.'); return; }
       const confirmar = confirm(`↩️ ¿Deseas reabrir el mes "${backup.closedMonth}" y deshacer el cierre?\n\nSe restaurarán todas las boletas, gastos diarios y el periodo activo volverá a ser "${backup.closedMonth}".`);
       if (!confirmar) return;
 
@@ -8296,7 +8328,7 @@ function getMonthCode(monthLabel) {
     
     function verDetalleMes(id) {
       const raw = localStorage.getItem('db_historial_meses');
-      const list = raw ? JSON.parse(raw) : [];
+      const list = parseSeguro(raw, []);
       const mes = list.find(m => m.id === id || m.code === id || m.nombre === id || matchMonth(m, id));
       if (!mes) return;
 
@@ -8377,7 +8409,7 @@ function getMonthCode(monthLabel) {
 
         content.innerHTML = `
           <div style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.3); border-radius:8px; padding:0.6rem; font-size:0.78rem; color:#93C5FD; margin-bottom:0.75rem;">
-            💡 <strong>Criterio Unificado de Pago:</strong> ${mes.criterio || 'Registro según salida real de dinero de la cuenta bancaria'}
+            💡 <strong>Criterio Unificado de Pago:</strong> ${escapeHtml(mes.criterio || 'Registro según salida real de dinero de la cuenta bancaria')}
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; background:var(--bg-surface-elevated); padding:0.85rem; border-radius:8px;">
             <div><span style="color:var(--text-muted); font-size:0.75rem;">Sueldo Diego:</span> <strong style="color:var(--accent-diego); font-size:0.95rem; display:block;">${formatCLP(mes.diegoSal)}</strong></div>
@@ -8704,8 +8736,10 @@ function getMonthCode(monthLabel) {
     // ==============================================================
     // ANÁLISIS DE GASTOS POR TARJETA / COFRE CON TRANSFERENCIAS INTERNAS
     // ==============================================================
-    let isCardAnalysisOpen = false;
-    let currentCardAnalysisFilter = 'all';
+    let isCardAnalysisOpen = true;
+    const expandedCardKeys = new Set();
+    const cardChartDrawers = {};
+let currentCardAnalysisFilter = 'all';
     let cardDoughnutCharts = {};
 
     function toggleCardAnalysisSection() {
@@ -9259,10 +9293,20 @@ function getMonthCode(monthLabel) {
           </div>
         `;
 
+        const detalleHtml = cardEl.innerHTML;
+        const cofreAbierto = expandedCardKeys.has(cfg.key);
+        cardEl.innerHTML = `
+          <button type="button" class="cofre-fila" aria-expanded="${cofreAbierto}" onclick="toggleCofreDetalle('${cfg.key}')">
+            <span class="cofre-nombre">${cfg.icon} ${cfg.name}</span>
+            <strong class="cofre-monto" style="color:${remaining < 0 ? '#F43F5E' : '#10B981'};">${remaining < 0 ? '-' : ''}${formatCLP(Math.abs(remaining))}</strong>
+            <span class="cofre-barra"><span style="width:${pctUsed}%; background:${cfg.color};"></span></span>
+            <span class="cofre-sub">${isCreditCard ? 'Cupo disponible' : 'Disponible'} · ${pctUsed}% usado</span>
+          </button>
+          <div class="card-detalle" id="detalle_${cfg.key}" style="display:${cofreAbierto ? 'block' : 'none'};">${detalleHtml}</div>`;
+
         grid.appendChild(cardEl);
 
-        // Renderizar Dona para esta tarjeta específica
-        setTimeout(() => {
+        cardChartDrawers[cfg.key] = () => {
           const ctx = document.getElementById(canvasId)?.getContext('2d');
           if (!ctx) return;
 
@@ -9286,7 +9330,7 @@ function getMonthCode(monthLabel) {
                   <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div style="display:flex; align-items:center; gap:0.35rem;">
                       <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${palette[i % palette.length]};"></span>
-                      <span style="color:var(--text-main); font-weight:600;">${cat}</span>
+                      <span style="color:var(--text-main); font-weight:600;">${escapeHtml(cat)}</span>
                     </div>
                     <div>
                       <strong style="color:var(--text-main); font-family:monospace;">${formatCLP(amt)}</strong>
@@ -9341,8 +9385,23 @@ function getMonthCode(monthLabel) {
               cutout: '62%'
             }
           });
-        }, 60);
+        };
+        if (cofreAbierto) setTimeout(cardChartDrawers[cfg.key], 60);
       });
+    }
+
+    function toggleCofreDetalle(key) {
+      const abierto = !expandedCardKeys.has(key);
+      if (abierto) expandedCardKeys.add(key); else expandedCardKeys.delete(key);
+      const detalle = document.getElementById(`detalle_${key}`);
+      if (detalle) detalle.style.display = abierto ? 'block' : 'none';
+      detalle?.closest('.card-analysis-box')?.querySelector('.cofre-fila')?.setAttribute('aria-expanded', String(abierto));
+      if (abierto) cardChartDrawers[key]?.();
+    }
+
+    function elegirDona(cual) {
+      document.querySelectorAll('.dona-opcion, .dona-selector button').forEach(el => el.classList.toggle('activa', el.dataset.dona === cual));
+      document.querySelectorAll('.dona-opcion.activa canvas').forEach(c => Chart.getChart(c)?.resize());
     }
 
     function renderCardAnalysisSection() {
@@ -9380,8 +9439,14 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              position: 'right',
-              labels: { color: '#F1F5F9', font: { size: 10, weight: '600' }, boxWidth: 12 }
+              position: mobileLayout.matches ? 'bottom' : 'right',
+              labels: {
+                color: '#F1F5F9', font: { size: mobileLayout.matches ? 12 : 10, weight: '600' }, boxWidth: 12,
+                generateLabels: (chart) => Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart).map(l => ({
+                  ...l,
+                  text: totalAmt > 0 ? `${l.text}: ${formatCLP(chart.data.datasets[0].data[l.index])}` : l.text
+                }))
+              }
             },
             tooltip: {
               callbacks: {
@@ -9609,6 +9674,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
             ]
           },
           options: {
+            indexAxis: mobileLayout.matches ? 'y' : 'x',
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
@@ -9620,14 +9686,21 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
               }
             },
             scales: {
-              x: { ticks: { color: '#94A3B8', font: { size: 9 } }, grid: { display: false } },
-              y: { 
+              [mobileLayout.matches ? 'y' : 'x']: { ticks: { color: '#94A3B8', font: { size: 9 } }, grid: { display: false } },
+              [mobileLayout.matches ? 'x' : 'y']: {
                 ticks: { color: '#94A3B8', callback: (v) => '$' + (v / 1000) + 'k' },
                 grid: { color: 'rgba(255, 255, 255, 0.06)' }
               }
             }
           }
         });
+        const metaRealLista = document.getElementById('metaRealLista');
+        if (metaRealLista) {
+          metaRealLista.innerHTML = catLabels.map((k, i) => ({ k, meta: metaValues[i], real: realValues[i] }))
+            .filter(f => f.meta > 0 || f.real > 0)
+            .map(f => `<div class="meta-real-fila"><span>${f.real > f.meta ? '⚠️ ' : ''}${escapeHtml(f.k)}</span><strong>${formatCLP(f.real)} <small>de ${formatCLP(f.meta)}</small></strong></div>`)
+            .join('');
+        }
       }
 
       // 9. Gráfico 5: Aporte & Carga Real Diego vs Soledad (de la Tabla de Gastos)
@@ -9748,7 +9821,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
               const rowAlert = document.createElement('div');
               rowAlert.style.cssText = 'background:rgba(244,63,94,0.1); border:1px solid rgba(244,63,94,0.3); border-radius:8px; padding:0.55rem 0.75rem; font-size:0.8rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.4rem; min-width:0; max-width:100%; box-sizing:border-box;';
               rowAlert.innerHTML = `
-                <span style="flex:1 1 180px; min-width:0;">🔴 <strong>${cat}</strong>: sobrepasó la meta en +${formatCLP(diff)}</span>
+                <span style="flex:1 1 180px; min-width:0;">🔴 <strong>${escapeHtml(cat)}</strong>: sobrepasó la meta en +${formatCLP(diff)}</span>
                 <span style="font-weight:700; color:#F43F5E; margin-left:auto; white-space:nowrap;">${formatCLP(spent)}</span>
               `;
               alertContainer.appendChild(rowAlert);
@@ -9862,7 +9935,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=33').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=35').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
