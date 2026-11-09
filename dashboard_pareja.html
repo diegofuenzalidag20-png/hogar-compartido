@@ -1851,6 +1851,10 @@ main, .tab-pane {
 .gastos-pie span { width: 100%; text-align: center; }
 .gastos-pie button { min-height: 44px; }
 
+@media (min-width: 769px) {
+  #tab-mes-actual > .kpi-grid { grid-template-columns: repeat(3, 1fr) !important; }
+}
+
 /* Navegación móvil: barra inferior, cabecera compacta y hoja de registro */
 .bottom-nav, .app-menu, .overlay-backdrop, .header-menu-btn, .sheet-close { display: none; }
 #toast.has-action { pointer-events: auto; display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; }
@@ -1880,7 +1884,10 @@ main, .tab-pane {
   .overlay-backdrop.show { display: block; position: fixed; inset: 0; z-index: 2040; background: rgba(0, 0, 0, 0.55); }
   .app-menu.open { display: flex; flex-direction: column; position: fixed; top: 62px; right: 10px; z-index: 2050; min-width: 240px; padding: 0.4rem; border-radius: 16px; border: 1px solid var(--border-glass); background: #151E31; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5); }
   .period-actions { display: none !important; }
-  .dona-selector { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; }
+  .solo-escritorio { display: none !important; }
+  .card-title { flex-wrap: wrap !important; row-gap: 0.4rem !important; }
+  button[onclick^="openSalaryModal"] { min-width: 44px; min-height: 44px; }
+.dona-selector { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; }
   .dona-selector button { flex: 1; min-height: 44px; }
   .dona-selector button.activa { background: var(--accent-amber) !important; color: #111827 !important; }
   .dona-opcion:not(.activa) { display: none !important; }
@@ -2184,56 +2191,6 @@ main, .tab-pane {
         </form>
       </div>
 
-      <!-- MÓDULO CO-APORTE CRÉDITO HIPOTECARIO EN UF (CUENTA COMPARTIDA) -->
-      <div class="card" style="border: 2px solid rgba(168, 85, 247, 0.4); background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(168, 85, 247, 0.08)); box-shadow: 0 10px 25px -5px rgba(168, 85, 247, 0.15);">
-        <div class="card-title">
-          <div style="display:flex; align-items:center; gap:0.5rem;">
-            <span style="font-size:1.3rem;">🤝</span>
-            <div>
-              <strong style="font-size:1.05rem;">Co-Aporte Crédito Hipotecario en UF (Diego + Soledad)</strong>
-              <div style="font-size:0.75rem; color:var(--text-muted);">Transferencia fija programada de Diego + Diferencial variable en UF cubierto por Soledad</div>
-            </div>
-          </div>
-          <span class="badge badge-purple" style="font-size:0.75rem;">Aporte Conjunto</span>
-        </div>
-
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:1rem; margin-top:1rem; padding:1rem; background:var(--bg-surface); border-radius:10px; border:1px solid var(--border-color); align-items:center;">
-          <div>
-            <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">1. Dividendo Total del Mes (UF):</label>
-            <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.35rem;">
-              <input type="number" id="hipoTotalInput" value="375000" oninput="updateHipotecarioCoAporte()" style="font-size:1.25rem; font-weight:800; color:#FACC15; padding:0.5rem; width:100%; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-body);">
-            </div>
-            <div style="font-size:0.7rem; color:var(--text-dim); margin-top:0.25rem;">Cobrado en Chequera BancoEstado</div>
-          </div>
-
-          <div>
-            <label style="font-size:0.75rem; font-weight:700; color:var(--accent-diego); text-transform:uppercase;">2. Aporte Fijo Diego (Transferencia):</label>
-            <div style="font-size:1.25rem; font-weight:800; color:var(--accent-diego); margin-top:0.35rem;" id="hipoDiegoFijoDisplay">$365.000</div>
-            <div style="font-size:0.7rem; color:var(--text-dim);">Transferencia programada fija (Fan ➔ Chequera)</div>
-          </div>
-
-          <div>
-            <label style="font-size:0.75rem; font-weight:700; color:var(--accent-soledad); text-transform:uppercase;">3. Diferencial Cubierto por Soledad:</label>
-            <div style="font-size:1.35rem; font-weight:800; color:#10B981; margin-top:0.35rem;" id="hipoSoledadDiffDisplay">+$10.000</div>
-            <div style="font-size:0.7rem; color:var(--text-dim);">Aporte complementario de Soledad</div>
-          </div>
-        </div>
-
-        <!-- Visual flow diagram -->
-        <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:0.75rem; margin-top:0.85rem; padding:0.85rem; background:rgba(0,0,0,0.25); border-radius:8px; font-size:0.82rem;">
-          <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.4rem;">
-            <span>🔵 Diego transfiere <strong>$365.000</strong></span>
-            <span style="color:var(--text-dim);">➔</span>
-            <span>🟣 Soledad aporta <strong style="color:#10B981;"><span id="hipoDiffInline">+$10.000</span></strong></span>
-            <span style="color:var(--text-dim);">➔</span>
-            <span>🏦 Pago Total al Banco: <strong style="color:#FACC15;"><span id="hipoTotalInline">$375.000</span></strong></span>
-          </div>
-          <button type="button" onclick="applyHipotecarioToAudit()" class="btn-primary" style="padding:0.45rem 0.95rem; font-size:0.82rem; background:linear-gradient(135deg, #10B981, #059669); font-weight:700;">
-            <span>💾</span> Aplicar al Mes
-          </button>
-        </div>
-      </div>
-
       <!-- ============================================================== -->
       <!-- TABLA INTERACTIVA DE GASTOS REGISTRADOS DEL MES (HISTORIAL)    -->
       <!-- ============================================================== -->
@@ -2332,6 +2289,56 @@ main, .tab-pane {
       </div>
 
 
+      <!-- MÓDULO CO-APORTE CRÉDITO HIPOTECARIO EN UF (CUENTA COMPARTIDA) -->
+      <div class="card" style="border: 2px solid rgba(168, 85, 247, 0.4); background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(168, 85, 247, 0.08)); box-shadow: 0 10px 25px -5px rgba(168, 85, 247, 0.15);">
+        <div class="card-title">
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span style="font-size:1.3rem;">🤝</span>
+            <div>
+              <strong style="font-size:1.05rem;">Co-Aporte Crédito Hipotecario en UF (Diego + Soledad)</strong>
+              <div style="font-size:0.75rem; color:var(--text-muted);">Transferencia fija programada de Diego + Diferencial variable en UF cubierto por Soledad</div>
+            </div>
+          </div>
+          <span class="badge badge-purple" style="font-size:0.75rem;">Aporte Conjunto</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:1rem; margin-top:1rem; padding:1rem; background:var(--bg-surface); border-radius:10px; border:1px solid var(--border-color); align-items:center;">
+          <div>
+            <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">1. Dividendo Total del Mes (UF):</label>
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.35rem;">
+              <input type="number" id="hipoTotalInput" value="375000" oninput="updateHipotecarioCoAporte()" style="font-size:1.25rem; font-weight:800; color:#FACC15; padding:0.5rem; width:100%; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-body);">
+            </div>
+            <div style="font-size:0.7rem; color:var(--text-dim); margin-top:0.25rem;">Cobrado en Chequera BancoEstado</div>
+          </div>
+
+          <div>
+            <label style="font-size:0.75rem; font-weight:700; color:var(--accent-diego); text-transform:uppercase;">2. Aporte Fijo Diego (Transferencia):</label>
+            <div style="font-size:1.25rem; font-weight:800; color:var(--accent-diego); margin-top:0.35rem;" id="hipoDiegoFijoDisplay">$365.000</div>
+            <div style="font-size:0.7rem; color:var(--text-dim);">Transferencia programada fija (Fan ➔ Chequera)</div>
+          </div>
+
+          <div>
+            <label style="font-size:0.75rem; font-weight:700; color:var(--accent-soledad); text-transform:uppercase;">3. Diferencial Cubierto por Soledad:</label>
+            <div style="font-size:1.35rem; font-weight:800; color:#10B981; margin-top:0.35rem;" id="hipoSoledadDiffDisplay">+$10.000</div>
+            <div style="font-size:0.7rem; color:var(--text-dim);">Aporte complementario de Soledad</div>
+          </div>
+        </div>
+
+        <!-- Visual flow diagram -->
+        <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:0.75rem; margin-top:0.85rem; padding:0.85rem; background:rgba(0,0,0,0.25); border-radius:8px; font-size:0.82rem;">
+          <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.4rem;">
+            <span>🔵 Diego transfiere <strong>$365.000</strong></span>
+            <span style="color:var(--text-dim);">➔</span>
+            <span>🟣 Soledad aporta <strong style="color:#10B981;"><span id="hipoDiffInline">+$10.000</span></strong></span>
+            <span style="color:var(--text-dim);">➔</span>
+            <span>🏦 Pago Total al Banco: <strong style="color:#FACC15;"><span id="hipoTotalInline">$375.000</span></strong></span>
+          </div>
+          <button type="button" onclick="applyHipotecarioToAudit()" class="btn-primary" style="padding:0.45rem 0.95rem; font-size:0.82rem; background:linear-gradient(135deg, #10B981, #059669); font-weight:700;">
+            <span>💾</span> Aplicar al Mes
+          </button>
+        </div>
+      </div>
+
       <!-- GUÍA FÁCIL DE INTERPRETACIÓN PARA SOLEDAD Y DIEGO -->
       <div class="card" style="background:var(--bg-surface-elevated); padding:1.25rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleGuide()">
@@ -2340,9 +2347,9 @@ main, .tab-pane {
             <strong style="font-size:0.95rem; color:var(--text-main);">Guía de Interpretación Rápida para Soledad y Diego</strong>
             <span style="font-size:0.75rem; color:var(--text-muted);">(Toca aquí para abrir o cerrar)</span>
           </div>
-          <span id="guideArrow" style="font-size:0.9rem; color:var(--text-muted);">▼</span>
+          <span id="guideArrow" style="font-size:0.9rem; color:var(--text-muted);">▶</span>
         </div>
-        <div id="guideContent" style="display:block; margin-top:1rem; border-top:1px solid var(--border-color); padding-top:1rem;">
+        <div id="guideContent" style="display:none; margin-top:1rem; border-top:1px solid var(--border-color); padding-top:1rem;">
           <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1rem;">
             <div style="background:var(--bg-surface); padding:0.85rem; border-radius:8px; border-left:3px solid #10B981;">
               <strong style="color:#10B981; font-size:0.85rem;">🟢 En Rango / En Presupuesto</strong>
@@ -2486,7 +2493,7 @@ main, .tab-pane {
         </div>
 
         <div class="kpi-card emerald" id="audit-card-superavit">
-          <div class="kpi-header"><span>Superávit Libre Familiar</span><span class="kpi-arrow-btn">↗</span></div>
+          <div class="kpi-header"><span>Superávit según Boletas</span><span class="kpi-arrow-btn">↗</span></div>
           <div class="kpi-value" id="audit-kpi-superavit">$617.007</div>
           <div class="kpi-sub">Ahorro libre mensual Diego + Soledad</div>
         </div>
@@ -2656,7 +2663,7 @@ main, .tab-pane {
         <!-- KPI 4: Superávit / Oxígeno Libre -->
         <div class="kpi-card emerald">
           <div class="kpi-header">
-            <span>Superávit Libre Familiar</span>
+            <span>Superávit según Gastos</span>
             <span class="kpi-arrow-btn">💎</span>
           </div>
           <div class="kpi-value" id="kpiMesSuperavit">$747.036</div>
@@ -2717,7 +2724,7 @@ main, .tab-pane {
               <div style="font-size:0.75rem; color:var(--text-muted);">Visualiza a dónde se destinó el dinero del mes: Global Familiar, Diego y Soledad</div>
             </div>
           </div>
-          <span class="badge badge-purple" style="font-size:0.75rem;">3 Vistas Comparativas</span>
+          <span class="badge badge-purple solo-escritorio" style="font-size:0.75rem;">3 Vistas Comparativas</span>
         </div>
 
         <div class="dona-selector">
@@ -2801,7 +2808,7 @@ main, .tab-pane {
         <div id="containerCardAnalysisContent" style="display:block; margin-top:1.25rem; border-top:1px solid var(--border-color); padding-top:1.25rem;">
           
           <!-- Banner Explicativo de Transferencias Internas -->
-          <div style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.25); border-radius:10px; padding:0.75rem 1rem; margin-bottom:1.25rem; display:flex; align-items:center; gap:0.6rem; font-size:0.82rem; color:#93C5FD;">
+          <div class="solo-escritorio" style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.25); border-radius:10px; padding:0.75rem 1rem; margin-bottom:1.25rem; display:flex; align-items:center; gap:0.6rem; font-size:0.82rem; color:#93C5FD;">
             <span style="font-size:1.2rem;">💡</span>
             <div>
               <strong>Lógica de Transferencias Internas:</strong> El monto asignado a cada cofre se descuenta de la cuenta principal (<strong>Cuenta Fan</strong> de Diego o <strong>Chequera</strong> de Soledad) y se carga en la tarjeta secundaria correspondiente. Cada gasto registrado se resta del saldo de esa tarjeta específica.
@@ -3570,10 +3577,17 @@ main, .tab-pane {
       }
     };
 
+    const temaClaro = () => document.body.getAttribute('data-theme') === 'light';
+    function chartTextColor() { return temaClaro() ? '#1E293B' : '#F1F5F9'; }
+    function chartBorderColor() { return temaClaro() ? '#FFFFFF' : 'rgba(10, 15, 30, 0.9)'; }
+
     function nuevoId(prefijo) { return `${prefijo}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`; }
 
     // Formatter CLP
-    const formatCLP = (num) => '$' + Math.round(num).toLocaleString('es-CL');
+    const formatCLP = (num) => {
+      const valor = Math.round(Number(num) || 0);
+      return (valor < 0 ? '-$' : '$') + Math.abs(valor).toLocaleString('es-CL');
+    };
 
     // Tab Navigation
     function switchTab(tabId, btn) {
@@ -3691,6 +3705,13 @@ main, .tab-pane {
         if (icon) icon.textContent = '🌙';
         localStorage.setItem('app_theme', 'light');
         showToast('☀️ Modo Claro activado');
+      }
+      renderAnalisisMesActual();
+      renderDashboardCharts();
+      renderCardAnalysis();
+      if (chartHistorico) {
+        chartHistorico.options.plugins.legend.labels.color = chartTextColor();
+        chartHistorico.update();
       }
     }
 
@@ -4851,7 +4872,7 @@ main, .tab-pane {
         const mpD = userProfile.cofresDiego?.mpAhorro ?? 130000;
 
         const cheq = userProfile.cofresSoledad?.chequeraHogar ?? 236000;
-        const smart = userProfile.cofresSoledad?.smartVisa ?? 50000;
+        const smart = getSmartReservaChequera();
         const tenpoS = userProfile.cofresSoledad?.tenpoBolsillo ?? 150000;
         const mpS = userProfile.cofresSoledad?.mpAhorro ?? 150000;
         const bancoS = userProfile.cofresSoledad?.bancoReserva ?? 150000;
@@ -4901,7 +4922,7 @@ main, .tab-pane {
         const mach = userProfile.cofresDiego?.machBolsillo ?? 140000;
         const mpD = userProfile.cofresDiego?.mpAhorro ?? 130000;
         const cheq = userProfile.cofresSoledad?.chequeraHogar ?? 425000;
-        const smart = userProfile.cofresSoledad?.smartVisa ?? 50000;
+        const smart = getSmartReservaChequera();
         const tenpoS = userProfile.cofresSoledad?.tenpoBolsillo ?? 150000;
         const mpS = userProfile.cofresSoledad?.mpAhorro ?? 150000;
         const bancoS = userProfile.cofresSoledad?.bancoReserva ?? 150000;
@@ -4931,7 +4952,7 @@ main, .tab-pane {
                 '#A855F7', '#EC4899', '#8B5CF6', '#14B8A6', '#38BDF8'
               ],
               borderWidth: 2,
-              borderColor: 'rgba(10, 15, 30, 0.9)'
+              borderColor: chartBorderColor()
             }]
           },
           options: {
@@ -4939,8 +4960,8 @@ main, .tab-pane {
             maintainAspectRatio: false,
             plugins: {
               legend: {
-                position: 'right',
-                labels: { color: '#F1F5F9', font: { size: 10, weight: '600' }, boxWidth: 12 }
+                position: mobileLayout.matches ? 'bottom' : 'right',
+                labels: { color: chartTextColor(), font: { size: 10, weight: '600' }, boxWidth: 12 }
               },
               tooltip: {
                 callbacks: {
@@ -4993,7 +5014,7 @@ main, .tab-pane {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: { labels: { color: '#F1F5F9', font: { size: 11, weight: '600' } } },
+              legend: { labels: { color: chartTextColor(), font: { size: 11, weight: '600' } } },
               tooltip: {
                 callbacks: {
                   label: (ctx) => ` ${ctx.dataset.label}: ${formatCLP(ctx.raw)}`
@@ -5001,7 +5022,7 @@ main, .tab-pane {
               }
             },
             scales: {
-              x: { ticks: { color: '#F1F5F9', font: { size: 12, weight: '700' } }, grid: { display: false } },
+              x: { ticks: { color: chartTextColor(), font: { size: 12, weight: '700' } }, grid: { display: false } },
               y: { 
                 ticks: { color: '#94A3B8', callback: (v) => '$' + (v / 1000) + 'k' },
                 grid: { color: 'rgba(255, 255, 255, 0.06)' }
@@ -7947,6 +7968,14 @@ function getMonthCode(monthLabel) {
       list.forEach(item => {
         const tr = document.createElement('tr');
         const isCerrado = item.estado === 'Cerrado';
+        if (!isCerrado && matchMonth(item, currentActiveMonth)) {
+          item.diegoSal = userProfile.diegoSalary;
+          item.soleSal = userProfile.soledadSalary;
+          item.totalIng = item.diegoSal + item.soleSal;
+          item.gastosHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
+          const fijosDiego = currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
+          item.superavit = item.totalIng - (item.gastosHogar + fijosDiego);
+        }
         tr.innerHTML = `
           <td><strong>${escapeHtml(item.nombre)}</strong></td>
           <td style="text-align:right; color:var(--accent-diego);">${formatCLP(item.diegoSal)}</td>
@@ -9299,8 +9328,8 @@ let currentCardAnalysisFilter = 'all';
           <button type="button" class="cofre-fila" aria-expanded="${cofreAbierto}" onclick="toggleCofreDetalle('${cfg.key}')">
             <span class="cofre-nombre">${cfg.icon} ${cfg.name}</span>
             <strong class="cofre-monto" style="color:${remaining < 0 ? '#F43F5E' : '#10B981'};">${remaining < 0 ? '-' : ''}${formatCLP(Math.abs(remaining))}</strong>
-            <span class="cofre-barra"><span style="width:${pctUsed}%; background:${cfg.color};"></span></span>
-            <span class="cofre-sub">${isCreditCard ? 'Cupo disponible' : 'Disponible'} · ${pctUsed}% usado</span>
+            <span class="cofre-barra"><span style="width:${pctUsed}%; background:${remaining < 0 ? '#F43F5E' : cfg.color};"></span></span>
+            <span class="cofre-sub">${remaining < 0 ? '⚠️ Sobregiro' : isCreditCard ? 'Cupo disponible' : 'Disponible'} · ${pctUsed}% usado</span>
           </button>
           <div class="card-detalle" id="detalle_${cfg.key}" style="display:${cofreAbierto ? 'block' : 'none'};">${detalleHtml}</div>`;
 
@@ -9364,7 +9393,7 @@ let currentCardAnalysisFilter = 'all';
                 data: dataValues,
                 backgroundColor: bgColors,
                 borderWidth: 2,
-                borderColor: 'rgba(10, 15, 30, 0.9)'
+                borderColor: chartBorderColor()
               }]
             },
             options: {
@@ -9430,7 +9459,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
           datasets: [{
             data: dataValues,
             backgroundColor: bgColors,
-            borderColor: 'rgba(10, 15, 30, 0.9)',
+            borderColor: chartBorderColor(),
             borderWidth: 2
           }]
         },
@@ -9441,7 +9470,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
             legend: {
               position: mobileLayout.matches ? 'bottom' : 'right',
               labels: {
-                color: '#F1F5F9', font: { size: mobileLayout.matches ? 12 : 10, weight: '600' }, boxWidth: 12,
+                color: chartTextColor(), font: { size: mobileLayout.matches ? 12 : 10, weight: '600' }, boxWidth: 12,
                 generateLabels: (chart) => Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart).map(l => ({
                   ...l,
                   text: totalAmt > 0 ? `${l.text}: ${formatCLP(chart.data.datasets[0].data[l.index])}` : l.text
@@ -9678,7 +9707,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: { labels: { color: '#F1F5F9', font: { size: 11, weight: '600' } } },
+              legend: { labels: { color: chartTextColor(), font: { size: 11, weight: '600' } } },
               tooltip: {
                 callbacks: {
                   label: (ctx) => ` ${ctx.dataset.label}: ${formatCLP(ctx.raw)}`
@@ -9733,7 +9762,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: { labels: { color: '#F1F5F9', font: { size: 11 } } },
+              legend: { labels: { color: chartTextColor(), font: { size: 11 } } },
               tooltip: {
                 callbacks: {
                   label: (ctx) => ` ${ctx.dataset.label}: ${formatCLP(ctx.raw)}`
@@ -9741,7 +9770,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
               }
             },
             scales: {
-              x: { stacked: true, ticks: { color: '#F1F5F9', font: { size: 12, weight: '700' } }, grid: { display: false } },
+              x: { stacked: true, ticks: { color: chartTextColor(), font: { size: 12, weight: '700' } }, grid: { display: false } },
               y: { 
                 stacked: true, 
                 ticks: { color: '#94A3B8', callback: (v) => '$' + (v / 1000) + 'k' },
@@ -9773,14 +9802,14 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
               data: dataFijos,
               backgroundColor: bgFijos,
               borderWidth: 2,
-              borderColor: 'rgba(10, 15, 30, 0.9)'
+              borderColor: chartBorderColor()
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: { position: 'bottom', labels: { color: '#F1F5F9', font: { size: 11, weight: '600' } } },
+              legend: { position: 'bottom', labels: { color: chartTextColor(), font: { size: 11, weight: '600' } } },
               tooltip: {
                 callbacks: {
                   label: (ctx) => totalGastos > 0 ? ` ${ctx.label}: ${formatCLP(ctx.raw)}` : ' Sin gastos en tabla'
@@ -9935,7 +9964,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=35').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=36').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }

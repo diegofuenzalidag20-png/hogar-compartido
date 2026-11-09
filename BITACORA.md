@@ -186,6 +186,18 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-09] — Revisión Visual con Playwright: Ajustes en Teléfono, Modo Claro y Escritorio (v36)
+* **Motivo:** Revisión pantalla por pantalla de la app publicada.
+* **Solución Técnica:**
+  * `formatCLP()` muestra `-$` en negativos y nunca `NaN`.
+  * Inicio muestra primero los gastos: el co-aporte hipotecario va después y la guía parte plegada.
+  * Cofres en sobregiro aparecen en rojo con su etiqueta; la leyenda de distribución ya no se corta y su total coincide con los ingresos.
+  * Cada superávit indica contra qué se calcula (boletas, gastos o presupuesto).
+  * Los gráficos toman colores según el tema (`chartTextColor()`, `chartBorderColor()`) y se redibujan al cambiarlo.
+  * El mes en curso del historial muestra sueldos y totales vigentes.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `sw.js` (`finanzas-pareja-v36`), `BITACORA.md`.
+* **Impacto:** Pantallas consistentes y legibles en teléfono, modo claro y escritorio.
+
 ### [2026-11-09] — Blindaje tras Batería de 56 Escenarios, Análisis Rediseñado y Lista de Gastos Corta (v34–v35)
 * **Motivo:** Reducir el scroll, simplificar los gráficos y blindar la app para el uso diario.
 * **Interfaz:**
