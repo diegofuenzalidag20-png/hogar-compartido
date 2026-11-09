@@ -2331,9 +2331,9 @@ main, .tab-pane {
           <div style="margin-top:0.85rem; font-size:0.82rem; color:var(--text-muted); line-height:1.5; background:var(--bg-surface); padding:0.85rem; border-radius:8px;">
             <strong style="color:var(--text-main);">✨ Conceptos clave para tener tranquilidad:</strong>
             <ul style="margin-top:0.4rem; padding-left:1.25rem; display:flex; flex-direction:column; gap:0.3rem;">
-              <li><strong>Margen Libre de Soledad (~$588.000):</strong> Sueldo de Soledad ($875k) menos sus cuentas ($286k). Es su dinero libre mensual para sus gastos personales o ahorro propio.</li>
-              <li><strong>Colchón de Diego ($35.000):</strong> El dinero libre que le sobra a Diego tras pagar Hipotecario, pasajes de Huasco, michis, bolsillo y su ahorro de $130k.</li>
-              <li><strong>Superávit Familiar (~$623.000):</strong> El excedente total del hogar para cumplir metas de ahorro conjunto.</li>
+              <li><strong>Disponible de Soledad:</strong> Fondos de la Chequera menos los gastos registrados en ella.</li>
+              <li><strong>Disponible de Diego:</strong> Fondos de la Cuenta Fan menos los gastos registrados en ella.</li>
+              <li><strong>Superávit Familiar:</strong> Ingresos del hogar menos el presupuesto meta del mes.</li>
             </ul>
           </div>
         </div>
@@ -2370,7 +2370,7 @@ main, .tab-pane {
               <div style="font-size:0.68rem; color:var(--text-dim);">Luz, agua, gas, súper...</div>
             </div>
             <div style="text-align:right;">
-              <div style="font-size:0.7rem; color:#10B981; font-weight:700; text-transform:uppercase;">Tu Dinero Libre</div>
+              <div style="font-size:0.7rem; color:#10B981; font-weight:700; text-transform:uppercase;">Disponible en Chequera</div>
               <div style="font-size:1.35rem; font-weight:800; color:#10B981;" id="soleCardMargen">$678.839</div>
               <div style="font-size:0.68rem; color:#34D399;" id="soleCardSubLibre">¡70% de tu sueldo para ti!</div>
             </div>
@@ -2422,7 +2422,7 @@ main, .tab-pane {
           </div>
 
           <div style="margin-top:0.85rem; font-size:0.78rem; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center;">
-            <span>Colchón Libre / Oxígeno: <strong style="color:#10B981;" id="diegoCardOxigeno">$151.426</strong></span>
+            <span>Disponible en Cuenta Fan: <strong style="color:#10B981;" id="diegoCardOxigeno">$151.426</strong></span>
             <span>Bolsillo Semanal Mach: <strong style="color:var(--text-main);">$35.000 / semana</strong></span>
           </div>
         </div>
@@ -2768,7 +2768,7 @@ main, .tab-pane {
             <span>👥 Desembolso Pareja: Diego vs Soledad</span>
             <span class="badge badge-emerald" style="font-size:0.7rem;">Equilibrio Pareja</span>
           </div>
-          <div class="card-desc">Cuánto dinero aportó cada uno al hogar este mes vs su saldo libre resultante.</div>
+          <div class="card-desc">Cuánto aportó cada uno al hogar este mes vs lo disponible en su cuenta principal.</div>
           <div style="position:relative; height:260px; margin-top:0.75rem;">
             <canvas id="chartMesDesembolsoPareja"></canvas>
           </div>
@@ -2825,27 +2825,27 @@ main, .tab-pane {
         </div>
 
         <div class="kpi-card rose">
-          <div class="kpi-header"><span>Gastos & Compromisos Hogar</span><span class="kpi-arrow-btn">💸</span></div>
+          <div class="kpi-header"><span>Presupuesto Meta del Mes</span><span class="kpi-arrow-btn">💸</span></div>
           <div class="kpi-value" id="dashKpiGastosTotal">$1.462.750</div>
           <div class="kpi-sub" id="dashKpiGastosSub">Fijos + Operaciones + Hogar Limache + Ahorro MP</div>
         </div>
 
         <div class="kpi-card emerald">
-          <div class="kpi-header"><span>Superávit Libre Familiar</span><span class="kpi-arrow-btn">💎</span></div>
+          <div class="kpi-header"><span>Superávit según Presupuesto</span><span class="kpi-arrow-btn">💎</span></div>
           <div class="kpi-value" id="dashKpiSuperavit">$832.875</div>
           <div class="kpi-sub" id="dashKpiSuperavitSub">36.3% de tasa de ahorro libre del hogar</div>
         </div>
 
         <div class="kpi-card amber">
-          <div class="kpi-header"><span>Oxígeno Diego</span><span class="kpi-arrow-btn">🛡️</span></div>
+          <div class="kpi-header"><span>Disponible Diego</span><span class="kpi-arrow-btn">🛡️</span></div>
           <div class="kpi-value" id="dashKpiOxigenoDiego">$151.426</div>
-          <div class="kpi-sub" id="dashKpiOxigenoDiegoSub">Colchón libre de imprevistos personales</div>
+          <div class="kpi-sub" id="dashKpiOxigenoDiegoSub">Fondos de Cuenta Fan menos gastos registrados</div>
         </div>
 
         <div class="kpi-card purple">
-          <div class="kpi-header"><span>Margen Libre Soledad</span><span class="kpi-arrow-btn">🟣</span></div>
+          <div class="kpi-header"><span>Disponible Soledad</span><span class="kpi-arrow-btn">🟣</span></div>
           <div class="kpi-value" id="dashKpiMargenSoledad">$678.839</div>
-          <div class="kpi-sub" id="dashKpiMargenSoledadSub">Sueldo $964k menos cuentas Limache ($286k)</div>
+          <div class="kpi-sub" id="dashKpiMargenSoledadSub">Fondos de la Chequera menos gastos registrados</div>
         </div>
       </div>
 
@@ -2881,7 +2881,7 @@ main, .tab-pane {
       <div class="charts-row">
         <div class="card">
           <div class="card-title">
-            <span>Distribución de Gastos por Cuenta / Cofre</span>
+            <span>Distribución del Sueldo por Cuenta / Cofre</span>
             <span>🍩</span>
           </div>
           <div class="card-desc"><span id="dashCofresSubtitle">Asignación porcentual de compromisos mensuales ($1.815.360)</span></div>
@@ -3034,7 +3034,7 @@ main, .tab-pane {
         <!-- Seasonality Chart -->
         <div class="card" style="margin-bottom:1.5rem;">
           <div class="card-title">
-            <span>Estacionalidad de Servicios Básicos (14 Meses)</span>
+            <span>Estacionalidad de Servicios Básicos</span>
             <span>❄️☀️</span>
           </div>
           <div class="card-desc">Observa el impacto del invierno en Luz y Gas frente a la estabilidad del Agua y Gastos Comunes</div>
@@ -3293,9 +3293,9 @@ main, .tab-pane {
           <!-- Pie Diego: Colchón + Botón Guardar -->
           <div style="margin-top:1rem; background:rgba(16,185,129,0.08); padding:0.85rem; border-radius:8px; border:1px solid rgba(16,185,129,0.3); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
             <div>
-              <span style="font-size:0.8rem; color:var(--text-main); font-weight:600;">💎 Colchón Libre Resultante:</span>
+              <span style="font-size:0.8rem; color:var(--text-main); font-weight:600;">💎 Disponible en Cuenta Fan:</span>
               <div style="font-size:1.2rem; font-weight:800; color:#10B981;" id="diegoColchonCuentasDisplay">$34.778</div>
-              <div style="font-size:0.7rem; color:var(--text-muted);">Dinero libre que queda en Cuenta Fan tras cubrir gastos fijos (~$609k)</div>
+              <div style="font-size:0.7rem; color:var(--text-muted);">Fondos del mes menos los gastos registrados en Cuenta Fan</div>
             </div>
             <button type="button" onclick="saveDiegoCofres()" class="btn-primary" style="padding:0.45rem 0.95rem; font-size:0.82rem; background:linear-gradient(135deg, #3B82F6, #1D4ED8); font-weight:700;">
               <span>💾</span> Guardar Cofres Diego
@@ -3471,9 +3471,9 @@ main, .tab-pane {
           <!-- Pie Soledad: Margen Libre + Botón Guardar -->
           <div style="margin-top:1rem; background:rgba(168,85,247,0.08); padding:0.85rem; border-radius:8px; border:1px solid rgba(168,85,247,0.3); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
             <div>
-              <span style="font-size:0.8rem; color:var(--text-main); font-weight:600;">💜 Saldo Libre Remanente Soledad:</span>
+              <span style="font-size:0.8rem; color:var(--text-main); font-weight:600;">💜 Disponible en Chequera:</span>
               <div style="font-size:1.2rem; font-weight:800; color:#10B981;" id="soleMargenCuentasDisplay">$89.000</div>
-              <div style="font-size:0.7rem; color:var(--text-muted);">Dinero libre que queda en Chequera tras cubrir cuentas Limache (~$286k)</div>
+              <div style="font-size:0.7rem; color:var(--text-muted);">Fondos del mes menos los gastos registrados en Chequera</div>
             </div>
             <button type="button" onclick="saveSoleCofres()" class="btn-primary" style="padding:0.45rem 0.95rem; font-size:0.82rem; background:linear-gradient(135deg, #A855F7, #7C3AED); font-weight:700;">
               <span>💾</span> Guardar Cofres Soledad
@@ -3847,8 +3847,7 @@ main, .tab-pane {
         renderAnalisisMesActual();
       }
       const tbody = document.getElementById('audit-tbody');
-      if (!tbody) return;
-      tbody.innerHTML = '';
+      if (tbody) tbody.innerHTML = '';
 
       let totalBase = 0;
       let totalReal = 0;
@@ -3897,7 +3896,7 @@ main, .tab-pane {
           </td>
           <td style="text-align:center;">${badgeHtml}</td>
         `;
-        tbody.appendChild(tr);
+        if (tbody) tbody.appendChild(tr);
       });
 
       // Update Audit KPIs
@@ -3911,23 +3910,11 @@ main, .tab-pane {
       document.getElementById('audit-kpi-superavit').textContent = formatCLP(superavitReal);
 
       // Actualizar Paneles Personales de Soledad y Diego
-      let soleCuentasTotal = 0;
-      let diegoCompromisosTotal = 0;
-
-      currentAuditItems.forEach(item => {
-        if (item.resp === 'Soledad') {
-          soleCuentasTotal += (item.actual > 0 ? item.actual : item.base);
-        } else {
-          // Fijos, pasajes y michis
-          if (!item.name.includes('Bolsillo') && !item.name.includes('Ahorro')) {
-            diegoCompromisosTotal += (item.actual > 0 ? item.actual : item.base);
-          }
-        }
-      });
+      const { soledad: soleCuentasTotal, diego: diegoCompromisosTotal } = getCompromisosPorPersona();
 
       // Panel Soledad
       const soleSueldo = userProfile.soledadSalary;
-      const soleMargen = soleSueldo - soleCuentasTotal;
+      const soleMargen = getCuentaPrincipalDisponible('Soledad');
       const solePct = soleSueldo > 0 ? Math.min(100, Math.round((soleCuentasTotal / soleSueldo) * 100)) : 30;
       const soleLibrePct = 100 - solePct;
 
@@ -3947,13 +3934,13 @@ main, .tab-pane {
       }
       if (elSoleProgress) elSoleProgress.style.width = solePct + '%';
       if (elSolePctAporte) elSolePctAporte.textContent = `Aporte al Hogar (${solePct}%)`;
-      if (elSolePctLibre) elSolePctLibre.textContent = `${soleLibrePct}% Libre para tus proyectos personales`;
-      if (elSoleSubLibre) elSoleSubLibre.textContent = `¡${soleLibrePct}% de tu sueldo para ti!`;
+      if (elSolePctLibre) elSolePctLibre.textContent = `${soleLibrePct}% del sueldo sin comprometer`;
+      if (elSoleSubLibre) elSoleSubLibre.textContent = 'Fondos del mes menos gastos registrados';
 
       // Panel Diego
       const diegoSueldo = userProfile.diegoSalary;
-      const diegoBolsilloAhorro = (userProfile.cofresDiego.machBolsillo || 140000) + (userProfile.cofresDiego.mpAhorro || 130000);
-      const diegoOxigeno = diegoSueldo - (diegoCompromisosTotal + diegoBolsilloAhorro);
+      const diegoBolsilloAhorro = (userProfile.cofresDiego.machBolsillo ?? 0) + (userProfile.cofresDiego.mpAhorro ?? 0);
+      const diegoOxigeno = getCuentaPrincipalDisponible('Diego');
 
       const elDiegoInput = document.getElementById('diegoSalaryInlineInput');
       const elDiegoComp = document.getElementById('diegoCardCompromisos');
@@ -4479,7 +4466,6 @@ main, .tab-pane {
       const savedSole = localStorage.getItem('soledad_salary');
       if (savedSole) userProfile.soledadSalary = parseInt(savedSole, 10);
 
-      repararRemanentesSiEsNecesario();
       syncProfileToInputs();
     }
 
@@ -4489,52 +4475,6 @@ main, .tab-pane {
     }
 
     // Auto-recuperación de remanentes si se cerró mes previamente pero los remanentes estaban en 0
-    function repararRemanentesSiEsNecesario() {
-      if (!userProfile.remanentes) {
-        userProfile.remanentes = {
-          mpDiego: 0,
-          mpSoledad: 0,
-          bancoSole: 0,
-          tenpoDiego: 0,
-          machDiego: 0,
-          tenpoSoledad: 0
-        };
-      }
-      const vals = Object.values(userProfile.remanentes);
-      const allZero = vals.length === 0 || vals.every(v => !v || v === 0);
-      if (allZero && (currentActiveMonth === 'Noviembre 2026' || currentActiveMonth === 'Nov-26')) {
-        try {
-          const raw = localStorage.getItem('db_historial_meses');
-          if (raw) {
-            const list = JSON.parse(raw);
-            const oct = list.find(m => matchMonth(m, 'Octubre 2026'));
-            if (oct && Array.isArray(oct.gastosDiarios) && oct.gastosDiarios.length > 0) {
-              const spent = {};
-              oct.gastosDiarios.forEach(g => {
-                const k = normalizeAccountKey(g.account);
-                spent[k] = (spent[k] || 0) + (Number(g.amount) || 0);
-              });
-              const baseMPD = userProfile.cofresDiego?.mpAhorro || 130000;
-              const baseMPS = userProfile.cofresSoledad?.mpAhorro || 150000;
-              const baseBancoS = userProfile.cofresSoledad?.bancoReserva || 150000;
-              const baseTenpoD = userProfile.cofresDiego?.tenpoHuasco || 300000;
-              const baseMachD = userProfile.cofresDiego?.machBolsillo || 140000;
-              const baseTenpoS = userProfile.cofresSoledad?.tenpoBolsillo || 150000;
-
-              userProfile.remanentes.mpDiego = Math.max(0, baseMPD - (spent['mpDiego'] || 0));
-              userProfile.remanentes.mpSoledad = Math.max(0, baseMPS - (spent['mpSoledad'] || 0));
-              userProfile.remanentes.bancoSole = Math.max(0, baseBancoS - (spent['reservaSole'] || 0));
-              userProfile.remanentes.tenpoDiego = Math.max(0, baseTenpoD - (spent['tenpoDiego'] || 0));
-              userProfile.remanentes.machDiego = Math.max(0, baseMachD - (spent['machDiego'] || 0));
-              userProfile.remanentes.tenpoSoledad = Math.max(0, baseTenpoS - (spent['tenpoSoledad'] || 0));
-
-              localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
-            }
-          }
-        } catch(e) {}
-      }
-    }
-
     // Sincronización bidireccional permanente de sueldos, paneles, cofres y KPIs
     function syncProfileToInputs() {
       const diegoSal = userProfile.diegoSalary;
@@ -4623,12 +4563,12 @@ main, .tab-pane {
       }
 
       // Cálculos para KPIs 3, 4, 5
-      const diegoGastosEst = 909360;
-      const diegoBolsilloAhorroEst = (userProfile.cofresDiego?.machBolsillo || 140000) + (userProfile.cofresDiego?.mpAhorro || 130000);
-      const diegoOxigenoEst = diegoSal - (diegoGastosEst + diegoBolsilloAhorroEst);
-      const soleGastosEst = 286000;
-      const soleMargenEst = soleSal - soleGastosEst;
-      const superavitEst = (totalSal - 1462750);
+      const metaMensual = getMetaMensual();
+      const diegoOxigenoEst = getCuentaPrincipalDisponible('Diego');
+      const soleMargenEst = getCuentaPrincipalDisponible('Soledad');
+      const superavitEst = totalSal - metaMensual;
+      const dashGastos = document.getElementById('dashKpiGastosTotal');
+      if (dashGastos) dashGastos.textContent = formatCLP(metaMensual);
       const superavitPct = totalSal > 0 ? ((superavitEst / totalSal) * 100).toFixed(1) : '0';
 
       const dashSup = document.getElementById('dashKpiSuperavit');
@@ -4642,7 +4582,7 @@ main, .tab-pane {
       const dashSoleM = document.getElementById('dashKpiMargenSoledad');
       const dashSoleMSub = document.getElementById('dashKpiMargenSoledadSub');
       if (dashSoleM) dashSoleM.textContent = (soleMargenEst >= 0 ? '+' : '-') + formatCLP(Math.abs(soleMargenEst));
-      if (dashSoleMSub) dashSoleMSub.textContent = `Sueldo ${formatCLP(soleSal)} menos cuentas Limache ($286k)`;
+      if (dashSoleMSub) dashSoleMSub.textContent = 'Fondos de la Chequera menos gastos registrados';
 
       // 7. Auto-cálculo de Remanentes (Cuenta Fan & Chequera Electrónica) y Tarjetas
       updateDiegoColchonDisplay();
@@ -4690,12 +4630,10 @@ main, .tab-pane {
 
       const elDesc = document.getElementById('diegoFanFormulaDesc');
       if (elDesc) {
-        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, Mach: ${formatCLP(mach)}, MP: ${formatCLP(mp)})<br>💰 <strong>Saldo disponible restante en Cuenta Fan:</strong> <strong style="color:#60A5FA;">${formatCLP(remanenteFan)}</strong>`;
+        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, Mach: ${formatCLP(mach)}, MP: ${formatCLP(mp)})<br>💰 <strong>Saldo disponible restante en Cuenta Fan:</strong> <strong style="color:#60A5FA;">${formatCLP(remanenteFan)}</strong>${overAssignWarning(totalTransferencias, salary)}`;
       }
 
-      // Gastos fijos vivienda estimados (~$609.360)
-      const gastosFijosVivienda = 609360;
-      const colchon = remanenteFan - gastosFijosVivienda;
+      const colchon = getCuentaPrincipalDisponible('Diego');
 
       const elColchon = document.getElementById('diegoColchonCuentasDisplay');
       if (elColchon) {
@@ -4721,7 +4659,8 @@ main, .tab-pane {
       const remBanco = parseInt(document.getElementById('inputRemanenteBancoSole')?.value, 10) || 0;
 
       // Smart Visa cuota ES parte de las transferencias desde Chequera
-      const totalTransferencias = tenpo + mp + banco + smart;
+      const smartReserva = getSmartReservaChequera(smart);
+      const totalTransferencias = tenpo + mp + banco + smartReserva;
       const remanenteChequera = Math.max(0, salary - totalTransferencias);
 
       const elCheq = document.getElementById('inputCofreSoleChequera');
@@ -4752,12 +4691,10 @@ main, .tab-pane {
 
       const elDesc = document.getElementById('soleChequeraFormulaDesc');
       if (elDesc) {
-        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, MP: ${formatCLP(mp)}, Reserva: ${formatCLP(banco)}, Smart Visa: ${formatCLP(smart)})<br>💰 <strong>Saldo disponible restante en Chequera:</strong> <strong style="color:#C084FC;">${formatCLP(remanenteChequera)}</strong>`;
+        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, MP: ${formatCLP(mp)}, Reserva: ${formatCLP(banco)}, Smart Visa: ${formatCLP(smartReserva)})<br>💰 <strong>Saldo disponible restante en Chequera:</strong> <strong style="color:#C084FC;">${formatCLP(remanenteChequera)}</strong>${overAssignWarning(totalTransferencias, salary)}`;
       }
 
-      // De Chequera se pagan las cuentas del hogar Limache (~$286.000)
-      const cuentasHogarEstimadas = 286000;
-      const remanenteLibre = remanenteChequera - cuentasHogarEstimadas;
+      const remanenteLibre = getCuentaPrincipalDisponible('Soledad');
 
       const elMargen = document.getElementById('soleMargenCuentasDisplay');
       if (elMargen) {
@@ -4773,9 +4710,9 @@ main, .tab-pane {
 
     // CÁLCULO Y CONTROL EN TIEMPO REAL: TARJETA SMART VISA (BANCOESTADO)
     function updateSmartVisaDisplay() {
-      const cupo = parseInt(document.getElementById('inputSmartVisaCupo')?.value, 10) || (userProfile.smartVisaConfig?.cupoTotal ?? 500000);
-      const cuota = parseInt(document.getElementById('inputCofreSoleSmart')?.value, 10) || (userProfile.cofresSoledad?.smartVisa ?? 50000);
-      const deudaPrevia = parseInt(document.getElementById('inputSmartVisaDeudaPrevia')?.value, 10) || (userProfile.smartVisaConfig?.deudaPrevia ?? 0);
+      const cupo = readMoney('inputSmartVisaCupo', userProfile.smartVisaConfig?.cupoTotal ?? 500000);
+      const cuota = readMoney('inputCofreSoleSmart', userProfile.cofresSoledad?.smartVisa ?? 0);
+      const deudaPrevia = readMoney('inputSmartVisaDeudaPrevia', userProfile.smartVisaConfig?.deudaPrevia ?? 0);
 
       // Calcular compras de este mes con Smart Visa en vivo desde expenses
       let comprasMes = 0;
@@ -4787,7 +4724,7 @@ main, .tab-pane {
         });
       }
 
-      const deudaActual = Math.max(0, deudaPrevia + comprasMes - cuota);
+      const deudaActual = Math.max(0, deudaPrevia + comprasMes - getSmartCuotaDelMes(cuota));
       const cupoDisponible = Math.max(0, cupo - deudaActual);
 
       userProfile.smartVisaConfig = {
@@ -4817,6 +4754,7 @@ main, .tab-pane {
         userProfile.diegoSalary = val;
         userProfile.diegoBase = val;
         userProfile.diegoOvertime = 0;
+        localStorage.setItem('diego_salary', val);
         const elH = document.getElementById('headerDiegoSalary');
         if (elH) elH.textContent = formatCLP(val);
         const elD = document.getElementById('cuentasDiegoSalaryDisplay');
@@ -4824,6 +4762,7 @@ main, .tab-pane {
         updateDiegoColchonDisplay();
       } else {
         userProfile.soledadSalary = val;
+        localStorage.setItem('soledad_salary', val);
         const elH = document.getElementById('headerSoledadSalary');
         if (elH) elH.textContent = formatCLP(val);
         const elD = document.getElementById('cuentasSoleSalaryDisplay');
@@ -4834,9 +4773,9 @@ main, .tab-pane {
 
     function saveDiegoCofres() {
       const salary = userProfile.diegoSalary || 1214038;
-      const tenpo = parseInt(document.getElementById('inputCofreTenpo').value, 10) || 300000;
-      const mach = parseInt(document.getElementById('inputCofreMach').value, 10) || 140000;
-      const mp = parseInt(document.getElementById('inputCofreMP').value, 10) || 130000;
+      const tenpo = readMoney('inputCofreTenpo', userProfile.cofresDiego?.tenpoHuasco ?? 0);
+      const mach = readMoney('inputCofreMach', userProfile.cofresDiego?.machBolsillo ?? 0);
+      const mp = readMoney('inputCofreMP', userProfile.cofresDiego?.mpAhorro ?? 0);
       const fan = Math.max(0, salary - (tenpo + mach + mp));
 
       const remanenteTenpo = parseInt(document.getElementById('inputRemanenteTenpoDiego')?.value, 10) || 0;
@@ -4864,16 +4803,16 @@ main, .tab-pane {
 
     function saveSoleCofres() {
       const salary = userProfile.soledadSalary || 875000;
-      const smart = parseInt(document.getElementById('inputCofreSoleSmart').value, 10) || 50000;
-      const tenpo = parseInt(document.getElementById('inputCofreSoleTenpo').value, 10) || 150000;
-      const mp = parseInt(document.getElementById('inputCofreSoleMP').value, 10) || 150000;
-      const banco = parseInt(document.getElementById('inputCofreSoleBanco').value, 10) || 150000;
-      const chequera = Math.max(0, salary - (tenpo + mp + banco + smart));
+      const smart = readMoney('inputCofreSoleSmart', userProfile.cofresSoledad?.smartVisa ?? 0);
+      const tenpo = readMoney('inputCofreSoleTenpo', userProfile.cofresSoledad?.tenpoBolsillo ?? 0);
+      const mp = readMoney('inputCofreSoleMP', userProfile.cofresSoledad?.mpAhorro ?? 0);
+      const banco = readMoney('inputCofreSoleBanco', userProfile.cofresSoledad?.bancoReserva ?? 0);
+      const chequera = Math.max(0, salary - (tenpo + mp + banco + getSmartReservaChequera(smart)));
 
       const remanenteTenpo = parseInt(document.getElementById('inputRemanenteTenpoSole')?.value, 10) || 0;
       const remanenteMPSole = parseInt(document.getElementById('inputRemanenteMPSole')?.value, 10) || 0;
       const remanenteBancoSole = parseInt(document.getElementById('inputRemanenteBancoSole')?.value, 10) || 0;
-      const cupoSmart = parseInt(document.getElementById('inputSmartVisaCupo')?.value, 10) || 500000;
+      const cupoSmart = readMoney('inputSmartVisaCupo', userProfile.smartVisaConfig?.cupoTotal ?? 500000);
       const deudaSmart = parseInt(document.getElementById('inputSmartVisaDeudaPrevia')?.value, 10) || 0;
 
       userProfile.cofresSoledad = {
@@ -4929,8 +4868,9 @@ main, .tab-pane {
       }
 
       // Sincronizar también las donas individuales de tarjetas en la sección de análisis
-      if (typeof renderCardAnalysis === 'function') {
-        renderCardAnalysis();
+      if (!cardAnalysisQueued) {
+        cardAnalysisQueued = true;
+        setTimeout(() => { cardAnalysisQueued = false; renderCardAnalysis(); }, 0);
       }
     }
 
@@ -5021,10 +4961,11 @@ main, .tab-pane {
       if (ctxAportes) {
         if (chartAportes) chartAportes.destroy();
 
-        const diegoGastos = 909360;
-        const diegoLibre = Math.max(0, diegoSal - diegoGastos);
-        const soleGastos = 286000;
-        const soleLibre = Math.max(0, soleSal - soleGastos);
+        const compromisos = getCompromisosPorPersona();
+        const diegoGastos = compromisos.diego;
+        const diegoLibre = Math.max(0, getCuentaPrincipalDisponible('Diego'));
+        const soleGastos = compromisos.soledad;
+        const soleLibre = Math.max(0, getCuentaPrincipalDisponible('Soledad'));
 
         chartAportes = new Chart(ctxAportes, {
           type: 'bar',
@@ -5044,7 +4985,7 @@ main, .tab-pane {
                 borderRadius: 6
               },
               {
-                label: 'Dinero / Ahorro Libre',
+                label: 'Disponible en Cuenta Principal',
                 data: [diegoLibre, soleLibre],
                 backgroundColor: ['#10B981', '#34D399'],
                 borderRadius: 6
@@ -6741,7 +6682,7 @@ main, .tab-pane {
         renderCardAnalysis();
       }
       if (typeof updateSmartVisaDisplay === 'function') {
-        updateSmartVisaDisplay();
+        syncProfileToInputs();
       }
     }
 
@@ -8138,16 +8079,16 @@ function getMonthCode(monthLabel) {
       }
 
       // Saldos restantes no gastados de cada cofre al momento del cierre
-      const saldoRemanenteMPDiego = Math.max(0, (userProfile.remanentes?.mpDiego || 0) + (userProfile.cofresDiego?.mpAhorro || 130000) - (spentByAcc['mpDiego'] || 0));
-      const saldoRemanenteMPSoledad = Math.max(0, (userProfile.remanentes?.mpSoledad || 0) + (userProfile.cofresSoledad?.mpAhorro || 150000) - (spentByAcc['mpSoledad'] || 0));
-      const saldoRemanenteBancoSole = Math.max(0, (userProfile.remanentes?.bancoSole || 0) + (userProfile.cofresSoledad?.bancoReserva || 150000) - (spentByAcc['reservaSole'] || 0));
-      const saldoRemanenteTenpoDiego = Math.max(0, (userProfile.remanentes?.tenpoDiego || 0) + (userProfile.cofresDiego?.tenpoHuasco || 300000) - (spentByAcc['tenpoDiego'] || 0));
-      const saldoRemanenteMachDiego = Math.max(0, (userProfile.remanentes?.machDiego || 0) + (userProfile.cofresDiego?.machBolsillo || 140000) - (spentByAcc['machDiego'] || 0));
-      const saldoRemanenteTenpoSole = Math.max(0, (userProfile.remanentes?.tenpoSoledad || 0) + (userProfile.cofresSoledad?.tenpoBolsillo || 150000) - (spentByAcc['tenpoSoledad'] || 0));
+      const saldoRemanenteMPDiego = Math.max(0, (userProfile.remanentes?.mpDiego || 0) + (userProfile.cofresDiego?.mpAhorro ?? 0) - (spentByAcc['mpDiego'] || 0));
+      const saldoRemanenteMPSoledad = Math.max(0, (userProfile.remanentes?.mpSoledad || 0) + (userProfile.cofresSoledad?.mpAhorro ?? 0) - (spentByAcc['mpSoledad'] || 0));
+      const saldoRemanenteBancoSole = Math.max(0, (userProfile.remanentes?.bancoSole || 0) + (userProfile.cofresSoledad?.bancoReserva ?? 0) - (spentByAcc['reservaSole'] || 0));
+      const saldoRemanenteTenpoDiego = Math.max(0, (userProfile.remanentes?.tenpoDiego || 0) + (userProfile.cofresDiego?.tenpoHuasco ?? 0) - (spentByAcc['tenpoDiego'] || 0));
+      const saldoRemanenteMachDiego = Math.max(0, (userProfile.remanentes?.machDiego || 0) + (userProfile.cofresDiego?.machBolsillo ?? 0) - (spentByAcc['machDiego'] || 0));
+      const saldoRemanenteTenpoSole = Math.max(0, (userProfile.remanentes?.tenpoSoledad || 0) + (userProfile.cofresSoledad?.tenpoBolsillo ?? 0) - (spentByAcc['tenpoSoledad'] || 0));
 
       // Tarjeta Smart Visa: calcular deuda remanente que pasa al siguiente mes
       const deudaAnteriorSmart = userProfile.smartVisaConfig?.deudaPrevia || 0;
-      const cuotaSmart = userProfile.cofresSoledad?.smartVisa || 50000;
+      const cuotaSmart = getSmartCuotaDelMes();
       const comprasSmartMes = spentByAcc['smartVisaSole'] || 0;
       const deudaRestanteSmart = Math.max(0, deudaAnteriorSmart + comprasSmartMes - cuotaSmart);
 
@@ -8166,7 +8107,7 @@ function getMonthCode(monthLabel) {
       userProfile.smartVisaConfig = {
         cupoTotal: userProfile.smartVisaConfig?.cupoTotal || 500000,
         deudaPrevia: deudaRestanteSmart,
-        cuotaMes: userProfile.cofresSoledad?.smartVisa || 50000
+        cuotaMes: userProfile.cofresSoledad?.smartVisa ?? 0
       };
 
       // Guardar el perfil con los remanentes actualizados
@@ -8743,6 +8684,54 @@ function getMonthCode(monthLabel) {
       renderCardAnalysis();
     }
 
+    // --- Saldos de cofres: una sola fuente para todas las pantallas ---
+    let cardAnalysisQueued = false;
+
+    // Acepta $0; solo una casilla vacía conserva el valor anterior
+    function readMoney(id, fallback) {
+      const value = parseInt(document.getElementById(id)?.value, 10);
+      return Number.isNaN(value) ? fallback : value;
+    }
+
+    function getCuentaPrincipalDisponible(owner) {
+      const key = owner === 'Diego' ? 'fanDiego' : 'chequeraSole';
+      const cfg = CARDS_ANALYSIS_CONFIG.find(c => c.key === key);
+      const gastado = expenses.reduce((acc, e) => normalizeAccountKey(e.account) === key ? acc + (Number(e.amount) || 0) : acc, 0);
+      return cfg.getRemanente() + cfg.getBudget() - gastado;
+    }
+
+    function getMetaMensual() {
+      return currentAuditItems.reduce((acc, it) => acc + (Number(it.base) || 0), 0);
+    }
+
+    function getCompromisosPorPersona() {
+      const total = { diego: 0, soledad: 0 };
+      currentAuditItems.forEach(item => {
+        const monto = item.actual > 0 ? item.actual : item.base;
+        if (item.resp === 'Soledad') total.soledad += monto;
+        else if (!item.name.includes('Bolsillo') && !item.name.includes('Ahorro')) total.diego += monto;
+      });
+      return total;
+    }
+
+    // Cuota pagada desde otra cuenta; las compras hechas con la tarjeta no cuentan
+    function getSmartCuotaPagada() {
+      return expenses.reduce((acc, e) => normalizeAccountKey(e.account) !== 'smartVisaSole' && /smart\s*visa/i.test(`${e.category} ${e.desc}`) ? acc + (Number(e.amount) || 0) : acc, 0);
+    }
+
+    function getSmartCuotaDelMes(cuotaPlanificada = userProfile.cofresSoledad?.smartVisa ?? 0) {
+      return getSmartCuotaPagada() || cuotaPlanificada;
+    }
+
+    // Si la cuota ya está registrada como gasto, reservarla además la descontaría dos veces
+    function getSmartReservaChequera(cuotaPlanificada = userProfile.cofresSoledad?.smartVisa ?? 0) {
+      return getSmartCuotaPagada() > 0 ? 0 : cuotaPlanificada;
+    }
+
+    function overAssignWarning(asignado, sueldo) {
+      return asignado > sueldo ? `<br><strong style="color:#F43F5E;">⚠️ Asignaste ${formatCLP(asignado - sueldo)} más que el sueldo.</strong>` : '';
+    }
+
     function normalizeAccountKey(acc) {
       const a = (acc || '').toLowerCase().trim();
       if (a.includes('tenpo') && (a.includes('diego') || a.includes('huasco') || (!a.includes('soledad') && !a.includes('sole')))) return 'tenpoDiego';
@@ -8828,11 +8817,11 @@ function getMonthCode(monthLabel) {
         sourceAccount: 'Sueldo Líquido Soledad',
         getBudget: () => {
           const sal = userProfile.soledadSalary || 875000;
-          const trans = (userProfile.cofresSoledad?.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad?.mpAhorro ?? 150000) + (userProfile.cofresSoledad?.bancoReserva ?? 150000) + (userProfile.cofresSoledad?.smartVisa ?? 50000);
+          const trans = (userProfile.cofresSoledad?.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad?.mpAhorro ?? 150000) + (userProfile.cofresSoledad?.bancoReserva ?? 150000) + getSmartReservaChequera();
           return Math.max(0, sal - trans);
         },
         getTotalSalary: () => userProfile.soledadSalary || 875000,
-        getTotalTransfersOut: () => (userProfile.cofresSoledad?.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad?.mpAhorro ?? 150000) + (userProfile.cofresSoledad?.bancoReserva ?? 150000) + (userProfile.cofresSoledad?.smartVisa ?? 50000),
+        getTotalTransfersOut: () => (userProfile.cofresSoledad?.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad?.mpAhorro ?? 150000) + (userProfile.cofresSoledad?.bancoReserva ?? 150000) + getSmartReservaChequera(),
         getRemanente: () => userProfile.remanentes?.chequeraSole ?? 0,
         color: '#A855F7',
         badgeClass: 'badge-purple',
@@ -8919,7 +8908,6 @@ function getMonthCode(monthLabel) {
     }
 
     function renderCardAnalysis() {
-      if (typeof updateSmartVisaDisplay === 'function') updateSmartVisaDisplay();
       const grid = document.getElementById('gridCardDoughnuts');
       if (!grid) return;
 
@@ -8964,7 +8952,7 @@ function getMonthCode(monthLabel) {
         // Métricas Smart Visa
         const cardCreditCupo = isCreditCard ? (userProfile.smartVisaConfig?.cupoTotal ?? 500000) : 0;
         const cardCreditDeudaPrevia = isCreditCard ? (userProfile.smartVisaConfig?.deudaPrevia ?? 0) : 0;
-        const cardCreditCuota = isCreditCard ? (userProfile.cofresSoledad?.smartVisa ?? 50000) : 0;
+        const cardCreditCuota = isCreditCard ? getSmartCuotaDelMes() : 0;
         const cardCreditDeuda = isCreditCard ? Math.max(0, cardCreditDeudaPrevia + totalSpent - cardCreditCuota) : 0;
         const cardCreditDisponible = isCreditCard ? Math.max(0, cardCreditCupo - cardCreditDeuda) : 0;
 
@@ -9490,8 +9478,8 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
       const ctxDesemb = document.getElementById('chartMesDesembolsoPareja')?.getContext('2d');
       if (ctxDesemb) {
         if (chartMesDesembolsoPareja) chartMesDesembolsoPareja.destroy();
-        const diegoLibre = Math.max(0, diegoSal - diegoDesembolso);
-        const soleLibre = Math.max(0, soleSal - soleDesembolso);
+        const diegoLibre = getCuentaPrincipalDisponible('Diego');
+        const soleLibre = getCuentaPrincipalDisponible('Soledad');
 
         chartMesDesembolsoPareja = new Chart(ctxDesemb, {
           type: 'bar',
@@ -9505,7 +9493,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
                 borderRadius: 6
               },
               {
-                label: 'Saldo Libre Resultante en Cuenta',
+                label: 'Disponible en Cuenta Principal',
                 data: [diegoLibre, soleLibre],
                 backgroundColor: ['rgba(16, 185, 129, 0.7)', 'rgba(52, 211, 153, 0.7)'],
                 borderRadius: 6
@@ -9717,7 +9705,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=30').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=31').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
