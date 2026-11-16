@@ -186,6 +186,11 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Controles en Verde en Vez de Amarillo-Naranja (v45)
+* **Motivo:** Los botones y selectores activos usaban un degradado amarillo-naranja que no combinaba con la paleta (verde, azul Diego, morado Soledad).
+* **Solución Técnica:** Pestañas, chips, filtros del historial, selector de donas, navegación inferior, desplegables, foco de campos y `.btn-primary` pasan al verde esmeralda (`#10B981 → #059669`). El botón "Reabrir mes" y las casillas de remanente/deuda quedan neutras. Se mantiene el amarillo solo como señal (alertas, cuentas pendientes, gráficos).
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `sw.js`.
+* **Impacto:** Toda la app usa un solo color para "seleccionado".
 ### [2026-11-16] — Paneles de Liquidez e Íconos Minimalistas (v44)
 * **Motivo:** Los paneles personales tenían demasiados datos; se pidió solo ver qué porcentaje de la plata total se ha usado. Los emojis no se veían acordes a una app de finanzas.
 * **Solución Técnica:**
