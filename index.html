@@ -3814,7 +3814,6 @@ main, .tab-pane {
       { id: 'item-22', name: 'Supermercado Hogar Limache', cat: 'Alimentación', resp: 'Soledad', cuenta: 'Chequera BancoEstado', base: 120000, actual: 120000 },
       { id: 'item-23', name: 'Tarjeta Smart Visa (Compromiso)', cat: 'Compromisos / Crédito', resp: 'Soledad', cuenta: 'Tarjeta Smart Visa', base: 50000, actual: 50000 },
       { id: 'item-24', name: 'Aseo Domiciliario (Cuota Trimestral)', cat: 'Contribuciones', resp: 'Soledad', cuenta: 'Chequera BancoEstado', base: 13841, actual: 13841 },
-      { id: 'item-25', name: 'Curso Waldorf Limache', cat: 'Compromisos / Educación', resp: 'Soledad', cuenta: 'Chequera BancoEstado', base: 50000, actual: 50000 },
       { id: 'item-26', name: 'Vacunas / Salud Michis', cat: 'Mascotas', resp: 'Soledad', cuenta: 'Chequera BancoEstado', base: 45000, actual: 45000 }
     ];
 
@@ -10185,7 +10184,7 @@ const detalleCategoria = {};
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=42').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=43').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }

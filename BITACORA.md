@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Curso Waldorf Fuera del Presupuesto (v43)
+* **Motivo:** El curso Waldorf ya no se paga.
+* **Solución Técnica:** Se quitó `item-25` de `masterAuditItems` (plantilla de meses nuevos) y del presupuesto de noviembre en la nube, con respaldo previo.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `sw.js`.
+* **Impacto:** La meta mensual baja en $50.000 y el ítem no reaparece al abrir un mes nuevo.
+
 ### [2026-11-16] — Responsables Correctos en Cuentas Fijas y Waldorf Fuera del Checklist (v42)
 * **Motivo:** El checklist mostraba Internet Hogar y Servicios Huasco como de Soledad, y el Arriendo Huasco como pendiente aunque estaba pagado. El curso Waldorf ya no corresponde.
 * **Causa:** Al registrar un gasto, la búsqueda de la cuenta era muy amplia ("Luz" caía en "Servicios Huasco (Luz y Agua)", "Hielo (Gastos Hogar)" en Gas, cualquier pasaje en Arriendo Huasco) y además cambiaba el responsable por quien registraba.
