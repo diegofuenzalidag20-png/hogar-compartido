@@ -1,9 +1,11 @@
-// Comprueba la combinación de datos entre teléfonos usando el código real de index.html.
+// Comprueba la combinación de datos entre teléfonos usando el código real (index.html y js/).
 // Uso: node test_sync_merge.mjs
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
-const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
+import { readdirSync } from 'node:fs';
+// El código vive en index.html y en los módulos de js/
+const html = [new URL('./index.html', import.meta.url), ...readdirSync(new URL('./js/', import.meta.url)).sort().map((m) => new URL(`./js/${m}`, import.meta.url))].map((u) => readFileSync(u, 'utf8')).join('\n');
 const sections = html.match(/const SYNC_SECTIONS = .*?;/)[0];
 const fn = html.match(/function mergeThreeWay[\s\S]*?\n {4}}\r?\n/)[0];
 const mergeThreeWay = new Function(`${sections}\n${fn}\nreturn mergeThreeWay;`)();

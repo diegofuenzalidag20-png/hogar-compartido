@@ -186,6 +186,15 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Código Dividido en Módulos y Grafo Actualizado (v47)
+* **Motivo:** El archivo único de ~11.000 líneas hacía cada cambio lento y riesgoso.
+* **Solución Técnica:**
+  * `index.html` queda solo con la estructura (~2.000 líneas). Estilos en `css/app.css`; lógica en 15 módulos `js/01-base.js` … `js/15-analisis-mes.js`, cargados en orden como scripts clásicos (mismo ámbito global, mismo orden de ejecución que antes). Mapa de módulos en `AGENTS.md`.
+  * `sw.js`: precarga módulos y estilos sin la caché HTTP (`cache: 'reload'`) y sirve el código propio (html/js/css) desde la red primero, para nunca mezclar un HTML nuevo con un módulo viejo.
+  * Pruebas unitarias leen `index.html` + `js/`. `window.renderExpensesTable` pasa a ser perezoso (renderExpenses vive en un módulo posterior).
+  * Grafo de graphify reconstruido con los módulos y 319 llamadas entre módulos (`qa-local/grafo_modulos.py`, `qa-local/reconstruir_grafo.ps1`).
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `sw.js`, `css/app.css`, `js/*.js`, `test_sync_merge.mjs`, `test_cofres.mjs`, `AGENTS.md`.
+* **Impacto:** Sin cambios visibles; cada parte de la app se puede modificar sin tocar las demás.
 ### [2026-11-16] — Inicio de Sesión, Respaldos, Real Sumado, Limache vs Huasco y Ventanas Propias (v46)
 * **Motivo:** Plan de mejoras: proteger los datos, que los números no dependan de cómo se escribe el detalle y pulir la experiencia.
 * **Solución Técnica:**

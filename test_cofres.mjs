@@ -1,9 +1,11 @@
-// Comprueba la cuota Smart Visa y el disponible usando el código real de index.html.
+// Comprueba la cuota Smart Visa y el disponible usando el código real (index.html y js/).
 // Uso: node test_cofres.mjs
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
-const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
+import { readdirSync } from 'node:fs';
+// El código vive en index.html y en los módulos de js/
+const html = [new URL('./index.html', import.meta.url), ...readdirSync(new URL('./js/', import.meta.url)).sort().map((m) => new URL(`./js/${m}`, import.meta.url))].map((u) => readFileSync(u, 'utf8')).join('\n');
 const fn = (name) => html.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n {4}}\\r?\\n`))[0];
 const names = ['normalizeAccountKey', 'getSmartCuotaPagada', 'getSmartCuotaDelMes', 'getSmartReservaChequera', 'getCuentaPrincipalDisponible', 'getMetaMensual'];
 const app = (expenses, cuota = 50000) => new Function('expenses', 'userProfile', 'CARDS_ANALYSIS_CONFIG', 'currentAuditItems',
