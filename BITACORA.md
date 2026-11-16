@@ -186,6 +186,15 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Responsables Correctos en Cuentas Fijas y Waldorf Fuera del Checklist (v42)
+* **Motivo:** El checklist mostraba Internet Hogar y Servicios Huasco como de Soledad, y el Arriendo Huasco como pendiente aunque estaba pagado. El curso Waldorf ya no corresponde.
+* **Causa:** Al registrar un gasto, la búsqueda de la cuenta era muy amplia ("Luz" caía en "Servicios Huasco (Luz y Agua)", "Hielo (Gastos Hogar)" en Gas, cualquier pasaje en Arriendo Huasco) y además cambiaba el responsable por quien registraba.
+* **Solución Técnica:**
+  * `gastoEsDeCuentaFija()`: el registro reconoce la cuenta fija con la misma regla del checklist y ya no modifica `resp`.
+  * Arriendo Huasco reconocido aunque su nombre diga "Huasco"; `item-25` (Waldorf) fuera de `CHECKLIST_FIJOS`.
+  * Nube corregida con respaldo: responsable, cuenta y monto real según los pagos de noviembre (Internet Hogar → Diego, Servicios Huasco → Diego/Tenpo, Gas y Arena → Soledad).
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `sw.js`.
+* **Impacto:** Cada cuenta del checklist aparece con quien realmente la paga y registrar un gasto ya no la reasigna.
 ### [2026-11-16] — Lugar del Gasto de Diego: Limache o Huasco (v41)
 * **Motivo:** Diego necesita separar los gastos de la casa en Limache de los del departamento en Huasco.
 * **Solución Técnica:**

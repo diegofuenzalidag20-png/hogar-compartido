@@ -5408,23 +5408,14 @@ main, .tab-pane {
 
       // 1. Sincronizar en auditoría mensual y checklist
       const descLower = desc.toLowerCase();
-      let matched = currentAuditItems.find(it => 
-        descLower.includes(it.name.toLowerCase()) || 
-        it.name.toLowerCase().includes(descLower) ||
-        (cat.toLowerCase().includes('luz') && it.name.toLowerCase().includes('luz')) ||
-        (cat.toLowerCase().includes('agua') && it.name.toLowerCase().includes('agua')) ||
-        (cat.toLowerCase().includes('gas') && it.name.toLowerCase().includes('gas')) ||
-        (cat.toLowerCase().includes('claro') && it.name.toLowerCase().includes('claro')) ||
-        (cat.toLowerCase().includes('entel') && it.name.toLowerCase().includes('entel')) ||
-        (cat.toLowerCase().includes('internet') && it.name.toLowerCase().includes('internet')) ||
-        (cat.toLowerCase().includes('huasco') && it.name.toLowerCase().includes('huasco')) ||
-        (cat.toLowerCase().includes('común') && it.name.toLowerCase().includes('común'))
-      );
+      const gastoPrueba = { category: cat.replace(/^[^\w\s]+\s*/, ''), desc };
+      // Antes "Luz" caía en "Servicios Huasco (Luz y Agua)" y "Hielo (Gastos Hogar)" en Gas, y cambiaban de responsable
+      let matched = currentAuditItems.find(it => gastoEsDeCuentaFija(it.id, gastoPrueba))
+        || currentAuditItems.find(it => !CHECKLIST_FIJOS[it.id] && it.name.toLowerCase() === descLower);
 
-      const auditBefore = matched ? { actual: matched.actual, resp: matched.resp } : null;
+      const auditBefore = matched ? { actual: matched.actual } : null;
       if (matched) {
         matched.actual = amount;
-        matched.resp = payer;
       } else {
         const newItem = {
           id: nuevoId('custom'),
@@ -5580,7 +5571,7 @@ main, .tab-pane {
     const CHECKLIST_FIJOS = {
       'item-1': { p: /aporte fijo/ },
       'item-1b': { p: /diferencial uf/ },
-      'item-2': { p: /arriendo habitaci/ },
+      'item-2': { p: /arriendo habitaci/, conHuasco: true },
       'item-3': { p: /servicios huasco/, conHuasco: true },
       'item-17': { p: /\bluz\b|chilquinta/ },
       'item-18': { p: /\bagua\b|esval/ },
@@ -5591,7 +5582,6 @@ main, .tab-pane {
       'item-20b': { p: /entel/ },
       'item-23': { p: /smart visa/ },
       'item-24': { p: /aseo/ },
-      'item-25': { p: /waldorf|curso/ },
       'item-5': { p: /comida michis/ },
       'item-6': { p: /arena/ },
       'item-7': { p: /netflix/, d: true },
@@ -5600,12 +5590,15 @@ main, .tab-pane {
       'item-10': { p: /rupatadina/ }
     };
 
-    function pagosDeCuentaFija(itemId) {
+    function gastoEsDeCuentaFija(itemId, g) {
       const regla = CHECKLIST_FIJOS[itemId];
-      return expenses.filter(g => {
-        const t = (regla.d ? `${g.desc || ''}` : `${g.category || ''} ${g.desc || ''}`).toLowerCase();
-        return regla.p.test(t) && (regla.conHuasco || !/huasco/.test(t));
-      });
+      if (!regla) return false;
+      const t = (regla.d ? `${g.desc || ''}` : `${g.category || ''} ${g.desc || ''}`).toLowerCase();
+      return regla.p.test(t) && (regla.conHuasco || !/huasco/.test(t));
+    }
+
+    function pagosDeCuentaFija(itemId) {
+      return expenses.filter(g => gastoEsDeCuentaFija(itemId, g));
     }
 
     function renderChecklist() {
@@ -10192,7 +10185,7 @@ const detalleCategoria = {};
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=41').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=42').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
