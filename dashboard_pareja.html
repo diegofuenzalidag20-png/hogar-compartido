@@ -1425,6 +1425,12 @@
     }
 
     /* Form Group Layout & Grid Safety (No Overlaps) */
+    .lugar-toggle { display: flex; gap: 0.4rem; }
+    .lugar-toggle .lugar-opcion { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.55rem; border: 1px solid var(--border-color); border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; color: var(--text-muted); text-transform: none; letter-spacing: normal; margin: 0; }
+    .lugar-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+    .lugar-toggle .lugar-opcion:has(input:checked) { background: rgba(59,130,246,0.18); border-color: rgba(59,130,246,0.55); color: #60A5FA; }
+    .lugar-toggle .lugar-opcion:focus-within { outline: 2px solid #60A5FA; outline-offset: 2px; }
+    .tag-lugar { font-size: 0.68rem; font-weight: 700; color: var(--text-muted); background: rgba(148,163,184,0.12); padding: 0.15rem 0.45rem; border-radius: 6px; border: 1px solid var(--border-color); white-space: nowrap; }
     .form-group {
       display: flex;
       flex-direction: column;
@@ -2142,6 +2148,14 @@ main, .tab-pane {
                 <option value="Soledad">🟣 Soledad</option>
                 <option value="Ambos">🤝 Ambos (Compartido 50/50)</option>
 </select>
+            </div>
+
+            <div class="form-group" id="quickLugarGroup" style="display:none;">
+              <label>¿Para dónde es?</label>
+              <div class="lugar-toggle" role="radiogroup" aria-label="Lugar del gasto">
+                <label class="lugar-opcion"><input type="radio" name="quickLugar" value="Limache" checked> 🏡 Limache</label>
+                <label class="lugar-opcion"><input type="radio" name="quickLugar" value="Huasco"> ⛰️ Huasco</label>
+              </div>
             </div>
 
             <div class="form-group">
@@ -5329,6 +5343,32 @@ main, .tab-pane {
       syncAllGlassSelects();
     }
 
+    // Diego reparte sus gastos entre la casa de Limache y el departamento de Huasco
+    const PATRON_HUASCO = /huasco|pasaje|turno/i;
+    function adivinarLugar(texto) { return PATRON_HUASCO.test(texto || '') ? 'Huasco' : 'Limache'; }
+    function marcarLugar(lugar) {
+      const r = document.querySelector(`input[name="quickLugar"][value="${lugar}"]`);
+      if (r) r.checked = true;
+    }
+    function actualizarSelectorLugar(e) {
+      const grupo = document.getElementById('quickLugarGroup');
+      if (!grupo) return;
+      grupo.style.display = document.getElementById('quickPayer').value === 'Diego' ? '' : 'none';
+      // Al elegir una categoría de Huasco (o de Limache) se sugiere el lugar; Diego puede cambiarlo
+      if (e && e.target && e.target.id === 'quickCategory') {
+        const cat = e.target.value || '';
+        if (PATRON_HUASCO.test(cat)) marcarLugar('Huasco');
+        else if (/limache/i.test(cat)) marcarLugar('Limache');
+      }
+    }
+    document.addEventListener('change', e => {
+      if (e.target && (e.target.id === 'quickPayer' || e.target.id === 'quickCategory')) actualizarSelectorLugar(e);
+      if (e.target && e.target.id === 'editExpPayer') {
+        const g = document.getElementById('editExpLugarGroup');
+        if (g) g.style.display = e.target.value === 'Diego' ? '' : 'none';
+      }
+    });
+
     let ultimoRegistro = { firma: '', hora: 0 };
 
     function handleQuickBillSubmit(e) {
@@ -5339,6 +5379,7 @@ main, .tab-pane {
       const amount = parseInt(document.getElementById('quickAmount').value, 10);
       const account = document.getElementById('quickAccount').value;
       const desc = document.getElementById('quickDesc').value.trim();
+      const lugar = payer === 'Diego' ? (document.querySelector('input[name="quickLugar"]:checked')?.value || 'Limache') : null;
 
       if (!payer) {
         alert('Por favor selecciona quién pagó.');
@@ -5361,7 +5402,7 @@ main, .tab-pane {
         return;
       }
 
-      const firmaRegistro = [date, payer, cat, amount, account, desc].join('|');
+      const firmaRegistro = [date, payer, cat, amount, account, desc, lugar].join('|');
       if (firmaRegistro === ultimoRegistro.firma && Date.now() - ultimoRegistro.hora < 2500) return;
       ultimoRegistro = { firma: firmaRegistro, hora: Date.now() };
 
@@ -5412,6 +5453,7 @@ main, .tab-pane {
         auditId: auditId,
         auditBefore: auditBefore
       };
+      if (lugar) newExp.lugar = lugar;
       expenses.unshift(newExp);
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
       localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
@@ -5459,6 +5501,7 @@ main, .tab-pane {
 
       const elDesc = document.getElementById('quickDesc');
       if (elDesc) elDesc.value = '';
+      marcarLugar('Limache');
 
       const elPayer = document.getElementById('quickPayer');
       if (elPayer) {
@@ -6547,7 +6590,7 @@ main, .tab-pane {
           if (currentExpenseFilter === 'Diego' && item.payer !== 'Diego' && item.payer !== 'Ambos') return false;
           if (currentExpenseFilter === 'Soledad' && item.payer !== 'Soledad' && item.payer !== 'Ambos') return false;
           if (currentExpenseSearch) {
-            const searchable = `${item.date || ''} ${item.payer || ''} ${item.category || ''} ${item.desc || ''} ${item.account || ''} ${item.amount || ''}`.toLowerCase();
+            const searchable = `${item.date || ''} ${item.payer || ''} ${item.lugar || ''} ${item.category || ''} ${item.desc || ''} ${item.account || ''} ${item.amount || ''}`.toLowerCase();
             if (!searchable.includes(currentExpenseSearch)) return false;
           }
           return true;
@@ -6606,6 +6649,11 @@ main, .tab-pane {
           } else {
             payerHtml = `<span class="pill-partner" style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.25rem 0.65rem; border-radius:999px; font-weight:700; font-size:0.75rem; background:rgba(16, 185, 129, 0.2); color:#34D399; border:1px solid rgba(16, 185, 129, 0.4);">🤝 Ambos</span>`;
             payerMobileHtml = `<span style="font-weight:700; font-size:0.75rem; color:#34D399; background:rgba(16,185,129,0.18); padding:0.2rem 0.5rem; border-radius:6px; border:1px solid rgba(16,185,129,0.35);">🤝 Ambos</span>`;
+          }
+          if (item.payer === 'Diego' && item.lugar) {
+            const tagLugar = ` <span class="tag-lugar">${item.lugar === 'Huasco' ? '⛰️' : '🏡'} ${escapeHtml(item.lugar)}</span>`;
+            payerHtml += tagLugar;
+            payerMobileHtml += tagLugar;
           }
 
           // 1. Desktop TR
@@ -6758,6 +6806,10 @@ main, .tab-pane {
       copiarOpciones('quickPayer', 'editExpPayer', exp.payer, false);
       copiarOpciones('quickAccount', 'editExpAccount', exp.account, false);
       copiarOpciones('quickCategory', 'editExpCategory', exp.category, true);
+      const lugarEl = document.getElementById('editExpLugar');
+      if (lugarEl) lugarEl.value = exp.lugar || adivinarLugar(`${exp.category || ''} ${exp.desc || ''}`);
+      const lugarGrupo = document.getElementById('editExpLugarGroup');
+      if (lugarGrupo) lugarGrupo.style.display = exp.payer === 'Diego' ? '' : 'none';
 
       // Seleccionar Categoría
       const catEl = document.getElementById('editExpCategory');
@@ -6821,6 +6873,7 @@ main, .tab-pane {
       const desc = document.getElementById('editExpDesc').value.trim();
       const amount = parseInt(document.getElementById('editExpAmount').value, 10);
       const account = document.getElementById('editExpAccount').value;
+      const lugar = payer === 'Diego' ? (document.getElementById('editExpLugar')?.value || 'Limache') : undefined;
 
       if (!amount || amount <= 0) {
         alert('Por favor ingresa un monto válido.');
@@ -6835,8 +6888,10 @@ main, .tab-pane {
         category: category,
         desc: desc,
         amount: amount,
-        account: account
+        account: account,
+        lugar: lugar
       };
+      if (!lugar) delete expenses[idx].lugar;
       if (boletaEditada) {
         boletaEditada.actual = amount;
         if (boletaEditada.fromQuickBill) boletaEditada.name = desc;
@@ -10137,7 +10192,7 @@ const detalleCategoria = {};
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=40').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=41').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
@@ -10558,6 +10613,14 @@ const detalleCategoria = {};
           <div>
             <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Detalle o Comercio:</label>
             <input type="text" id="editExpDesc" required style="width:100%; padding:0.55rem 0.75rem; font-size:0.85rem; border-radius:8px;" placeholder="Ej: Lider, Copec, Farmacia...">
+          </div>
+
+          <div id="editExpLugarGroup" style="display:none;">
+            <label for="editExpLugar" style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">¿Para dónde es?</label>
+            <select id="editExpLugar" style="width:100%; padding:0.55rem 0.75rem; font-size:0.85rem; border-radius:8px;">
+              <option value="Limache">🏡 Limache (casa)</option>
+              <option value="Huasco">⛰️ Huasco (departamento)</option>
+            </select>
           </div>
 
           <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:0.65rem;">

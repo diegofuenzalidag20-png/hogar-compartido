@@ -186,6 +186,14 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Lugar del Gasto de Diego: Limache o Huasco (v41)
+* **Motivo:** Diego necesita separar los gastos de la casa en Limache de los del departamento en Huasco.
+* **Solución Técnica:**
+  * Selector "¿Para dónde es?" (🏡 Limache / ⛰️ Huasco) en el registro rápido, visible solo cuando paga Diego. Al elegir una categoría de Huasco (pasajes, turno, arriendo) se sugiere Huasco.
+  * El gasto guarda `lugar`; la lista muestra la etiqueta y la búsqueda la reconoce. El editor permite cambiarlo y lo quita si el gasto pasa a Soledad o Ambos.
+  * Limpieza en la nube: se borraron 6 copias repetidas del 1 de noviembre (Luz, Agua, Gas, Gasto Común, Plan Claro, Santa Isabel), con respaldo previo.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `sw.js`.
+* **Impacto:** Los gastos de Diego quedan diferenciados por lugar y el total del mes ya no cuenta dos veces esas cuentas.
 ### [2026-11-16] — Checklist de Cuentas Fijas y Presupuestos con Datos de Noviembre (v40)
 * **Motivo:** El checklist mostraba cuentas ya pagadas como "Falta ingresar" y mezclaba gastos variables (Uber, súper, salidas). Los presupuestos no reflejaban el gasto real.
 * **Solución Técnica:**
