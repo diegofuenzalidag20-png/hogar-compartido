@@ -1893,6 +1893,17 @@ main, .tab-pane {
 #modalVerMesContent { overflow-y: auto; min-height: 0; }
 #modalVerMesContent > * { flex-shrink: 0; }
 
+.categoria-detalle:not(:empty) { margin-top: 0.85rem; padding: 0.75rem; border: 1px solid var(--border-glass); border-radius: 12px; background: var(--bg-surface-elevated); }
+.categoria-detalle-cabeza { display: flex; justify-content: space-between; gap: 0.75rem; align-items: flex-start; }
+.categoria-detalle-cabeza small { display: block; margin-top: 0.15rem; color: var(--text-muted); font-size: 0.78rem; }
+.categoria-detalle .sheet-close { display: flex; }
+.categoria-detalle-total { margin: 0.5rem 0 0.25rem; color: var(--text-muted); font-size: 0.82rem; }
+.categoria-detalle-total strong { color: var(--text-main); }
+.categoria-detalle-fila { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.45rem 0; border-top: 1px solid var(--border-glass); font-size: 0.86rem; }
+.categoria-detalle-fila span { min-width: 0; }
+.categoria-detalle-fila small { display: block; color: var(--text-muted); font-size: 0.72rem; }
+.categoria-detalle-fila > strong { flex: none; font-family: monospace; }
+
 /* Navegación móvil: barra inferior, cabecera compacta y hoja de registro */
 .bottom-nav, .app-menu, .overlay-backdrop, .header-menu-btn, .sheet-close { display: none; }
 #toast.has-action { pointer-events: auto; display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; }
@@ -2761,7 +2772,7 @@ main, .tab-pane {
             <span style="font-size:1.35rem;">🥧</span>
             <div>
               <strong style="font-size:1.15rem; color:var(--text-main);">Desglose de Gastos por Categoría (Mes Actual)</strong>
-              <div style="font-size:0.75rem; color:var(--text-muted);">Visualiza a dónde se destinó el dinero del mes: Global Familiar, Diego y Soledad</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">Toca una categoría del gráfico o de la leyenda para ver qué gastos incluye.</div>
             </div>
           </div>
           <span class="badge badge-purple solo-escritorio" style="font-size:0.75rem;">3 Vistas Comparativas</span>
@@ -5410,7 +5421,7 @@ main, .tab-pane {
       renderAuditTable();
       renderChecklist();
       saveAuditMonth();
-      triggerAutoSyncToCloud();
+      triggerAutoSyncToCloud(true);
       if (typeof updateDiegoColchonDisplay === 'function') updateDiegoColchonDisplay();
       if (typeof updateSoleMargenDisplay === 'function') updateSoleMargenDisplay();
       if (typeof updateSmartVisaDisplay === 'function') updateSmartVisaDisplay();
@@ -6145,6 +6156,23 @@ main, .tab-pane {
     }
 
     async function runCloudSync() {
+      // Camino rápido: si nadie cambió la nube desde nuestra última sincronización, se sube sin leer antes.
+      // Si otro teléfono guardó entremedio, Firestore lo rechaza y se sigue por el camino con combinación.
+      const versionConocida = localStorage.getItem(SYNC_VERSION_KEY);
+      const baseConocida = leerJSON(SYNC_BASE_KEY, null);
+      if (versionConocida && baseConocida) {
+        const payloadRapido = JSON.parse(JSON.stringify(buildCompleteFamilyPayload()));
+        if (JSON.stringify(pickSyncState(payloadRapido)) !== JSON.stringify(baseConocida)) {
+          payloadRapido.timestamp = Date.now();
+          payloadRapido.clientSessionId = CLIENT_SESSION_ID;
+          const versionNueva = await writeCloudDoc(payloadRapido, versionConocida);
+          if (versionNueva) {
+            rememberSyncedState(pickSyncState(payloadRapido), versionNueva, payloadRapido.timestamp);
+            return 'pushed';
+          }
+        }
+      }
+
       for (let attempt = 0; attempt < 5; attempt++) {
         const { updateTime, payload: remotePayload } = await readCloudDoc();
         const remote = remotePayload && pickSyncState(remotePayload);
@@ -6245,7 +6273,7 @@ main, .tab-pane {
         autoSyncCloudTimer = setTimeout(() => {
           autoSyncCloudTimer = null;
           pushToFirestore(true);
-        }, 350);
+        }, 150);
       }
     }
 
@@ -6257,7 +6285,7 @@ main, .tab-pane {
       if (cloudPollInterval) clearInterval(cloudPollInterval);
       cloudPollInterval = setInterval(() => {
         if (!document.hidden) pullFromFirestore(true);
-      }, 15000);
+      }, 5000);
 
       window.addEventListener('visibilitychange', () => {
         // Al salir de la app no se puede esperar al temporizador
@@ -6678,6 +6706,19 @@ main, .tab-pane {
       document.getElementById('editExpPayer').value = exp.payer || 'Diego';
       document.getElementById('editExpDesc').value = exp.desc || '';
       document.getElementById('editExpAmount').value = exp.amount || 0;
+
+      // Las mismas opciones que el registro; un valor antiguo que ya no exista se conserva
+      const copiarOpciones = (desde, hasta, actual, limpiar) => {
+        const origen = document.getElementById(desde), destino = document.getElementById(hasta);
+        if (!origen || !destino) return;
+        destino.innerHTML = '';
+        [...origen.options].filter(o => o.value).forEach(o => destino.add(new Option(o.text, limpiar ? o.value.replace(/^[^\w\s]+\s*/, '') : o.value)));
+        if (actual && ![...destino.options].some(o => o.value === actual)) destino.add(new Option(actual, actual));
+        destino.value = actual || destino.options[0]?.value || '';
+      };
+      copiarOpciones('quickPayer', 'editExpPayer', exp.payer, false);
+      copiarOpciones('quickAccount', 'editExpAccount', exp.account, false);
+      copiarOpciones('quickCategory', 'editExpCategory', exp.category, true);
 
       // Seleccionar Categoría
       const catEl = document.getElementById('editExpCategory');
@@ -8614,30 +8655,21 @@ tr.innerHTML = `
     let chartMesFijosVsVariables = null;
 
     // Normalizador de categorías para vincular la tabla de gastos a los gráficos
+    const CATEGORIAS_GASTO = [
+      { nombre: 'Vivienda & Crédito', patron: /hipotec|vivienda|smart visa|cr[eé]dito|dividendo/, incluye: 'Dividendo hipotecario y cuota de la tarjeta Smart Visa.' },
+      { nombre: 'Mascotas (Michis)', patron: /michi|mascota|\bgatos?\b|arena|veterin/, incluye: 'Comida, arena y veterinario de los michis.' },
+      { nombre: 'Logística Huasco', patron: /huasco|pasaje|\bbus\b|arriendo habitaci|turno|uber|colectivo|traslado|metro|moviliz|operaciones/, incluye: 'Arriendo y servicios en Huasco, pasajes, Uber, metro y comida de turno.' },
+      { nombre: 'Alimentación', patron: /supermercado|s[uú]per\b|lider|mayorista|aliment|feria|verdul|\bpan\b|delivery|comida|salida|almuerzo|desayuno/, incluye: 'Supermercado, feria y comidas fuera de casa.' },
+      { nombre: 'Salud & Educación', patron: /salud|farmacia|m[eé]dic|dental|consulta|eutirox|rupatadina|waldorf|curso/, incluye: 'Farmacia, consultas médicas y cursos.' },
+      { nombre: 'Bolsillo & Ahorro', patron: /streaming|netflix|spotify|crunchyroll|bolsillo|gastos propios|ahorro|transferencia|tercero/, incluye: 'Gastos personales, streaming, ahorro y transferencias a terceros.' },
+      { nombre: 'Hogar Limache', patron: /\bluz\b|chilquinta|\bagua\b|esval|\bgas\b|com[uú]n|condominio|\bclaro\b|entel|internet|aseo|servicios hogar|gastos hogar|imprevist|limache/, incluye: 'Cuentas de la casa: luz, agua, gas, gasto común, internet, telefonía, aseo e imprevistos del hogar.' }
+    ];
+
     function normalizeExpenseCategory(categoryName, descName) {
-      const text = `${categoryName || ''} ${descName || ''}`.toLowerCase();
-      if (text.includes('hipotec') || text.includes('vivienda') || text.includes('smart visa') || text.includes('crédito') || text.includes('credito') || text.includes('dividendo')) {
-        return 'Vivienda & Crédito';
-      }
-      if (text.includes('michi') || text.includes('mascota') || text.includes('gato') || text.includes('arena') || text.includes('veterin')) {
-        return 'Mascotas (Michis)';
-      }
-      if (text.includes('huasco') || text.includes('pasaje') || text.includes('bus') || text.includes('arriendo habitación') || text.includes('turno') || text.includes('uber') || text.includes('moviliz') || text.includes('operaciones')) {
-        return 'Logística Huasco';
-      }
-      if (text.includes('luz') || text.includes('chilquinta') || text.includes('agua') || text.includes('esval') || text.includes('gas') || text.includes('común') || text.includes('comun') || text.includes('claro') || text.includes('entel') || text.includes('internet') || text.includes('aseo') || text.includes('servicios hogar') || text.includes('limache')) {
-        return 'Hogar Limache';
-      }
-      if (text.includes('salud') || text.includes('farmacia') || text.includes('medica') || text.includes('eutirox') || text.includes('rupatadina') || text.includes('waldorf') || text.includes('curso') || text.includes('netflix') || text.includes('spotify') || text.includes('streaming')) {
-        return 'Salud & Educación';
-      }
-      if (text.includes('transferencia') || text.includes('tercero')) {
-        return 'Bolsillo & Ahorro';
-      }
-      if (text.includes('super') || text.includes('súper') || text.includes('lider') || text.includes('mayorista') || text.includes('alimento') || text.includes('feria') || text.includes('pan') || text.includes('verdura') || text.includes('delivery') || text.includes('comida') || text.includes('salida')) {
-        return 'Alimentación';
-      }
-      return 'Bolsillo & Ahorro';
+      const texto = `${categoryName || ''} ${descName || ''}`.toLowerCase();
+      // El orden importa: "Supermercado (... Limache)" es comida, no una cuenta de la casa
+      const regla = CATEGORIAS_GASTO.find(c => c.patron.test(texto));
+      return regla ? regla.nombre : 'Bolsillo & Ahorro';
     }
 
     function isExpenseFijo(categoryName, descName) {
@@ -9492,7 +9524,48 @@ let currentCardAnalysisFilter = 'all';
     function renderCardAnalysisSection() {
       renderCardAnalysis();
     }
-function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette) {
+const detalleCategoria = {};
+    const QUIEN_POR_DONA = { chartMesCategoriasGlobal: null, chartMesCategoriasDiego: 'Diego', chartMesCategoriasSoledad: 'Soledad' };
+
+    function mostrarDetalleCategoria(canvasId, categoria, mantener = false) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      let caja = document.getElementById(`det_${canvasId}`);
+      if (!caja) {
+        caja = document.createElement('div');
+        caja.id = `det_${canvasId}`;
+        caja.className = 'categoria-detalle';
+        canvas.closest('.card').appendChild(caja);
+      }
+      if (!mantener && detalleCategoria[canvasId] === categoria) {
+        delete detalleCategoria[canvasId];
+        caja.innerHTML = '';
+        return;
+      }
+      detalleCategoria[canvasId] = categoria;
+      const quien = QUIEN_POR_DONA[canvasId];
+      const gastos = expenses
+        .filter(e => normalizeExpenseCategory(e.category, e.desc) === categoria)
+        .filter(e => !quien || e.payer === quien || e.payer === 'Ambos')
+        .map(e => ({ ...e, monto: (Number(e.amount) || 0) * (quien && e.payer === 'Ambos' ? 0.5 : 1) }))
+        .sort((x, y) => y.monto - x.monto);
+      const total = gastos.reduce((s, e) => s + e.monto, 0);
+      const regla = CATEGORIAS_GASTO.find(c => c.nombre === categoria);
+      caja.innerHTML = `
+        <div class="categoria-detalle-cabeza">
+          <div><strong>${escapeHtml(categoria)}</strong><small>${escapeHtml(regla ? regla.incluye : 'Gastos que no calzan en otra categoría.')}</small></div>
+          <button type="button" class="sheet-close" aria-label="Cerrar detalle" onclick="mostrarDetalleCategoria('${canvasId}', detalleCategoria['${canvasId}'])">✕</button>
+        </div>
+        <div class="categoria-detalle-total">${gastos.length} ${gastos.length === 1 ? 'gasto' : 'gastos'} · <strong>${formatCLP(total)}</strong></div>
+        ${gastos.map(e => `
+          <div class="categoria-detalle-fila">
+            <span><strong>${escapeHtml(e.desc || e.category)}</strong><small>${escapeHtml(e.date || '')} · ${escapeHtml(e.payer)}${quien && e.payer === 'Ambos' ? ' (50%)' : ''} · ${escapeHtml(e.category || '')}</small></span>
+            <strong>${formatCLP(e.monto)}</strong>
+          </div>`).join('')}`;
+      if (!mantener) caja.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+
+    function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette) {
       const ctx = document.getElementById(canvasId)?.getContext('2d');
       if (!ctx) return null;
       if (currentChart) currentChart.destroy();
@@ -9508,7 +9581,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
         bgColors = ['rgba(255, 255, 255, 0.1)'];
       }
 
-      return new Chart(ctx, {
+      const grafico = new Chart(ctx, {
         type: 'doughnut',
         data: {
           labels: labels,
@@ -9520,11 +9593,14 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
           }]
         },
         options: {
+        onClick: (evt, elementos, chart) => { if (elementos.length && totalAmt > 0) mostrarDetalleCategoria(canvasId, chart.data.labels[elementos[0].index]); },
+        onHover: (evt, elementos) => { evt.native.target.style.cursor = elementos.length && totalAmt > 0 ? 'pointer' : 'default'; },
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
             legend: {
               position: mobileLayout.matches ? 'bottom' : 'right',
+              onClick: (evt, item, legend) => { if (totalAmt > 0) mostrarDetalleCategoria(canvasId, legend.chart.data.labels[item.index]); },
               labels: {
                 color: chartTextColor(), font: { size: mobileLayout.matches ? 12 : 10, weight: '600' }, boxWidth: 12,
                 generateLabels: (chart) => Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart).map(l => ({
@@ -9546,6 +9622,8 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
           cutout: '62%'
         }
       });
+      if (detalleCategoria[canvasId]) mostrarDetalleCategoria(canvasId, detalleCategoria[canvasId], true);
+      return grafico;
     }
 
     // ==============================================================
@@ -10020,7 +10098,7 @@ function buildCategoryDoughnut(canvasId, catMap, currentChart, totalAmt, palette
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=38').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=39').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }

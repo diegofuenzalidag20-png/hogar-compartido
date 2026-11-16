@@ -186,6 +186,21 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Categorías Claras con Detalle, Editor Igual al Registro y Sincronización Más Rápida (v39)
+* **Motivo:** Las categorías de las donas no explicaban qué incluían, el editor tenía otras opciones y la sincronización tardaba.
+* **Fallos de clasificación corregidos:**
+  * "Supermercado (... Limache)" caía en Hogar Limache.
+  * "Gastos Propios" caía en Hogar porque "gastos" contiene "gas".
+  * "Consultas Médicas" no reconocía la tilde.
+  * Netflix quedaba en Salud & Educación.
+* **Solución Técnica:**
+  * `CATEGORIAS_GASTO` define reglas en orden, con palabras completas, y una descripción de qué incluye cada categoría.
+  * Tocar una tajada o su leyenda abre debajo la lista de gastos de esa categoría (`mostrarDetalleCategoria()`), solo de esa persona en su dona; tocar de nuevo la cierra.
+  * `openEditExpenseModal()` copia las opciones de pagador, cuenta y categoría del formulario de registro y conserva valores antiguos que ya no existan.
+  * `runCloudSync()` sube directo con la versión conocida y solo lee y combina si otro teléfono guardó entremedio. La revisión de la nube pasa de 15 a 5 segundos y el registro sube de inmediato.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `sw.js` (`finanzas-pareja-v39`), `BITACORA.md`.
+* **Impacto:** Se entiende qué hay en cada categoría, y un gasto llega al otro teléfono en segundos.
+
 ### [2026-11-09] — Historial Usa lo Realmente Pagado en Meses Cerrados (v38)
 * **Motivo:** Oct-26 mostraba valores por defecto de las boletas en vez de lo pagado.
 * **Regla de negocio:** Hasta septiembre 2026 las cuentas de consumo se guardaban con el título del mes anterior (consumo ahora, pago al mes siguiente). Octubre repite esos valores por decisión de los usuarios, y desde entonces cada gasto se registra en su mes real.
