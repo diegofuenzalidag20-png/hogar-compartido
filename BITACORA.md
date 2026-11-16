@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Signo + Centrado en el Botón de Registro (v48)
+* **Motivo:** El carácter "+" quedaba descentrado en el círculo verde por las métricas de la fuente.
+* **Solución Técnica:** El botón `.bottom-nav-add` usa el ícono de trazo `#i-plus` (SVG de 30 px) en vez del carácter; centrado exacto (desfase 0 px medido).
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `css/app.css`, `sw.js`, `js/*` (versión).
+* **Impacto:** Botón principal visualmente equilibrado.
+
 ### [2026-11-16] — Código Dividido en Módulos y Grafo Actualizado (v47)
 * **Motivo:** El archivo único de ~11.000 líneas hacía cada cambio lento y riesgoso.
 * **Solución Técnica:**

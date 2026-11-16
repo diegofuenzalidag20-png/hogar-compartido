@@ -1939,6 +1939,7 @@ main, .tab-pane {
   .bottom-nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.1rem; min-height: 58px; border: 0; border-radius: 12px; background: none; color: var(--text-muted); font: inherit; font-size: 0.75rem; font-weight: 700; }
   .bottom-nav-item span { font-size: 1.3rem; line-height: 1; }
   .bottom-nav-item.active { color: #34D399; background: rgba(16, 185, 129, 0.12); }
+  .bottom-nav-add .ic { width: 30px; height: 30px; stroke-width: 2.6; vertical-align: 0; }
   .bottom-nav-add { justify-self: center; display: flex; align-items: center; justify-content: center; width: 58px; height: 58px; margin-top: -20px; border: 3px solid #0F1626; border-radius: 50%; background: linear-gradient(135deg, #10B981, #059669); color: #fff; font-size: 2rem; line-height: 1; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.45); }
 
   .overlay-backdrop.show { display: block; position: fixed; inset: 0; z-index: 2040; background: rgba(0, 0, 0, 0.55); }
