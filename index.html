@@ -2557,7 +2557,7 @@ main, .tab-pane {
           <div style="display:flex; align-items:center; gap:0.5rem;">
             <span style="font-size:1.3rem;">📑</span>
             <div>
-              <strong style="font-size:1.05rem;">Checklist de Boletas del Hogar (¿Cuáles faltan por llegar?)</strong>
+              <strong style="font-size:1.05rem;">Cuentas fijas del mes (¿cuáles faltan?)</strong>
               <div style="font-size:0.75rem; color:var(--text-muted);">Cuentas mensuales que se pagan en Limache y compromisos comunes</div>
             </div>
           </div>
@@ -5533,6 +5533,38 @@ main, .tab-pane {
              n.includes('aseo') || n.includes('waldorf') || c.includes('hogar') || c.includes('alimentación') || item.isCustom;
     }
 
+    // Cuenta fija → cómo reconocer su pago en los gastos del mes (d: solo el detalle, sin la categoría)
+    const CHECKLIST_FIJOS = {
+      'item-1': { p: /aporte fijo/ },
+      'item-1b': { p: /diferencial uf/ },
+      'item-2': { p: /arriendo habitaci/ },
+      'item-3': { p: /servicios huasco/, conHuasco: true },
+      'item-17': { p: /\bluz\b|chilquinta/ },
+      'item-18': { p: /\bagua\b|esval/ },
+      'item-19': { p: /\bgas\b/ },
+      'item-21': { p: /gasto com[uú]n|condominio/ },
+      'item-20c': { p: /internet/ },
+      'item-20': { p: /\bclaro\b/ },
+      'item-20b': { p: /entel/ },
+      'item-23': { p: /smart visa/ },
+      'item-24': { p: /aseo/ },
+      'item-25': { p: /waldorf|curso/ },
+      'item-5': { p: /comida michis/ },
+      'item-6': { p: /arena/ },
+      'item-7': { p: /netflix/, d: true },
+      'item-8': { p: /crunchyroll/, d: true },
+      'item-9': { p: /eutirox/ },
+      'item-10': { p: /rupatadina/ }
+    };
+
+    function pagosDeCuentaFija(itemId) {
+      const regla = CHECKLIST_FIJOS[itemId];
+      return expenses.filter(g => {
+        const t = (regla.d ? `${g.desc || ''}` : `${g.category || ''} ${g.desc || ''}`).toLowerCase();
+        return regla.p.test(t) && (regla.conHuasco || !/huasco/.test(t));
+      });
+    }
+
     function renderChecklist() {
       const container = document.getElementById('checklistContainer');
       const badge = document.getElementById('checklistProgressBadge');
@@ -5540,29 +5572,36 @@ main, .tab-pane {
 
       container.innerHTML = '';
 
-      let filteredItems = currentAuditItems;
+      // Solo cuentas fijas y grandes; lo variable (Uber, súper, salidas) se ve en la lista de gastos
+      const fijas = currentAuditItems.filter(it => CHECKLIST_FIJOS[it.id]);
+      let filteredItems = fijas;
       if (currentChecklistFilter === 'hogar') {
-        filteredItems = currentAuditItems.filter(isHouseholdBill);
+        filteredItems = fijas.filter(isHouseholdBill);
       } else if (currentChecklistFilter === 'diego') {
-        filteredItems = currentAuditItems.filter(it => it.resp === 'Diego' && !it.name.toLowerCase().includes('michis'));
+        filteredItems = fijas.filter(it => it.resp === 'Diego');
       } else if (currentChecklistFilter === 'soledad') {
-        filteredItems = currentAuditItems.filter(it => it.resp === 'Soledad');
+        filteredItems = fijas.filter(it => it.resp === 'Soledad');
       }
 
       let doneCount = 0;
       let totalCount = filteredItems.length;
 
       filteredItems.forEach(item => {
-        const isDone = item.actual > 0;
+        const pagos = pagosDeCuentaFija(item.id);
+        const pagado = pagos.reduce((s, g) => s + (Number(g.amount) || 0), 0);
+        const isDone = pagos.length > 0;
         if (isDone) doneCount++;
 
         const div = document.createElement('div');
         div.className = `check-item ${isDone ? 'done' : 'pending'}`;
-        div.onclick = () => quickSelectChip(item.name, item.actual || item.base, item.resp, item.cat, item.cuenta, item.name);
+        if (!isDone) div.onclick = () => quickSelectChip(item.name, item.base, item.resp, item.cat, item.cuenta, item.name);
 
         const respColor = item.resp === 'Diego' ? 'var(--accent-diego)' : 'var(--accent-soledad)';
         const statusIcon = isDone ? '✅' : '⏳';
-        const statusText = isDone ? formatCLP(item.actual) : 'Falta ingresar';
+        const statusText = isDone ? formatCLP(pagado) : 'Falta';
+        const detalle = isDone
+          ? (pagos.length > 1 ? `${pagos.length} pagos registrados · revisa si se repitió` : `Pagado el ${escapeHtml(pagos[0].date || '')}`)
+          : `Aprox. ${formatCLP(item.base)} · toca para registrar`;
 
         div.innerHTML = `
           <div>
@@ -5573,7 +5612,7 @@ main, .tab-pane {
             <div style="font-size:0.82rem; font-weight:700; color:${isDone ? 'var(--accent-emerald)' : 'var(--accent-amber)'};">
               ${statusIcon} ${statusText}
             </div>
-            <div style="font-size:0.68rem; color:var(--text-dim);">Toca para registrar</div>
+            <div style="font-size:0.68rem; color:${isDone && pagos.length > 1 ? 'var(--accent-amber)' : 'var(--text-dim)'};">${detalle}</div>
           </div>
         `;
         container.appendChild(div);
@@ -5585,7 +5624,7 @@ main, .tab-pane {
           ? 'boletas del hogar' 
           : (currentChecklistFilter === 'diego' 
               ? 'fijos Diego' 
-              : (currentChecklistFilter === 'soledad' ? 'cuentas Soledad' : 'todas las cuentas'));
+              : (currentChecklistFilter === 'soledad' ? 'cuentas Soledad' : 'cuentas fijas'));
         badge.textContent = `${doneCount} de ${totalCount} ${filterTitle} (${pct}%)`;
         badge.className = pct === 100 ? 'badge badge-emerald' : 'badge badge-blue';
       }
@@ -10098,7 +10137,7 @@ const detalleCategoria = {};
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=39').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=40').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }

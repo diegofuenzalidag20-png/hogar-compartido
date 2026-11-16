@@ -186,6 +186,14 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Checklist de Cuentas Fijas y Presupuestos con Datos de Noviembre (v40)
+* **Motivo:** El checklist mostraba cuentas ya pagadas como "Falta ingresar" y mezclaba gastos variables (Uber, súper, salidas). Los presupuestos no reflejaban el gasto real.
+* **Solución Técnica:**
+  * `CHECKLIST_FIJOS` + `pagosDeCuentaFija()`: el checklist muestra solo 20 cuentas fijas y marca su pago buscando el gasto real del mes (Huasco no toma las cuentas de Limache; Netflix/Crunchyroll se reconocen solo por el detalle).
+  * Si una cuenta tiene más de un pago se avisa "revisa si se repitió"; si falta, muestra el monto aproximado y al tocar abre el registro.
+  * Presupuestos ajustados en la nube con lo pagado/gastado a la fecha (variables proyectados a 30 días, duplicados del día 1 excluidos). Nuevos ítems: Comida fuera y salidas, Imprevistos del hogar, Gastos personales, Consultas médicas. "Internet + Celular (Diego)" a $0 por repetirse con Entel e Internet Hogar. Meta $1.701.243 → $2.298.102.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `sw.js`.
+* **Impacto:** El checklist sirve para recordar las cuentas grandes que faltan y la meta del mes se acerca al gasto real.
 ### [2026-11-16] — Categorías Claras con Detalle, Editor Igual al Registro y Sincronización Más Rápida (v39)
 * **Motivo:** Las categorías de las donas no explicaban qué incluían, el editor tenía otras opciones y la sincronización tardaba.
 * **Fallos de clasificación corregidos:**
