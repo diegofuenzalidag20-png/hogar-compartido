@@ -186,6 +186,14 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Paneles de Liquidez e Íconos Minimalistas (v44)
+* **Motivo:** Los paneles personales tenían demasiados datos; se pidió solo ver qué porcentaje de la plata total se ha usado. Los emojis no se veían acordes a una app de finanzas.
+* **Solución Técnica:**
+  * `getLiquidezPersona(owner)`: suma fondos del mes (remanente + asignación) de todas las cuentas de la persona, sin la tarjeta de crédito, y lo gastado en ellas (incluye el ajuste negativo de Mach y la cuota Smart Visa de Soledad). Los paneles muestran solo "Liquidez usada este mes" con porcentaje y barra (ámbar desde 70%, rojo desde 90%).
+  * Juego de íconos de trazo (estilo app bancaria) en un sprite SVG. Un `MutationObserver` reemplaza los emojis del texto por `<svg class="ic">` al mostrarse; las opciones de los selectores, diálogos nativos y gráficos no se tocan. Los puntos de color quedan como círculos con el color de cada persona.
+  * Etiquetas del gráfico de Tenpo sin emojis; placeholders sin emojis.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `sw.js`.
+* **Impacto:** Vistazo rápido de cuánto ha usado cada uno y una apariencia más sobria y consistente.
 ### [2026-11-16] — Curso Waldorf Fuera del Presupuesto (v43)
 * **Motivo:** El curso Waldorf ya no se paga.
 * **Solución Técnica:** Se quitó `item-25` de `masterAuditItems` (plantilla de meses nuevos) y del presupuesto de noviembre en la nube, con respaldo previo.
