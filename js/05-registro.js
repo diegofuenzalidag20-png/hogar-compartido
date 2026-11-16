@@ -220,63 +220,63 @@
       syncAllGlassSelects();
     }
 
-    // Los emojis del texto se muestran como íconos de trazo; las opciones de los selectores quedan igual
-    const ICONO_DE_EMOJI = {'🟣':'dot c-sole','🔵':'dot c-diego','🟢':'dot c-ok','🔴':'dot c-mal','🟡':'dot c-aviso','💾':'save','💰':'wallet','💵':'cash','💸':'cash','💡':'bulb','⚠️':'alert c-aviso','⚠':'alert c-aviso','💳':'card','✏️':'pencil','✏':'pencil','☁️':'cloud','☁':'cloud','📅':'calendar','🗓️':'calendar','🗓':'calendar','🏦':'bank','✅':'check c-ok','✕':'x','❌':'x c-mal','🐱':'paw','🐾':'paw','💎':'gem','🏡':'home','🏠':'home','📲':'phone','📱':'phone','📥':'download','📤':'upload','⚡':'zap','🛒':'cart','🛍️':'bag','🛍':'bag','👜':'bag','➕':'plus','🤝':'users','👥':'users','🧹':'eraser','📋':'list','📑':'list','🧾':'list','📜':'list','✨':'sparkle','🌟':'sparkle','🎉':'sparkle','🚀':'sparkle','🤖':'sparkle','↩️':'undo','↩':'undo','💧':'drop','🔥':'flame','🌐':'wifi','📶':'wifi','🏢':'building','🚗':'car','📊':'chart','📈':'up','📉':'down','⏳':'clock','⏱️':'clock','⏱':'clock','🚌':'bus','🚆':'train','🩺':'pulse','💊':'pill','📦':'box','📂':'folder','⚖️':'scale','⚖':'scale','🗑️':'trash','🗑':'trash','☀️':'sun','☀':'sun','🌙':'moon','🌓':'moon','📘':'book','🎓':'cap','🥪':'food','🥗':'food','🍽️':'food','🍽':'food','🥧':'food','🍩':'food','🍎':'food','🍔':'food','→':'arrow','➔':'arrow','👉':'arrow','↗':'external','⬆️':'arrowup','⬆':'arrowup','⬇️':'arrowdown','⬇':'arrowdown','🔄':'refresh','🔁':'refresh','⛰️':'mountain','⛰':'mountain','🛡️':'shield','🛡':'shield','🔒':'lock','📺':'tv','🔍':'search','🍃':'leaf','💬':'chat','☰':'menu','🏆':'award c-oro','🥇':'award c-oro','🥈':'award c-plata','🥉':'award c-bronce','💜':'heart c-sole','🎯':'target','👁️':'eye','👁':'eye','⚙️':'sliders','⚙':'sliders'};
-    const RE_EMOJI = /(?:[\u{1F000}-\u{1FAFF}]|[\u2190-\u21FF\u2300-\u23FF\u2600-\u27BF\u2B00-\u2BFF])\uFE0F?/gu;
-    const SIN_ICONOS = new Set(['OPTION', 'OPTGROUP', 'SELECT', 'TEXTAREA', 'SCRIPT', 'STYLE', 'TITLE', 'svg', 'CANVAS']);
-    function iconoSVG(emoji) {
-      const def = ICONO_DE_EMOJI[emoji] || ICONO_DE_EMOJI[emoji.replace('\uFE0F', '')];
-      if (!def) return null;
-      const [nombre, color] = def.split(' ');
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('class', `ic ic-${nombre}${color ? ' ' + color : ''}`);
-      svg.setAttribute('aria-hidden', 'true');
-      svg.dataset.e = emoji;
-      const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-      use.setAttribute('href', `#i-${nombre}`);
-      svg.appendChild(use);
-      return svg;
-    }
-    function iconizarTexto(nodo) {
-      const padre = nodo.parentNode;
-      if (!padre || SIN_ICONOS.has(padre.nodeName) || padre.closest?.('select, textarea, svg')) return;
-      const texto = nodo.nodeValue;
-      RE_EMOJI.lastIndex = 0;
-      if (!RE_EMOJI.test(texto)) return;
-      const frag = document.createDocumentFragment();
-      let desde = 0, cambio = false;
-      texto.replace(RE_EMOJI, (emoji, pos) => {
-        const svg = iconoSVG(emoji);
-        if (!svg) return emoji;
-        if (pos > desde) frag.appendChild(document.createTextNode(texto.slice(desde, pos)));
-        frag.appendChild(svg);
-        desde = pos + emoji.length;
-        cambio = true;
-        return emoji;
-      });
-      if (!cambio) return;
-      if (desde < texto.length) frag.appendChild(document.createTextNode(texto.slice(desde)));
-      padre.replaceChild(frag, nodo);
-    }
-    function iconizar(raiz) {
-      if (!raiz) return;
-      if (raiz.nodeType === 3) return iconizarTexto(raiz);
-      if (raiz.nodeType !== 1 || SIN_ICONOS.has(raiz.nodeName)) return;
-      const w = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT);
-      const nodos = [];
-      while (w.nextNode()) nodos.push(w.currentNode);
-      nodos.forEach(iconizarTexto);
-    }
-    function iniciarIconos() {
-      iconizar(document.body);
-      new MutationObserver(cambios => cambios.forEach(m => {
-        if (m.type === 'characterData') iconizarTexto(m.target);
-        else m.addedNodes.forEach(iconizar);
-      })).observe(document.body, { childList: true, subtree: true, characterData: true });
-    }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciarIconos);
-    else iniciarIconos();
-
+    // Los emojis del texto se muestran como íconos de trazo; las opciones de los selectores quedan igual
+    const ICONO_DE_EMOJI = {'🟣':'dot c-sole','🔵':'dot c-diego','🟢':'dot c-ok','🔴':'dot c-mal','🟡':'dot c-aviso','💾':'save','💰':'wallet','💵':'cash','💸':'cash','💡':'bulb','⚠️':'alert c-aviso','⚠':'alert c-aviso','💳':'card','✏️':'pencil','✏':'pencil','☁️':'cloud','☁':'cloud','📅':'calendar','🗓️':'calendar','🗓':'calendar','🏦':'bank','✅':'check c-ok','✕':'x','❌':'x c-mal','🐱':'paw','🐾':'paw','💎':'gem','🏡':'home','🏠':'home','📲':'phone','📱':'phone','📥':'download','📤':'upload','⚡':'zap','🛒':'cart','🛍️':'bag','🛍':'bag','👜':'bag','➕':'plus','🤝':'users','👥':'users','🧹':'eraser','📋':'list','📑':'list','🧾':'list','📜':'list','✨':'sparkle','🌟':'sparkle','🎉':'sparkle','🚀':'sparkle','🤖':'sparkle','↩️':'undo','↩':'undo','💧':'drop','🔥':'flame','🌐':'wifi','📶':'wifi','🏢':'building','🚗':'car','📊':'chart','📈':'up','📉':'down','⏳':'clock','⏱️':'clock','⏱':'clock','🚌':'bus','🚆':'train','🩺':'pulse','💊':'pill','📦':'box','📂':'folder','⚖️':'scale','⚖':'scale','🗑️':'trash','🗑':'trash','☀️':'sun','☀':'sun','🌙':'moon','🌓':'moon','📘':'book','🎓':'cap','🥪':'food','🥗':'food','🍽️':'food','🍽':'food','🥧':'food','🍩':'food','🍎':'food','🍔':'food','→':'arrow','➔':'arrow','👉':'arrow','↗':'external','⬆️':'arrowup','⬆':'arrowup','⬇️':'arrowdown','⬇':'arrowdown','🔄':'refresh','🔁':'refresh','⛰️':'mountain','⛰':'mountain','🛡️':'shield','🛡':'shield','🔒':'lock','📺':'tv','🔍':'search','🍃':'leaf','💬':'chat','☰':'menu','🏆':'award c-oro','🥇':'award c-oro','🥈':'award c-plata','🥉':'award c-bronce','💜':'heart c-sole','🎯':'target','👁️':'eye','👁':'eye','⚙️':'sliders','⚙':'sliders'};
+    const RE_EMOJI = /(?:[\u{1F000}-\u{1FAFF}]|[\u2190-\u21FF\u2300-\u23FF\u2600-\u27BF\u2B00-\u2BFF])\uFE0F?/gu;
+    const SIN_ICONOS = new Set(['OPTION', 'OPTGROUP', 'SELECT', 'TEXTAREA', 'SCRIPT', 'STYLE', 'TITLE', 'svg', 'CANVAS']);
+    function iconoSVG(emoji) {
+      const def = ICONO_DE_EMOJI[emoji] || ICONO_DE_EMOJI[emoji.replace('\uFE0F', '')];
+      if (!def) return null;
+      const [nombre, color] = def.split(' ');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', `ic ic-${nombre}${color ? ' ' + color : ''}`);
+      svg.setAttribute('aria-hidden', 'true');
+      svg.dataset.e = emoji;
+      const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+      use.setAttribute('href', `#i-${nombre}`);
+      svg.appendChild(use);
+      return svg;
+    }
+    function iconizarTexto(nodo) {
+      const padre = nodo.parentNode;
+      if (!padre || SIN_ICONOS.has(padre.nodeName) || padre.closest?.('select, textarea, svg')) return;
+      const texto = nodo.nodeValue;
+      RE_EMOJI.lastIndex = 0;
+      if (!RE_EMOJI.test(texto)) return;
+      const frag = document.createDocumentFragment();
+      let desde = 0, cambio = false;
+      texto.replace(RE_EMOJI, (emoji, pos) => {
+        const svg = iconoSVG(emoji);
+        if (!svg) return emoji;
+        if (pos > desde) frag.appendChild(document.createTextNode(texto.slice(desde, pos)));
+        frag.appendChild(svg);
+        desde = pos + emoji.length;
+        cambio = true;
+        return emoji;
+      });
+      if (!cambio) return;
+      if (desde < texto.length) frag.appendChild(document.createTextNode(texto.slice(desde)));
+      padre.replaceChild(frag, nodo);
+    }
+    function iconizar(raiz) {
+      if (!raiz) return;
+      if (raiz.nodeType === 3) return iconizarTexto(raiz);
+      if (raiz.nodeType !== 1 || SIN_ICONOS.has(raiz.nodeName)) return;
+      const w = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT);
+      const nodos = [];
+      while (w.nextNode()) nodos.push(w.currentNode);
+      nodos.forEach(iconizarTexto);
+    }
+    function iniciarIconos() {
+      iconizar(document.body);
+      new MutationObserver(cambios => cambios.forEach(m => {
+        if (m.type === 'characterData') iconizarTexto(m.target);
+        else m.addedNodes.forEach(iconizar);
+      })).observe(document.body, { childList: true, subtree: true, characterData: true });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciarIconos);
+    else iniciarIconos();
+
     // Diego reparte sus gastos entre la casa de Limache y el departamento de Huasco
     const PATRON_HUASCO = /huasco|pasaje|turno/i;
     function adivinarLugar(texto) { return PATRON_HUASCO.test(texto || '') ? 'Huasco' : 'Limache'; }

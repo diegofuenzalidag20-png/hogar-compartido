@@ -9,134 +9,144 @@
     const FIRESTORE_DOC_URL = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents/hogar/datos_compartidos?key=${FIRESTORE_API_KEY}`;
     const CLIENT_SESSION_ID = 'sess_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
 
-    // ---------- Inicio de sesión con Google (Firebase Auth) ----------
-    // Firestore sigue por REST: la sesión solo agrega el token. Sin sesión todo funciona mientras las reglas lo permitan.
-    class ErrorSinPermiso extends Error { constructor() { super('La nube pide iniciar sesión'); } }
-    const FIREBASE_CONFIG = { apiKey: FIRESTORE_API_KEY, authDomain: `${FIRESTORE_PROJECT_ID}.firebaseapp.com`, projectId: FIRESTORE_PROJECT_ID };
-    function authFirebase() {
-      if (!window.firebase?.auth) return null;
-      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-      return firebase.auth();
-    }
-    async function encabezadosNube(extra = {}) {
-      const usuario = authFirebase()?.currentUser;
-      if (!usuario) return extra;
-      try { return { ...extra, Authorization: `Bearer ${await usuario.getIdToken()}` }; } catch (e) { return extra; }
-    }
-    function pintarSesion(usuario) {
-      const b = document.getElementById('menuCuenta');
-      if (b) b.textContent = usuario ? `👥 Cerrar sesión (${usuario.email})` : '👥 Iniciar sesión con Google';
-    }
-    let avisoSesionMostrado = false;
-    function avisarSinSesion() {
-      updateCloudStatusBadge(false, '🔒 Inicia sesión');
-      if (avisoSesionMostrado) return;
-      avisoSesionMostrado = true;
-      showToast('🔒 La nube pide iniciar sesión con Google', { label: 'Entrar', onClick: entrarConGoogle });
-    }
-    async function entrarConGoogle() {
-      const auth = authFirebase();
-      if (!auth) { alert('No se pudo cargar el inicio de sesión. Revisa la conexión e inténtalo de nuevo.'); return; }
-      try {
-        await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-        avisoSesionMostrado = false;
-        showToast('✅ Sesión iniciada');
-        pullFromFirestore(true);
-      } catch (e) {
-        if (e?.code !== 'auth/popup-closed-by-user' && e?.code !== 'auth/cancelled-popup-request') alert('No se pudo iniciar sesión: ' + (e?.message || e));
-      }
-    }
-    async function alternarSesion() {
-      const auth = authFirebase();
-      if (auth?.currentUser) {
-        if (await confirmar(`¿Cerrar la sesión de ${auth.currentUser.email}? Los datos de este teléfono se mantienen.`)) await auth.signOut();
-      } else entrarConGoogle();
-    }
-    function iniciarSesionGoogle() {
-      const auth = authFirebase();
-      if (!auth) return;
-      auth.onAuthStateChanged(usuario => {
-        pintarSesion(usuario);
-        if (usuario) pullFromFirestore(true);
-      });
-    }
-
-    // ---------- Respaldos diarios en la nube ----------
-    // Una copia por día en hogar/datos_compartidos/respaldos/AAAA-MM-DD; se guardan los últimos 45.
-    const RESPALDOS_URL = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents/hogar/datos_compartidos/respaldos`;
-    const RESPALDOS_A_GUARDAR = 45;
-    let respaldoEnCurso = false;
-    async function guardarRespaldo(id, payload) {
-      const res = await fetch(`${RESPALDOS_URL}/${id}?key=${FIRESTORE_API_KEY}`, {
-        method: 'PATCH',
-        headers: await encabezadosNube({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ fields: { appStateJson: { stringValue: JSON.stringify(payload) }, creado: { integerValue: String(Date.now()) } } })
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    }
-    async function listarRespaldos() {
-      const res = await fetch(`${RESPALDOS_URL}?key=${FIRESTORE_API_KEY}&pageSize=300&mask.fieldPaths=creado`, { cache: 'no-store', headers: await encabezadosNube() });
-      if (res.status === 401 || res.status === 403) throw new ErrorSinPermiso();
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return ((await res.json()).documents || []).map(d => d.name.split('/').pop()).sort().reverse();
-    }
-    async function respaldarSiCorresponde() {
-      const hoy = getLocalDateISO();
-      if (respaldoEnCurso || localStorage.getItem('respaldo_dia') === hoy) return;
-      respaldoEnCurso = true;
-      try {
-        await guardarRespaldo(hoy, JSON.parse(JSON.stringify(buildCompleteFamilyPayload())));
-        localStorage.setItem('respaldo_dia', hoy);
-        const sobrantes = (await listarRespaldos()).slice(RESPALDOS_A_GUARDAR);
-        for (const id of sobrantes) await fetch(`${RESPALDOS_URL}/${id}?key=${FIRESTORE_API_KEY}`, { method: 'DELETE', headers: await encabezadosNube() });
-      } catch (e) {
-        console.warn('Respaldo diario pendiente:', e.message);
-      } finally {
-        respaldoEnCurso = false;
-      }
-    }
-    async function abrirRespaldos() {
-      const lista = document.getElementById('respaldosLista');
-      document.getElementById('modalRespaldos').style.display = 'flex';
-      lista.innerHTML = '<p class="hist-nota">Buscando respaldos…</p>';
-      try {
-        const ids = (await listarRespaldos()).filter(id => /^\d{4}-\d{2}-\d{2}$/.test(id));
-        lista.innerHTML = ids.length ? '' : '<p class="hist-nota">Aún no hay respaldos. Se crea uno al día cuando la app se sincroniza.</p>';
-        ids.forEach(id => {
-          const fila = document.createElement('div');
-          fila.className = 'respaldo-fila';
-          const fecha = new Date(`${id}T12:00:00`).toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-          fila.innerHTML = `<span>${escapeHtml(fecha)}</span>`;
-          const b = document.createElement('button');
-          b.type = 'button';
-          b.className = 'btn-secondary';
-          b.textContent = 'Restaurar';
-          b.onclick = () => restaurarRespaldo(id, fecha);
-          fila.appendChild(b);
-          lista.appendChild(fila);
-        });
-      } catch (e) {
-        lista.innerHTML = `<p class="hist-nota">${e instanceof ErrorSinPermiso ? 'Inicia sesión con Google para ver los respaldos.' : 'No se pudieron leer los respaldos. Revisa la conexión.'}</p>`;
-      }
-    }
-    function cerrarRespaldos() { document.getElementById('modalRespaldos').style.display = 'none'; }
-    async function restaurarRespaldo(id, fecha) {
-      if (!(await confirmar(`¿Volver los datos al ${fecha}? Lo registrado después se pierde, salvo lo que esté en otro respaldo. Antes se guarda una copia del estado actual.`))) return;
-      try {
-        const res = await fetch(`${RESPALDOS_URL}/${id}?key=${FIRESTORE_API_KEY}`, { cache: 'no-store', headers: await encabezadosNube() });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const payload = parseSeguro((await res.json()).fields?.appStateJson?.stringValue, null);
-        if (!payload || !Array.isArray(payload.expenses)) throw new Error('El respaldo está incompleto');
-        await guardarRespaldo(`antes-de-restaurar-${Date.now()}`, JSON.parse(JSON.stringify(buildCompleteFamilyPayload())));
-        applyRemoteDataToApp(payload);
-        await pushToFirestore(true);
-        cerrarRespaldos();
-        showToast(`✅ Datos restaurados al ${fecha}`);
-      } catch (e) {
-        alert('No se pudo restaurar: ' + e.message);
-      }
-    }
-
+    // ---------- Inicio de sesión con Google (Firebase Auth) ----------
+    // Firestore sigue por REST: la sesión solo agrega el token. Sin sesión todo funciona mientras las reglas lo permitan.
+    class ErrorSinPermiso extends Error { constructor() { super('La nube pide iniciar sesión'); } }
+    const FIREBASE_CONFIG = { apiKey: FIRESTORE_API_KEY, authDomain: `${FIRESTORE_PROJECT_ID}.firebaseapp.com`, projectId: FIRESTORE_PROJECT_ID };
+    function authFirebase() {
+      if (!window.firebase?.auth) return null;
+      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      return firebase.auth();
+    }
+    // Al abrir la app, Firebase tarda un momento en recuperar la sesión guardada: nada sale a la nube antes
+    let marcarAuthLista;
+    const authLista = new Promise(resolve => { marcarAuthLista = resolve; });
+    setTimeout(() => marcarAuthLista(), 6000);
+    async function encabezadosNube(extra = {}) {
+      await authLista;
+      const usuario = authFirebase()?.currentUser;
+      if (!usuario) return extra;
+      try { return { ...extra, Authorization: `Bearer ${await usuario.getIdToken()}` }; } catch (e) { return extra; }
+    }
+    function pintarSesion(usuario) {
+      const b = document.getElementById('menuCuenta');
+      if (b) b.textContent = usuario ? `👥 Cerrar sesión (${usuario.email})` : '👥 Iniciar sesión con Google';
+    }
+    let avisoSesionMostrado = false;
+    function avisarSinSesion() {
+      updateCloudStatusBadge(false, '🔒 Inicia sesión');
+      if (avisoSesionMostrado) return;
+      avisoSesionMostrado = true;
+      showToast('🔒 La nube pide iniciar sesión con Google', { label: 'Entrar', onClick: entrarConGoogle });
+    }
+    async function entrarConGoogle() {
+      const auth = authFirebase();
+      if (!auth) { alert('No se pudo cargar el inicio de sesión. Revisa la conexión e inténtalo de nuevo.'); return; }
+      try {
+        await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+        avisoSesionMostrado = false;
+        showToast('✅ Sesión iniciada');
+        pullFromFirestore(true);
+      } catch (e) {
+        if (e?.code !== 'auth/popup-closed-by-user' && e?.code !== 'auth/cancelled-popup-request') alert('No se pudo iniciar sesión: ' + (e?.message || e));
+      }
+    }
+    async function alternarSesion() {
+      const auth = authFirebase();
+      if (auth?.currentUser) {
+        if (await confirmar(`¿Cerrar la sesión de ${auth.currentUser.email}? Los datos de este teléfono se mantienen.`)) await auth.signOut();
+      } else entrarConGoogle();
+    }
+    function iniciarSesionGoogle() {
+      const auth = authFirebase();
+      if (!auth) { marcarAuthLista(); return; }
+      updateCloudStatusBadge(false, '⏳ Autenticando…');
+      let primera = true;
+      auth.onAuthStateChanged(usuario => {
+        pintarSesion(usuario);
+        marcarAuthLista();
+        // La primera respuesta solo confirma la sesión guardada; la sincronización inicial ya la estaba esperando
+        if (usuario && !primera) pullFromFirestore(true);
+        primera = false;
+      });
+    }
+
+    // ---------- Respaldos diarios en la nube ----------
+    // Una copia por día en hogar/datos_compartidos/respaldos/AAAA-MM-DD; se guardan los últimos 45.
+    const RESPALDOS_URL = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents/hogar/datos_compartidos/respaldos`;
+    const RESPALDOS_A_GUARDAR = 45;
+    let respaldoEnCurso = false;
+    async function guardarRespaldo(id, payload) {
+      const res = await fetch(`${RESPALDOS_URL}/${id}?key=${FIRESTORE_API_KEY}`, {
+        method: 'PATCH',
+        headers: await encabezadosNube({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ fields: { appStateJson: { stringValue: JSON.stringify(payload) }, creado: { integerValue: String(Date.now()) } } })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    }
+    async function listarRespaldos() {
+      const res = await fetch(`${RESPALDOS_URL}?key=${FIRESTORE_API_KEY}&pageSize=300&mask.fieldPaths=creado`, { cache: 'no-store', headers: await encabezadosNube() });
+      if (res.status === 401 || res.status === 403) throw new ErrorSinPermiso();
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return ((await res.json()).documents || []).map(d => d.name.split('/').pop()).sort().reverse();
+    }
+    async function respaldarSiCorresponde() {
+      const hoy = getLocalDateISO();
+      if (respaldoEnCurso || localStorage.getItem('respaldo_dia') === hoy) return;
+      respaldoEnCurso = true;
+      try {
+        await guardarRespaldo(hoy, JSON.parse(JSON.stringify(buildCompleteFamilyPayload())));
+        localStorage.setItem('respaldo_dia', hoy);
+        const sobrantes = (await listarRespaldos()).slice(RESPALDOS_A_GUARDAR);
+        for (const id of sobrantes) await fetch(`${RESPALDOS_URL}/${id}?key=${FIRESTORE_API_KEY}`, { method: 'DELETE', headers: await encabezadosNube() });
+      } catch (e) {
+        console.warn('Respaldo diario pendiente:', e.message);
+      } finally {
+        respaldoEnCurso = false;
+      }
+    }
+    async function abrirRespaldos() {
+      const lista = document.getElementById('respaldosLista');
+      document.getElementById('modalRespaldos').style.display = 'flex';
+      lista.innerHTML = '<p class="hist-nota">Buscando respaldos…</p>';
+      try {
+        const ids = (await listarRespaldos()).filter(id => /^\d{4}-\d{2}-\d{2}$/.test(id));
+        lista.innerHTML = ids.length ? '' : '<p class="hist-nota">Aún no hay respaldos. Se crea uno al día cuando la app se sincroniza.</p>';
+        ids.forEach(id => {
+          const fila = document.createElement('div');
+          fila.className = 'respaldo-fila';
+          const fecha = new Date(`${id}T12:00:00`).toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+          fila.innerHTML = `<span>${escapeHtml(fecha)}</span>`;
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'btn-secondary';
+          b.textContent = 'Restaurar';
+          b.onclick = () => restaurarRespaldo(id, fecha);
+          fila.appendChild(b);
+          lista.appendChild(fila);
+        });
+      } catch (e) {
+        lista.innerHTML = `<p class="hist-nota">${e instanceof ErrorSinPermiso ? 'Inicia sesión con Google para ver los respaldos.' : 'No se pudieron leer los respaldos. Revisa la conexión.'}</p>`;
+      }
+    }
+    function cerrarRespaldos() { document.getElementById('modalRespaldos').style.display = 'none'; }
+    async function restaurarRespaldo(id, fecha) {
+      if (!(await confirmar(`¿Volver los datos al ${fecha}? Lo registrado después se pierde, salvo lo que esté en otro respaldo. Antes se guarda una copia del estado actual.`))) return;
+      try {
+        const res = await fetch(`${RESPALDOS_URL}/${id}?key=${FIRESTORE_API_KEY}`, { cache: 'no-store', headers: await encabezadosNube() });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const payload = parseSeguro((await res.json()).fields?.appStateJson?.stringValue, null);
+        if (!payload || !Array.isArray(payload.expenses)) throw new Error('El respaldo está incompleto');
+        await guardarRespaldo(`antes-de-restaurar-${Date.now()}`, JSON.parse(JSON.stringify(buildCompleteFamilyPayload())));
+        applyRemoteDataToApp(payload);
+        await pushToFirestore(true);
+        cerrarRespaldos();
+        showToast(`✅ Datos restaurados al ${fecha}`);
+      } catch (e) {
+        alert('No se pudo restaurar: ' + e.message);
+      }
+    }
+
     let autoSyncCloudTimer = null;
     let lastUploadedTimestamp = 0;
     let cloudPollInterval = null;

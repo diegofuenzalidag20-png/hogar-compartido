@@ -20,39 +20,39 @@
     function chartTextColor() { return temaClaro() ? '#1E293B' : '#F1F5F9'; }
     function chartBorderColor() { return temaClaro() ? '#FFFFFF' : 'rgba(10, 15, 30, 0.9)'; }
 
-    // ---------- Ventanas propias (reemplazan alert/confirm/prompt del sistema) ----------
-    // Devuelve una promesa: true/false al confirmar, el texto escrito (o null) al pedir un dato.
-    function dialogo({ texto, aceptar = 'Entendido', cancelar = null, entrada = null }) {
-      return new Promise(resolve => {
-        const fondo = document.createElement('div');
-        fondo.className = 'dialogo-fondo';
-        fondo.innerHTML = `<div class="dialogo" role="dialog" aria-modal="true"><p class="dialogo-texto"></p>${entrada !== null ? '<input class="dialogo-entrada" type="text">' : ''}<div class="dialogo-botones">${cancelar ? '<button type="button" class="btn-secondary dialogo-no"></button>' : ''}<button type="button" class="btn-primary dialogo-si"></button></div></div>`;
-        fondo.querySelector('.dialogo-texto').textContent = texto;
-        fondo.querySelector('.dialogo-si').textContent = aceptar;
-        if (cancelar) fondo.querySelector('.dialogo-no').textContent = cancelar;
-        const campo = fondo.querySelector('.dialogo-entrada');
-        if (campo) campo.value = entrada;
-        let listo = false;
-        const responder = (si) => {
-          if (listo) return;
-          listo = true;
-          fondo.remove();
-          resolve(entrada !== null ? (si ? campo.value : null) : (cancelar ? !!si : true));
-        };
-        fondo.querySelector('.dialogo-si').onclick = () => responder(true);
-        if (cancelar) fondo.querySelector('.dialogo-no').onclick = () => responder(false);
-        fondo.addEventListener('keydown', e => { if (e.key === 'Escape') responder(false); if (e.key === 'Enter') responder(true); });
-        document.body.appendChild(fondo);
-        (campo || fondo.querySelector('.dialogo-si')).focus();
-        if (campo) campo.select();
-        window.dispatchEvent(new CustomEvent('dialogo-abierto', { detail: { texto, responder } }));
-      });
-    }
-    const avisar = (texto) => dialogo({ texto: String(texto) });
-    const confirmar = (texto, aceptar = 'Sí, continuar') => dialogo({ texto, aceptar, cancelar: 'Cancelar' });
-    const pedirTexto = (texto, valor = '') => dialogo({ texto, entrada: String(valor ?? ''), aceptar: 'Aceptar', cancelar: 'Cancelar' });
-    window.alert = (texto) => { avisar(texto); };
-
+    // ---------- Ventanas propias (reemplazan alert/confirm/prompt del sistema) ----------
+    // Devuelve una promesa: true/false al confirmar, el texto escrito (o null) al pedir un dato.
+    function dialogo({ texto, aceptar = 'Entendido', cancelar = null, entrada = null }) {
+      return new Promise(resolve => {
+        const fondo = document.createElement('div');
+        fondo.className = 'dialogo-fondo';
+        fondo.innerHTML = `<div class="dialogo" role="dialog" aria-modal="true"><p class="dialogo-texto"></p>${entrada !== null ? '<input class="dialogo-entrada" type="text">' : ''}<div class="dialogo-botones">${cancelar ? '<button type="button" class="btn-secondary dialogo-no"></button>' : ''}<button type="button" class="btn-primary dialogo-si"></button></div></div>`;
+        fondo.querySelector('.dialogo-texto').textContent = texto;
+        fondo.querySelector('.dialogo-si').textContent = aceptar;
+        if (cancelar) fondo.querySelector('.dialogo-no').textContent = cancelar;
+        const campo = fondo.querySelector('.dialogo-entrada');
+        if (campo) campo.value = entrada;
+        let listo = false;
+        const responder = (si) => {
+          if (listo) return;
+          listo = true;
+          fondo.remove();
+          resolve(entrada !== null ? (si ? campo.value : null) : (cancelar ? !!si : true));
+        };
+        fondo.querySelector('.dialogo-si').onclick = () => responder(true);
+        if (cancelar) fondo.querySelector('.dialogo-no').onclick = () => responder(false);
+        fondo.addEventListener('keydown', e => { if (e.key === 'Escape') responder(false); if (e.key === 'Enter') responder(true); });
+        document.body.appendChild(fondo);
+        (campo || fondo.querySelector('.dialogo-si')).focus();
+        if (campo) campo.select();
+        window.dispatchEvent(new CustomEvent('dialogo-abierto', { detail: { texto, responder } }));
+      });
+    }
+    const avisar = (texto) => dialogo({ texto: String(texto) });
+    const confirmar = (texto, aceptar = 'Sí, continuar') => dialogo({ texto, aceptar, cancelar: 'Cancelar' });
+    const pedirTexto = (texto, valor = '') => dialogo({ texto, entrada: String(valor ?? ''), aceptar: 'Aceptar', cancelar: 'Cancelar' });
+    window.alert = (texto) => { avisar(texto); };
+
     function nuevoId(prefijo) { return `${prefijo}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`; }
 
     // Formatter CLP

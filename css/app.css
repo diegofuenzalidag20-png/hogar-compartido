@@ -1401,28 +1401,28 @@
     }
 
     /* Form Group Layout & Grid Safety (No Overlaps) */
-    /* Íconos de trazo (reemplazan los emojis al mostrarse) */
-    .ic { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: inline-block; }
-    .ic.ic-dot { width: 0.8em; height: 0.8em; vertical-align: -0.05em; }
-    .ic.c-sole { color: #A855F7; } .ic.c-diego { color: #3B82F6; } .ic.c-ok { color: #10B981; } .ic.c-mal { color: #F43F5E; } .ic.c-aviso { color: #F59E0B; }
-    .ic.c-oro { color: #F59E0B; } .ic.c-plata { color: #94A3B8; } .ic.c-bronce { color: #C2410C; }
-    /* Paneles de liquidez */
-    .liq-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
-    .liq-card { border-left: 4px solid var(--liq-color); padding: 1rem 1.15rem; }
-    .liq-cabecera { display: flex; justify-content: space-between; align-items: flex-end; gap: 0.75rem; }
-    .liq-cabecera strong { display: block; color: var(--liq-color); font-size: 1.05rem; }
-    .liq-cabecera span { font-size: 0.75rem; color: var(--text-muted); }
-    .liq-cabecera .liq-pct { font-size: 1.6rem; font-weight: 800; color: var(--text-main); line-height: 1; font-variant-numeric: tabular-nums; }
-    .liq-barra { margin-top: 0.75rem; height: 10px; border-radius: 999px; background: rgba(148,163,184,0.18); overflow: hidden; }
-    .liq-barra > div { height: 100%; width: 0; border-radius: 999px; background: var(--liq-color); transition: width 0.4s ease; }
+    /* Íconos de trazo (reemplazan los emojis al mostrarse) */
+    .ic { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: inline-block; }
+    .ic.ic-dot { width: 0.8em; height: 0.8em; vertical-align: -0.05em; }
+    .ic.c-sole { color: #A855F7; } .ic.c-diego { color: #3B82F6; } .ic.c-ok { color: #10B981; } .ic.c-mal { color: #F43F5E; } .ic.c-aviso { color: #F59E0B; }
+    .ic.c-oro { color: #F59E0B; } .ic.c-plata { color: #94A3B8; } .ic.c-bronce { color: #C2410C; }
+    /* Paneles de liquidez */
+    .liq-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+    .liq-card { border-left: 4px solid var(--liq-color); padding: 1rem 1.15rem; }
+    .liq-cabecera { display: flex; justify-content: space-between; align-items: flex-end; gap: 0.75rem; }
+    .liq-cabecera strong { display: block; color: var(--liq-color); font-size: 1.05rem; }
+    .liq-cabecera span { font-size: 0.75rem; color: var(--text-muted); }
+    .liq-cabecera .liq-pct { font-size: 1.6rem; font-weight: 800; color: var(--text-main); line-height: 1; font-variant-numeric: tabular-nums; }
+    .liq-barra { margin-top: 0.75rem; height: 10px; border-radius: 999px; background: rgba(148,163,184,0.18); overflow: hidden; }
+    .liq-barra > div { height: 100%; width: 0; border-radius: 999px; background: var(--liq-color); transition: width 0.4s ease; }
     .respaldo-fila { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.5rem 0; border-top: 1px solid var(--border-glass); font-size: 0.88rem; }
     .respaldo-fila span::first-letter { text-transform: uppercase; }
-    .dialogo-fondo { position: fixed; inset: 0; z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(2, 6, 23, 0.6); backdrop-filter: blur(6px); }
-    .dialogo { width: min(420px, 100%); padding: 1.15rem; border-radius: 18px; border: 1px solid var(--border-glass); background: var(--bg-surface-elevated, #111827); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); }
-    .dialogo-texto { margin: 0; white-space: pre-line; color: var(--text-main); font-size: 0.95rem; line-height: 1.45; }
-    .dialogo-entrada { width: 100%; margin-top: 0.75rem; padding: 0.6rem 0.75rem; border-radius: 10px; }
-    .dialogo-botones { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1rem; }
-    .dialogo-botones button { min-height: 44px; justify-content: center; }
+    .dialogo-fondo { position: fixed; inset: 0; z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(2, 6, 23, 0.6); backdrop-filter: blur(6px); }
+    .dialogo { width: min(420px, 100%); padding: 1.15rem; border-radius: 18px; border: 1px solid var(--border-glass); background: var(--bg-surface-elevated, #111827); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); }
+    .dialogo-texto { margin: 0; white-space: pre-line; color: var(--text-main); font-size: 0.95rem; line-height: 1.45; }
+    .dialogo-entrada { width: 100%; margin-top: 0.75rem; padding: 0.6rem 0.75rem; border-radius: 10px; }
+    .dialogo-botones { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1rem; }
+    .dialogo-botones button { min-height: 44px; justify-content: center; }
     .lugar-barra { display: flex; height: 12px; margin-top: 0.75rem; border-radius: 999px; overflow: hidden; background: rgba(148,163,184,0.18); }
     .lugar-barra span { height: 100%; transition: width 0.4s ease; }
     #lugarBarLimache { background: #3B82F6; }

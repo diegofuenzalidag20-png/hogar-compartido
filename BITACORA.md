@@ -186,6 +186,13 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — No Pedir Sesión al Abrir Estando Iniciada (v49)
+* **Motivo:** Al abrir la app aparecía "La nube pide iniciar sesión" aunque la sesión estaba guardada.
+* **Causa:** La primera sincronización salía antes de que Firebase recuperara la sesión guardada (tarda un momento), así que iba sin token y las reglas la rechazaban.
+* **Solución Técnica:** `encabezadosNube()` espera a `authLista` (primera respuesta de `onAuthStateChanged`, máximo 6 s) antes de cualquier pedido a la nube; mientras tanto el indicador muestra "⏳ Autenticando…". Se normalizaron saltos de línea dobles (`\r\r\n`) en módulos, estilos e index.
+* **Archivos Modificados:** `js/08-nube.js`, `js/*`, `css/app.css`, `index.html`, `dashboard_pareja.html`, `sw.js`.
+* **Impacto:** Al abrir la app ya no aparece el aviso; solo se pide iniciar sesión cuando de verdad no hay sesión.
+
 ### [2026-11-16] — Signo + Centrado en el Botón de Registro (v48)
 * **Motivo:** El carácter "+" quedaba descentrado en el círculo verde por las métricas de la fuente.
 * **Solución Técnica:** El botón `.bottom-nav-add` usa el ícono de trazo `#i-plus` (SVG de 30 px) en vez del carácter; centrado exacto (desfase 0 px medido).
