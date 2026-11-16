@@ -186,6 +186,19 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Inicio de Sesión, Respaldos, Real Sumado, Limache vs Huasco y Ventanas Propias (v46)
+* **Motivo:** Plan de mejoras: proteger los datos, que los números no dependan de cómo se escribe el detalle y pulir la experiencia.
+* **Solución Técnica:**
+  * **Inicio de sesión con Google** (Firebase Auth compat 10.12.2, solo Auth; Firestore sigue por REST con `Authorization: Bearer`). `encabezadosNube()`, `entrarConGoogle()`, `alternarSesion()`; un 401/403 lanza `ErrorSinPermiso` y muestra "Inicia sesión". Funciona igual sin sesión mientras las reglas lo permitan.
+  * **Respaldos diarios** en `hogar/datos_compartidos/respaldos/AAAA-MM-DD` (últimos 45). Menú → Respaldos diarios: lista y restaurar (antes guarda `antes-de-restaurar-*`).
+  * **Gastos ligados a su cuenta:** `REGLAS_VARIABLES` + `itemIdPorReglas()`/`itemIdDeGasto()`; la regla corrige enlaces viejos (pasajes que caían en Arriendo). `sincronizarRealDesdeGastos()`: el Real de cada cuenta es la suma de sus pagos.
+  * **Limache vs Huasco:** tarjeta en Análisis con totales y barra (`totalesLugarDiego()`); se guarda `lugarDiego` al registrar el mes en la BD.
+  * **Ajustar presupuestos con este mes** (menú): fijas = lo pagado, variables = lo gastado proyectado al mes; vista previa antes de aplicar.
+  * **Ventanas propias** (`dialogo`, `avisar`, `confirmar`, `pedirTexto`) en vez de alert/confirm/prompt. Borrar un gasto vuelve a buscarlo por id tras confirmar.
+  * **Montos de partida en un solo lugar:** `PERFIL_INICIAL`; se eliminó la cifra distinta de Chequera Hogar (425.000 vs 236.000).
+  * Historial: Octubre 2026 corregido en la nube (responsables y montos según lo pagado), con respaldo.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `sw.js`.
+* **Impacto:** Datos protegibles y recuperables; presupuestos y checklist cuadran con lo pagado.
 ### [2026-11-16] — Controles en Verde en Vez de Amarillo-Naranja (v45)
 * **Motivo:** Los botones y selectores activos usaban un degradado amarillo-naranja que no combinaba con la paleta (verde, azul Diego, morado Soledad).
 * **Solución Técnica:** Pestañas, chips, filtros del historial, selector de donas, navegación inferior, desplegables, foco de campos y `.btn-primary` pasan al verde esmeralda (`#10B981 → #059669`). El botón "Reabrir mes" y las casillas de remanente/deuda quedan neutras. Se mantiene el amarillo solo como señal (alertas, cuentas pendientes, gráficos).

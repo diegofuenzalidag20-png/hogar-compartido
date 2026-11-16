@@ -20,6 +20,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <!-- Firebase Cloud Sync Engine (REST Directo ultra-rápido sin dependencias pesadas) -->
   <style>
     :root {
@@ -1439,6 +1441,21 @@
     .liq-cabecera .liq-pct { font-size: 1.6rem; font-weight: 800; color: var(--text-main); line-height: 1; font-variant-numeric: tabular-nums; }
     .liq-barra { margin-top: 0.75rem; height: 10px; border-radius: 999px; background: rgba(148,163,184,0.18); overflow: hidden; }
     .liq-barra > div { height: 100%; width: 0; border-radius: 999px; background: var(--liq-color); transition: width 0.4s ease; }
+    .respaldo-fila { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.5rem 0; border-top: 1px solid var(--border-glass); font-size: 0.88rem; }
+    .respaldo-fila span::first-letter { text-transform: uppercase; }
+    .dialogo-fondo { position: fixed; inset: 0; z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(2, 6, 23, 0.6); backdrop-filter: blur(6px); }
+    .dialogo { width: min(420px, 100%); padding: 1.15rem; border-radius: 18px; border: 1px solid var(--border-glass); background: var(--bg-surface-elevated, #111827); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); }
+    .dialogo-texto { margin: 0; white-space: pre-line; color: var(--text-main); font-size: 0.95rem; line-height: 1.45; }
+    .dialogo-entrada { width: 100%; margin-top: 0.75rem; padding: 0.6rem 0.75rem; border-radius: 10px; }
+    .dialogo-botones { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1rem; }
+    .dialogo-botones button { min-height: 44px; justify-content: center; }
+    .lugar-barra { display: flex; height: 12px; margin-top: 0.75rem; border-radius: 999px; overflow: hidden; background: rgba(148,163,184,0.18); }
+    .lugar-barra span { height: 100%; transition: width 0.4s ease; }
+    #lugarBarLimache { background: #3B82F6; }
+    #lugarBarHuasco { background: #14B8A6; }
+    .lugar-totales { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem; }
+    .lugar-totales small { display: block; color: var(--text-muted); font-size: 0.75rem; }
+    .lugar-totales strong { display: block; font-size: 1.25rem; color: var(--text-main); margin: 0.1rem 0; }
     .lugar-toggle { display: flex; gap: 0.4rem; }
     .lugar-toggle .lugar-opcion { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.55rem; border: 1px solid var(--border-color); border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; color: var(--text-muted); text-transform: none; letter-spacing: normal; margin: 0; }
     .lugar-toggle input { position: absolute; opacity: 0; pointer-events: none; }
@@ -2333,7 +2350,7 @@ main, .tab-pane {
 
           <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; flex:1; max-width:400px; justify-content:flex-end;">
             <div style="position:relative; width:100%; max-width:260px;">
-              <input type="text" id="quickExpenseSearchInput" oninput="filterExpensesBySearch(this.value)" placeholder="Buscar gasto o comercio..." style="width:100%; padding:0.45rem 0.8rem 0.45rem 2rem; font-size:0.85rem; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:white;">
+              <input type="text" id="quickExpenseSearchInput" oninput="filterExpensesBySearch(this.value)" placeholder="Buscar gasto o comercio..." style="width:100%; padding:0.45rem 0.8rem 0.45rem 2.4rem !important; font-size:0.85rem; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:white;">
               <span style="position:absolute; left:0.6rem; top:50%; transform:translateY(-50%); opacity:0.5; font-size:0.8rem; pointer-events:none;">🔍</span>
             </div>
             <button type="button" class="btn-secondary" onclick="exportToCSV()" style="padding:0.45rem 0.75rem; font-size:0.8rem; white-space:nowrap;" title="Exportar a Excel / CSV">
@@ -2722,6 +2739,20 @@ main, .tab-pane {
           </div>
           <div id="metaRealLista"></div>
         </div>
+      </div>
+
+      <!-- LIMACHE VS HUASCO: dónde se van los gastos de Diego -->
+      <div class="card" id="cardLugarDiego" style="margin-bottom:1.5rem;">
+        <div class="liq-cabecera">
+          <div><strong style="color:var(--text-main);">Limache vs Huasco</strong><span>Gastos de Diego este mes</span></div>
+          <span class="liq-pct" id="lugarPctHuasco" style="font-size:1.1rem;"></span>
+        </div>
+        <div class="lugar-barra" aria-hidden="true"><span id="lugarBarLimache"></span><span id="lugarBarHuasco"></span></div>
+        <div class="lugar-totales">
+          <div><small>🏡 Limache (casa)</small><strong id="lugarTotLimache">$0</strong><small id="lugarCntLimache"></small></div>
+          <div style="text-align:right;"><small>⛰️ Huasco (departamento)</small><strong id="lugarTotHuasco">$0</strong><small id="lugarCntHuasco"></small></div>
+        </div>
+        <p class="hist-nota" id="lugarSinAsignar" style="margin:0.5rem 0 0;"></p>
       </div>
 
       <!-- SECCIÓN: 3 DONAS DE DESGLOSE DE GASTOS (GLOBAL, DIEGO, SOLEDAD) -->
@@ -3477,10 +3508,13 @@ main, .tab-pane {
   <div id="appMenu" class="app-menu">
     <div class="app-menu-label">Este mes</div>
     <button type="button" onclick="closeAppMenu(); guardarMesEnBD()">💾 Guardar en Base de Datos</button>
+    <button type="button" onclick="closeAppMenu(); ajustarPresupuestosConElMes()">⚖️ Ajustar presupuestos con este mes</button>
     <button type="button" onclick="closeAppMenu(); abrirModalCerrarMes()">🚀 Cerrar mes y pasar al siguiente</button>
     <button type="button" onclick="closeAppMenu(); goToTab('tab-historico')">📂 Ver Base de Datos</button>
     <button type="button" id="menuReabrirMes" onclick="closeAppMenu(); deshacerUltimoCierreMes()">↩️ Reabrir mes anterior</button>
     <div class="app-menu-label">General</div>
+    <button type="button" id="menuCuenta" onclick="closeAppMenu(); alternarSesion()">👥 Iniciar sesión con Google</button>
+    <button type="button" onclick="closeAppMenu(); abrirRespaldos()">🛡️ Respaldos diarios</button>
     <button type="button" onclick="closeAppMenu(); openSyncModal()">☁️ Sincronización</button>
     <button type="button" onclick="closeAppMenu(); goToTab('tab-guia')">📘 Guía de uso</button>
     <button type="button" id="menuInstallPwa" onclick="closeAppMenu(); triggerPwaInstall()">📲 Instalar app</button>
@@ -3523,6 +3557,39 @@ main, .tab-pane {
     function chartTextColor() { return temaClaro() ? '#1E293B' : '#F1F5F9'; }
     function chartBorderColor() { return temaClaro() ? '#FFFFFF' : 'rgba(10, 15, 30, 0.9)'; }
 
+    // ---------- Ventanas propias (reemplazan alert/confirm/prompt del sistema) ----------
+    // Devuelve una promesa: true/false al confirmar, el texto escrito (o null) al pedir un dato.
+    function dialogo({ texto, aceptar = 'Entendido', cancelar = null, entrada = null }) {
+      return new Promise(resolve => {
+        const fondo = document.createElement('div');
+        fondo.className = 'dialogo-fondo';
+        fondo.innerHTML = `<div class="dialogo" role="dialog" aria-modal="true"><p class="dialogo-texto"></p>${entrada !== null ? '<input class="dialogo-entrada" type="text">' : ''}<div class="dialogo-botones">${cancelar ? '<button type="button" class="btn-secondary dialogo-no"></button>' : ''}<button type="button" class="btn-primary dialogo-si"></button></div></div>`;
+        fondo.querySelector('.dialogo-texto').textContent = texto;
+        fondo.querySelector('.dialogo-si').textContent = aceptar;
+        if (cancelar) fondo.querySelector('.dialogo-no').textContent = cancelar;
+        const campo = fondo.querySelector('.dialogo-entrada');
+        if (campo) campo.value = entrada;
+        let listo = false;
+        const responder = (si) => {
+          if (listo) return;
+          listo = true;
+          fondo.remove();
+          resolve(entrada !== null ? (si ? campo.value : null) : (cancelar ? !!si : true));
+        };
+        fondo.querySelector('.dialogo-si').onclick = () => responder(true);
+        if (cancelar) fondo.querySelector('.dialogo-no').onclick = () => responder(false);
+        fondo.addEventListener('keydown', e => { if (e.key === 'Escape') responder(false); if (e.key === 'Enter') responder(true); });
+        document.body.appendChild(fondo);
+        (campo || fondo.querySelector('.dialogo-si')).focus();
+        if (campo) campo.select();
+        window.dispatchEvent(new CustomEvent('dialogo-abierto', { detail: { texto, responder } }));
+      });
+    }
+    const avisar = (texto) => dialogo({ texto: String(texto) });
+    const confirmar = (texto, aceptar = 'Sí, continuar') => dialogo({ texto, aceptar, cancelar: 'Cancelar' });
+    const pedirTexto = (texto, valor = '') => dialogo({ texto, entrada: String(valor ?? ''), aceptar: 'Aceptar', cancelar: 'Cancelar' });
+    window.alert = (texto) => { avisar(texto); };
+
     function nuevoId(prefijo) { return `${prefijo}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`; }
 
     // Formatter CLP
@@ -3699,8 +3766,8 @@ main, .tab-pane {
       showToast(`¡Ítem "${name}" agregado con éxito al presupuesto!`);
     }
 
-    function deleteAuditItem(id) {
-      if (confirm('¿Deseas eliminar este ítem personalizado?')) {
+    async function deleteAuditItem(id) {
+      if (await confirmar('¿Deseas eliminar este ítem personalizado?', 'Eliminar')) {
         currentAuditItems = currentAuditItems.filter(it => it.id !== id);
         const customs = currentAuditItems.filter(it => it.isCustom && !it.fromQuickBill);
         localStorage.setItem('custom_audit_items', JSON.stringify(customs));
@@ -3791,6 +3858,7 @@ main, .tab-pane {
     }
 
     function renderAuditTable() {
+      sincronizarRealDesdeGastos();
       if (typeof renderAnalisisMesActual === 'function' && document.getElementById('tab-mes-actual')?.classList.contains('active')) {
         renderAnalisisMesActual();
       }
@@ -4327,7 +4395,8 @@ main, .tab-pane {
     
     
     // --- GESTIÓN DINÁMICA DE SALARIOS (HORAS EXTRAS) & COFRES ---
-    let userProfile = {
+    // Valores de partida de una instalación nueva; las cifras reales viven en la nube
+    const PERFIL_INICIAL = Object.freeze({
       diegoSalary: 1214038,
       diegoBase: 1214038,
       diegoOvertime: 0,
@@ -4360,7 +4429,8 @@ main, .tab-pane {
         deudaPrevia: 0,
         cuotaMes: 50000
       }
-    };
+    });
+    let userProfile = JSON.parse(JSON.stringify(PERFIL_INICIAL));
 
     function loadUserProfile() {
       const saved = localStorage.getItem('finanzas_user_profile');
@@ -4429,9 +4499,9 @@ main, .tab-pane {
       const elMach = document.getElementById('inputCofreMach');
       const elMP = document.getElementById('inputCofreMP');
 
-      if (elTenpo) elTenpo.value = userProfile.cofresDiego?.tenpoHuasco ?? 300000;
+      if (elTenpo) elTenpo.value = userProfile.cofresDiego?.tenpoHuasco ?? PERFIL_INICIAL.cofresDiego.tenpoHuasco;
       if (elMach) elMach.value = getMachSemanal().monto;
-      if (elMP) elMP.value = userProfile.cofresDiego?.mpAhorro ?? 130000;
+      if (elMP) elMP.value = userProfile.cofresDiego?.mpAhorro ?? PERFIL_INICIAL.cofresDiego.mpAhorro;
 
       // 4b. Inputs de Remanentes Diego
       const inRemTenpoD = document.getElementById('inputRemanenteTenpoDiego');
@@ -4449,10 +4519,10 @@ main, .tab-pane {
       const elSoleMP = document.getElementById('inputCofreSoleMP');
       const elSoleBanco = document.getElementById('inputCofreSoleBanco');
 
-      if (elSoleSmart) elSoleSmart.value = userProfile.cofresSoledad?.smartVisa ?? 50000;
-      if (elSoleTenpo) elSoleTenpo.value = userProfile.cofresSoledad?.tenpoBolsillo ?? 150000;
-      if (elSoleMP) elSoleMP.value = userProfile.cofresSoledad?.mpAhorro ?? 150000;
-      if (elSoleBanco) elSoleBanco.value = userProfile.cofresSoledad?.bancoReserva ?? 150000;
+      if (elSoleSmart) elSoleSmart.value = userProfile.cofresSoledad?.smartVisa ?? PERFIL_INICIAL.cofresSoledad.smartVisa;
+      if (elSoleTenpo) elSoleTenpo.value = userProfile.cofresSoledad?.tenpoBolsillo ?? PERFIL_INICIAL.cofresSoledad.tenpoBolsillo;
+      if (elSoleMP) elSoleMP.value = userProfile.cofresSoledad?.mpAhorro ?? PERFIL_INICIAL.cofresSoledad.mpAhorro;
+      if (elSoleBanco) elSoleBanco.value = userProfile.cofresSoledad?.bancoReserva ?? PERFIL_INICIAL.cofresSoledad.bancoReserva;
 
       // 5b. Inputs de Remanentes Soledad
       const inRemTenpoS = document.getElementById('inputRemanenteTenpoSole');
@@ -4465,7 +4535,7 @@ main, .tab-pane {
       if (inRemSoleBanco) inRemSoleBanco.value = userProfile.remanentes?.bancoSole ?? 0;
 
       const inSmartCupo = document.getElementById('inputSmartVisaCupo');
-      if (inSmartCupo) inSmartCupo.value = userProfile.smartVisaConfig?.cupoTotal ?? 500000;
+      if (inSmartCupo) inSmartCupo.value = userProfile.smartVisaConfig?.cupoTotal ?? PERFIL_INICIAL.smartVisaConfig.cupoTotal;
 
       const inSmartDeuda = document.getElementById('inputSmartVisaDeudaPrevia');
       if (inSmartDeuda) inSmartDeuda.value = userProfile.smartVisaConfig?.deudaPrevia ?? 0;
@@ -4509,7 +4579,7 @@ main, .tab-pane {
     }
 
     function updateDiegoColchonDisplay() {
-      const salary = userProfile.diegoSalary || 1214038;
+      const salary = userProfile.diegoSalary || PERFIL_INICIAL.diegoSalary;
       const tenpo = parseInt(document.getElementById('inputCofreTenpo')?.value, 10) || 0;
       const mp = parseInt(document.getElementById('inputCofreMP')?.value, 10) || 0;
       const montoMach = readMoney('inputCofreMach', userProfile.machSemanal?.monto ?? 35000);
@@ -4572,7 +4642,7 @@ main, .tab-pane {
 
     // CÁLCULO AUTOMÁTICO EN TIEMPO REAL: REMANENTE CHEQUERA & SALDO LIBRE SOLEDAD
     function updateSoleMargenDisplay() {
-      const salary = userProfile.soledadSalary || 875000;
+      const salary = userProfile.soledadSalary || PERFIL_INICIAL.soledadSalary;
       const smart = parseInt(document.getElementById('inputCofreSoleSmart')?.value, 10) || 0;
       const tenpo = parseInt(document.getElementById('inputCofreSoleTenpo')?.value, 10) || 0;
       const mp = parseInt(document.getElementById('inputCofreSoleMP')?.value, 10) || 0;
@@ -4633,7 +4703,7 @@ main, .tab-pane {
 
     // CÁLCULO Y CONTROL EN TIEMPO REAL: TARJETA SMART VISA (BANCOESTADO)
     function updateSmartVisaDisplay() {
-      const cupo = readMoney('inputSmartVisaCupo', userProfile.smartVisaConfig?.cupoTotal ?? 500000);
+      const cupo = readMoney('inputSmartVisaCupo', userProfile.smartVisaConfig?.cupoTotal ?? PERFIL_INICIAL.smartVisaConfig.cupoTotal);
       const cuota = readMoney('inputCofreSoleSmart', userProfile.cofresSoledad?.smartVisa ?? 0);
       const deudaPrevia = readMoney('inputSmartVisaDeudaPrevia', userProfile.smartVisaConfig?.deudaPrevia ?? 0);
 
@@ -4696,7 +4766,7 @@ main, .tab-pane {
     }
 
     function saveDiegoCofres() {
-      const salary = userProfile.diegoSalary || 1214038;
+      const salary = userProfile.diegoSalary || PERFIL_INICIAL.diegoSalary;
       const tenpo = readMoney('inputCofreTenpo', userProfile.cofresDiego?.tenpoHuasco ?? 0);
       const mp = readMoney('inputCofreMP', userProfile.cofresDiego?.mpAhorro ?? 0);
       const montoMach = readMoney('inputCofreMach', userProfile.machSemanal?.monto ?? 35000);
@@ -4726,7 +4796,7 @@ main, .tab-pane {
     }
 
     function saveSoleCofres() {
-      const salary = userProfile.soledadSalary || 875000;
+      const salary = userProfile.soledadSalary || PERFIL_INICIAL.soledadSalary;
       const smart = readMoney('inputCofreSoleSmart', userProfile.cofresSoledad?.smartVisa ?? 0);
       const tenpo = readMoney('inputCofreSoleTenpo', userProfile.cofresSoledad?.tenpoBolsillo ?? 0);
       const mp = readMoney('inputCofreSoleMP', userProfile.cofresSoledad?.mpAhorro ?? 0);
@@ -4736,7 +4806,7 @@ main, .tab-pane {
       const remanenteTenpo = parseInt(document.getElementById('inputRemanenteTenpoSole')?.value, 10) || 0;
       const remanenteMPSole = parseInt(document.getElementById('inputRemanenteMPSole')?.value, 10) || 0;
       const remanenteBancoSole = parseInt(document.getElementById('inputRemanenteBancoSole')?.value, 10) || 0;
-      const cupoSmart = readMoney('inputSmartVisaCupo', userProfile.smartVisaConfig?.cupoTotal ?? 500000);
+      const cupoSmart = readMoney('inputSmartVisaCupo', userProfile.smartVisaConfig?.cupoTotal ?? PERFIL_INICIAL.smartVisaConfig.cupoTotal);
       const deudaSmart = parseInt(document.getElementById('inputSmartVisaDeudaPrevia')?.value, 10) || 0;
 
       userProfile.cofresSoledad = {
@@ -4768,20 +4838,20 @@ main, .tab-pane {
 
     function updateChartsWithNewSalary() {
       if (chartAportes && chartAportes.data && chartAportes.data.datasets) {
-        chartAportes.data.datasets[0].data = [userProfile.diegoSalary || 1214038, userProfile.soledadSalary || 875000];
+        chartAportes.data.datasets[0].data = [userProfile.diegoSalary || PERFIL_INICIAL.diegoSalary, userProfile.soledadSalary || PERFIL_INICIAL.soledadSalary];
         chartAportes.update();
       }
       if (chartCofres && chartCofres.data && chartCofres.data.datasets) {
-        const fan = userProfile.cofresDiego?.fanFijos ?? 609360;
-        const tenpoD = userProfile.cofresDiego?.tenpoHuasco ?? 300000;
-        const mach = userProfile.cofresDiego?.machBolsillo ?? 140000;
-        const mpD = userProfile.cofresDiego?.mpAhorro ?? 130000;
+        const fan = userProfile.cofresDiego?.fanFijos ?? PERFIL_INICIAL.cofresDiego.fanFijos;
+        const tenpoD = userProfile.cofresDiego?.tenpoHuasco ?? PERFIL_INICIAL.cofresDiego.tenpoHuasco;
+        const mach = userProfile.cofresDiego?.machBolsillo ?? PERFIL_INICIAL.cofresDiego.machBolsillo;
+        const mpD = userProfile.cofresDiego?.mpAhorro ?? PERFIL_INICIAL.cofresDiego.mpAhorro;
 
-        const cheq = userProfile.cofresSoledad?.chequeraHogar ?? 236000;
+        const cheq = userProfile.cofresSoledad?.chequeraHogar ?? PERFIL_INICIAL.cofresSoledad.chequeraHogar;
         const smart = getSmartReservaChequera();
-        const tenpoS = userProfile.cofresSoledad?.tenpoBolsillo ?? 150000;
-        const mpS = userProfile.cofresSoledad?.mpAhorro ?? 150000;
-        const bancoS = userProfile.cofresSoledad?.bancoReserva ?? 150000;
+        const tenpoS = userProfile.cofresSoledad?.tenpoBolsillo ?? PERFIL_INICIAL.cofresSoledad.tenpoBolsillo;
+        const mpS = userProfile.cofresSoledad?.mpAhorro ?? PERFIL_INICIAL.cofresSoledad.mpAhorro;
+        const bancoS = userProfile.cofresSoledad?.bancoReserva ?? PERFIL_INICIAL.cofresSoledad.bancoReserva;
 
         chartCofres.data.datasets[0].data = [fan, tenpoD, mach, mpD, cheq, smart, tenpoS, mpS, bancoS];
         chartCofres.update();
@@ -4814,8 +4884,8 @@ main, .tab-pane {
     // RENDERIZADOR ROBUSTO DE GRÁFICOS DEL DASHBOARD (COFRES & APORTES)
     // ==============================================================
     function renderDashboardCharts() {
-      const diegoSal = userProfile.diegoSalary || 1214038;
-      const soleSal = userProfile.soledadSalary || 875000;
+      const diegoSal = userProfile.diegoSalary || PERFIL_INICIAL.diegoSalary;
+      const soleSal = userProfile.soledadSalary || PERFIL_INICIAL.soledadSalary;
       const totalSal = diegoSal + soleSal;
 
       // 1. Chart Cofres (Desglose real de cofres Diego + Soledad)
@@ -4823,15 +4893,15 @@ main, .tab-pane {
       if (ctxCofres) {
         if (chartCofres) chartCofres.destroy();
 
-        const fan = userProfile.cofresDiego?.fanFijos ?? 609360;
-        const tenpoD = userProfile.cofresDiego?.tenpoHuasco ?? 300000;
-        const mach = userProfile.cofresDiego?.machBolsillo ?? 140000;
-        const mpD = userProfile.cofresDiego?.mpAhorro ?? 130000;
-        const cheq = userProfile.cofresSoledad?.chequeraHogar ?? 425000;
+        const fan = userProfile.cofresDiego?.fanFijos ?? PERFIL_INICIAL.cofresDiego.fanFijos;
+        const tenpoD = userProfile.cofresDiego?.tenpoHuasco ?? PERFIL_INICIAL.cofresDiego.tenpoHuasco;
+        const mach = userProfile.cofresDiego?.machBolsillo ?? PERFIL_INICIAL.cofresDiego.machBolsillo;
+        const mpD = userProfile.cofresDiego?.mpAhorro ?? PERFIL_INICIAL.cofresDiego.mpAhorro;
+        const cheq = userProfile.cofresSoledad?.chequeraHogar ?? PERFIL_INICIAL.cofresSoledad.chequeraHogar;
         const smart = getSmartReservaChequera();
-        const tenpoS = userProfile.cofresSoledad?.tenpoBolsillo ?? 150000;
-        const mpS = userProfile.cofresSoledad?.mpAhorro ?? 150000;
-        const bancoS = userProfile.cofresSoledad?.bancoReserva ?? 150000;
+        const tenpoS = userProfile.cofresSoledad?.tenpoBolsillo ?? PERFIL_INICIAL.cofresSoledad.tenpoBolsillo;
+        const mpS = userProfile.cofresSoledad?.mpAhorro ?? PERFIL_INICIAL.cofresSoledad.mpAhorro;
+        const bancoS = userProfile.cofresSoledad?.bancoReserva ?? PERFIL_INICIAL.cofresSoledad.bancoReserva;
         const totalCofres = fan + tenpoD + mach + mpD + cheq + smart + tenpoS + mpS + bancoS;
 
         const subTitleEl = document.getElementById('dashCofresSubtitle');
@@ -5379,8 +5449,9 @@ main, .tab-pane {
       const descLower = desc.toLowerCase();
       const gastoPrueba = { category: cat.replace(/^[^\w\s]+\s*/, ''), desc };
       // Antes "Luz" caía en "Servicios Huasco (Luz y Agua)" y "Hielo (Gastos Hogar)" en Gas, y cambiaban de responsable
-      let matched = currentAuditItems.find(it => gastoEsDeCuentaFija(it.id, gastoPrueba))
-        || currentAuditItems.find(it => !CHECKLIST_FIJOS[it.id] && it.name.toLowerCase() === descLower);
+      const idPorRegla = itemIdPorReglas(gastoPrueba);
+      let matched = (idPorRegla && currentAuditItems.find(it => it.id === idPorRegla))
+        || currentAuditItems.find(it => !CHECKLIST_FIJOS[it.id] && !REGLAS_VARIABLES[it.id] && it.name.toLowerCase() === descLower);
 
       const auditBefore = matched ? { actual: matched.actual } : null;
       if (matched) {
@@ -5559,15 +5630,80 @@ main, .tab-pane {
       'item-10': { p: /rupatadina/ }
     };
 
+    // Cuentas variables del presupuesto; el orden importa (lo más específico primero)
+    const REGLAS_VARIABLES = {
+      'item-26': { p: /veterin|vacuna/ },
+      'item-11': { p: /pasaje/, conHuasco: true },
+      'item-14': { p: /snack|turno/, conHuasco: true },
+      'item-12': { p: /uber|colectivo|traslado/, conHuasco: true },
+      'item-13': { p: /\bmetro\b|\befe\b/, conHuasco: true },
+      'item-22': { p: /supermercado|lider|mayorista|unimarc|santa isabel/ },
+      'item-30': { p: /consulta|dental/ },
+      'item-29': { p: /bolsillo personal|gastos propios/ },
+      'item-28': { p: /imprevist|gastos hogar/ },
+      'item-27': { p: /comida fuera|salida|delivery|almuerzo|desayuno|comida viaje|^alimentaci/ }
+    };
+
+    // A qué cuenta del presupuesto pertenece un gasto: primero por regla (corrige enlaces viejos mal hechos), si no por su enlace guardado
+    function itemIdPorReglas(g) {
+      const ids = [...Object.keys(CHECKLIST_FIJOS), ...Object.keys(REGLAS_VARIABLES)];
+      return ids.find(id => currentAuditItems.some(it => it.id === id) && gastoEsDeCuentaFija(id, g)) || null;
+    }
+    function itemIdDeGasto(g) {
+      return itemIdPorReglas(g) || (g.auditId && currentAuditItems.some(it => it.id === g.auditId) ? g.auditId : null);
+    }
+
+    // El "Real" de cada cuenta es la suma de sus pagos del mes, no el último pago
+    function sincronizarRealDesdeGastos() {
+      const suma = {};
+      expenses.forEach(g => {
+        const id = itemIdDeGasto(g);
+        if (id) suma[id] = (suma[id] || 0) + (Number(g.amount) || 0);
+      });
+      currentAuditItems.forEach(it => {
+        if (suma[it.id] !== undefined) it.actual = suma[it.id];
+        else if (CHECKLIST_FIJOS[it.id] || REGLAS_VARIABLES[it.id]) it.actual = 0;
+      });
+    }
+
     function gastoEsDeCuentaFija(itemId, g) {
-      const regla = CHECKLIST_FIJOS[itemId];
+      const regla = CHECKLIST_FIJOS[itemId] || REGLAS_VARIABLES[itemId];
       if (!regla) return false;
       const t = (regla.d ? `${g.desc || ''}` : `${g.category || ''} ${g.desc || ''}`).toLowerCase();
       return regla.p.test(t) && (regla.conHuasco || !/huasco/.test(t));
     }
 
+    // Propone presupuestos con lo pagado este mes: fijas = lo pagado; variables = lo gastado, proyectado si el mes no termina
+    function propuestaDePresupuestos(hoy = new Date()) {
+      sincronizarRealDesdeGastos();
+      const [anio, mes] = (expenses.map(g => g.date).filter(Boolean).sort().pop() || getLocalDateISO()).split('-').map(Number);
+      const diasMes = new Date(anio, mes, 0).getDate();
+      const mesEnCurso = hoy.getFullYear() === anio && hoy.getMonth() + 1 === mes;
+      const avance = mesEnCurso ? Math.min(1, hoy.getDate() / diasMes) : 1;
+      const cambios = [];
+      currentAuditItems.forEach(it => {
+        let nuevo = null;
+        if (CHECKLIST_FIJOS[it.id] && it.actual > 0) nuevo = it.actual;
+        if (REGLAS_VARIABLES[it.id] && it.actual > 0) nuevo = Math.ceil(it.actual / Math.max(avance, 0.25) / 1000) * 1000;
+        if (nuevo !== null && nuevo !== it.base) cambios.push({ item: it, antes: it.base, despues: nuevo });
+      });
+      return { cambios, avance };
+    }
+
+    async function ajustarPresupuestosConElMes() {
+      const { cambios, avance } = propuestaDePresupuestos();
+      if (!cambios.length) { avisar('Los presupuestos ya calzan con lo pagado este mes.'); return; }
+      const lineas = cambios.map(c => `• ${c.item.name}: ${formatCLP(c.antes)} → ${formatCLP(c.despues)}`).join('\n');
+      const nota = avance < 1 ? `\n\nEl mes va en ${Math.round(avance * 100)}%: lo variable se proyecta al mes completo.` : '';
+      if (!(await confirmar(`Ajustar ${cambios.length} presupuestos según lo pagado este mes:\n\n${lineas}${nota}`, 'Ajustar'))) return;
+      cambios.forEach(c => { c.item.base = c.despues; });
+      persistirBoletasActivas();
+      triggerAutoSyncToCloud(true);
+      showToast(`⚖️ ${cambios.length} presupuestos ajustados · Meta ${formatCLP(getMetaMensual())}`);
+    }
+
     function pagosDeCuentaFija(itemId) {
-      return expenses.filter(g => gastoEsDeCuentaFija(itemId, g));
+      return expenses.filter(g => itemIdDeGasto(g) === itemId);
     }
 
     function renderChecklist() {
@@ -5796,10 +5932,10 @@ main, .tab-pane {
           showToast('📲 ¡Enlace comprimido copiado! Listo para WhatsApp');
           closeSyncModal();
         }).catch(() => {
-          prompt('Copia este enlace para enviarlo por WhatsApp:', shareUrl);
+          pedirTexto('Copia este enlace para enviarlo por WhatsApp:', shareUrl);
         });
       } else {
-        prompt('Copia este enlace para enviarlo por WhatsApp:', shareUrl);
+        pedirTexto('Copia este enlace para enviarlo por WhatsApp:', shareUrl);
       }
     }
 
@@ -5827,7 +5963,7 @@ main, .tab-pane {
           (hasProfile ? `💰 Sueldos de Diego y Soledad + Asignación de Cofres\n\n` : `\n`) +
           `¿Deseas cargar y sincronizar tu aplicación ahora?`;
 
-        const confirmSync = confirm(confirmMsg);
+        const confirmSync = await confirmar(confirmMsg, 'Cargar datos');
         if (!confirmSync) {
           history.replaceState(null, null, window.location.pathname);
           return;
@@ -5967,6 +6103,134 @@ main, .tab-pane {
     const FIRESTORE_DOC_URL = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents/hogar/datos_compartidos?key=${FIRESTORE_API_KEY}`;
     const CLIENT_SESSION_ID = 'sess_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
 
+    // ---------- Inicio de sesión con Google (Firebase Auth) ----------
+    // Firestore sigue por REST: la sesión solo agrega el token. Sin sesión todo funciona mientras las reglas lo permitan.
+    class ErrorSinPermiso extends Error { constructor() { super('La nube pide iniciar sesión'); } }
+    const FIREBASE_CONFIG = { apiKey: FIRESTORE_API_KEY, authDomain: `${FIRESTORE_PROJECT_ID}.firebaseapp.com`, projectId: FIRESTORE_PROJECT_ID };
+    function authFirebase() {
+      if (!window.firebase?.auth) return null;
+      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      return firebase.auth();
+    }
+    async function encabezadosNube(extra = {}) {
+      const usuario = authFirebase()?.currentUser;
+      if (!usuario) return extra;
+      try { return { ...extra, Authorization: `Bearer ${await usuario.getIdToken()}` }; } catch (e) { return extra; }
+    }
+    function pintarSesion(usuario) {
+      const b = document.getElementById('menuCuenta');
+      if (b) b.textContent = usuario ? `👥 Cerrar sesión (${usuario.email})` : '👥 Iniciar sesión con Google';
+    }
+    let avisoSesionMostrado = false;
+    function avisarSinSesion() {
+      updateCloudStatusBadge(false, '🔒 Inicia sesión');
+      if (avisoSesionMostrado) return;
+      avisoSesionMostrado = true;
+      showToast('🔒 La nube pide iniciar sesión con Google', { label: 'Entrar', onClick: entrarConGoogle });
+    }
+    async function entrarConGoogle() {
+      const auth = authFirebase();
+      if (!auth) { alert('No se pudo cargar el inicio de sesión. Revisa la conexión e inténtalo de nuevo.'); return; }
+      try {
+        await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+        avisoSesionMostrado = false;
+        showToast('✅ Sesión iniciada');
+        pullFromFirestore(true);
+      } catch (e) {
+        if (e?.code !== 'auth/popup-closed-by-user' && e?.code !== 'auth/cancelled-popup-request') alert('No se pudo iniciar sesión: ' + (e?.message || e));
+      }
+    }
+    async function alternarSesion() {
+      const auth = authFirebase();
+      if (auth?.currentUser) {
+        if (await confirmar(`¿Cerrar la sesión de ${auth.currentUser.email}? Los datos de este teléfono se mantienen.`)) await auth.signOut();
+      } else entrarConGoogle();
+    }
+    function iniciarSesionGoogle() {
+      const auth = authFirebase();
+      if (!auth) return;
+      auth.onAuthStateChanged(usuario => {
+        pintarSesion(usuario);
+        if (usuario) pullFromFirestore(true);
+      });
+    }
+
+    // ---------- Respaldos diarios en la nube ----------
+    // Una copia por día en hogar/datos_compartidos/respaldos/AAAA-MM-DD; se guardan los últimos 45.
+    const RESPALDOS_URL = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents/hogar/datos_compartidos/respaldos`;
+    const RESPALDOS_A_GUARDAR = 45;
+    let respaldoEnCurso = false;
+    async function guardarRespaldo(id, payload) {
+      const res = await fetch(`${RESPALDOS_URL}/${id}?key=${FIRESTORE_API_KEY}`, {
+        method: 'PATCH',
+        headers: await encabezadosNube({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ fields: { appStateJson: { stringValue: JSON.stringify(payload) }, creado: { integerValue: String(Date.now()) } } })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    }
+    async function listarRespaldos() {
+      const res = await fetch(`${RESPALDOS_URL}?key=${FIRESTORE_API_KEY}&pageSize=300&mask.fieldPaths=creado`, { cache: 'no-store', headers: await encabezadosNube() });
+      if (res.status === 401 || res.status === 403) throw new ErrorSinPermiso();
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return ((await res.json()).documents || []).map(d => d.name.split('/').pop()).sort().reverse();
+    }
+    async function respaldarSiCorresponde() {
+      const hoy = getLocalDateISO();
+      if (respaldoEnCurso || localStorage.getItem('respaldo_dia') === hoy) return;
+      respaldoEnCurso = true;
+      try {
+        await guardarRespaldo(hoy, JSON.parse(JSON.stringify(buildCompleteFamilyPayload())));
+        localStorage.setItem('respaldo_dia', hoy);
+        const sobrantes = (await listarRespaldos()).slice(RESPALDOS_A_GUARDAR);
+        for (const id of sobrantes) await fetch(`${RESPALDOS_URL}/${id}?key=${FIRESTORE_API_KEY}`, { method: 'DELETE', headers: await encabezadosNube() });
+      } catch (e) {
+        console.warn('Respaldo diario pendiente:', e.message);
+      } finally {
+        respaldoEnCurso = false;
+      }
+    }
+    async function abrirRespaldos() {
+      const lista = document.getElementById('respaldosLista');
+      document.getElementById('modalRespaldos').style.display = 'flex';
+      lista.innerHTML = '<p class="hist-nota">Buscando respaldos…</p>';
+      try {
+        const ids = (await listarRespaldos()).filter(id => /^\d{4}-\d{2}-\d{2}$/.test(id));
+        lista.innerHTML = ids.length ? '' : '<p class="hist-nota">Aún no hay respaldos. Se crea uno al día cuando la app se sincroniza.</p>';
+        ids.forEach(id => {
+          const fila = document.createElement('div');
+          fila.className = 'respaldo-fila';
+          const fecha = new Date(`${id}T12:00:00`).toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+          fila.innerHTML = `<span>${escapeHtml(fecha)}</span>`;
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'btn-secondary';
+          b.textContent = 'Restaurar';
+          b.onclick = () => restaurarRespaldo(id, fecha);
+          fila.appendChild(b);
+          lista.appendChild(fila);
+        });
+      } catch (e) {
+        lista.innerHTML = `<p class="hist-nota">${e instanceof ErrorSinPermiso ? 'Inicia sesión con Google para ver los respaldos.' : 'No se pudieron leer los respaldos. Revisa la conexión.'}</p>`;
+      }
+    }
+    function cerrarRespaldos() { document.getElementById('modalRespaldos').style.display = 'none'; }
+    async function restaurarRespaldo(id, fecha) {
+      if (!(await confirmar(`¿Volver los datos al ${fecha}? Lo registrado después se pierde, salvo lo que esté en otro respaldo. Antes se guarda una copia del estado actual.`))) return;
+      try {
+        const res = await fetch(`${RESPALDOS_URL}/${id}?key=${FIRESTORE_API_KEY}`, { cache: 'no-store', headers: await encabezadosNube() });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const payload = parseSeguro((await res.json()).fields?.appStateJson?.stringValue, null);
+        if (!payload || !Array.isArray(payload.expenses)) throw new Error('El respaldo está incompleto');
+        await guardarRespaldo(`antes-de-restaurar-${Date.now()}`, JSON.parse(JSON.stringify(buildCompleteFamilyPayload())));
+        applyRemoteDataToApp(payload);
+        await pushToFirestore(true);
+        cerrarRespaldos();
+        showToast(`✅ Datos restaurados al ${fecha}`);
+      } catch (e) {
+        alert('No se pudo restaurar: ' + e.message);
+      }
+    }
+
     let autoSyncCloudTimer = null;
     let lastUploadedTimestamp = 0;
     let cloudPollInterval = null;
@@ -6156,8 +6420,9 @@ main, .tab-pane {
     }
 
     async function readCloudDoc() {
-      const res = await fetch(FIRESTORE_DOC_URL, { cache: 'no-store' });
+      const res = await fetch(FIRESTORE_DOC_URL, { cache: 'no-store', headers: await encabezadosNube() });
       if (res.status === 404) return { updateTime: null, payload: null };
+      if (res.status === 401 || res.status === 403) throw new ErrorSinPermiso();
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const doc = await res.json();
       let payload = null;
@@ -6176,7 +6441,7 @@ main, .tab-pane {
       const precondition = updateTime ? `currentDocument.updateTime=${encodeURIComponent(updateTime)}` : 'currentDocument.exists=false';
       const res = await fetch(`${FIRESTORE_DOC_URL}&${precondition}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await encabezadosNube({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           fields: {
             appStateJson: { stringValue: JSON.stringify(payload) },
@@ -6188,6 +6453,7 @@ main, .tab-pane {
         })
       });
       if (res.ok) return (await res.json()).updateTime;
+      if (res.status === 401 || res.status === 403) throw new ErrorSinPermiso();
       const error = (await res.json().catch(() => ({}))).error;
       if (['FAILED_PRECONDITION', 'ALREADY_EXISTS', 'ABORTED'].includes(error?.status)) return null;
       throw new Error(error?.message || `HTTP ${res.status}`);
@@ -6277,11 +6543,13 @@ main, .tab-pane {
       try {
         const result = await syncWithCloud();
         updateCloudStatusBadge(true, '🟢 Nube en Vivo');
+        respaldarSiCorresponde();
         if (!isSilent) showToast('☁️ ¡Guardado en la nube de Firebase con éxito!');
         else if (result === 'pulled' || result === 'merged') showToast('☁️ ¡Sincronizado con tu pareja!');
         return true;
       } catch (err) {
         console.error('Error guardando en Firestore:', err);
+        if (err instanceof ErrorSinPermiso) { avisarSinSesion(); return false; }
         updateCloudStatusBadge(false, '⚠️ Sin guardar en nube');
         if (!isSilent) alert('Error al guardar en Firebase: ' + err.message);
         return false;
@@ -6293,6 +6561,7 @@ main, .tab-pane {
         if (!isSilent) showToast('⏳ Descargando datos desde Firebase...');
         const result = await syncWithCloud();
         updateCloudStatusBadge(true, '🟢 Nube en Vivo');
+        respaldarSiCorresponde();
         if (!isSilent) {
           showToast('☁️ ¡Datos actualizados desde Firebase!');
           closeSyncModal();
@@ -6302,6 +6571,7 @@ main, .tab-pane {
         return true;
       } catch (err) {
         console.error('Error sincronizando con Firestore:', err);
+        if (err instanceof ErrorSinPermiso) { avisarSinSesion(); return false; }
         updateCloudStatusBadge(false, '⚠️ Sin guardar en nube');
         if (!isSilent) alert('Error al descargar de Firebase: ' + err.message);
         return false;
@@ -6323,6 +6593,7 @@ main, .tab-pane {
 
     function initFirebaseSync() {
       // Descarga inicial automática al abrir la app
+      iniciarSesionGoogle();
       pullFromFirestore(true);
 
       // El ciclo periódico también reintenta lo que no se pudo subir
@@ -6887,10 +7158,15 @@ main, .tab-pane {
       renderChecklist();
     }
 
-    function deleteExpense(idx) {
+    async function deleteExpense(idx) {
       if (idx < 0 || idx >= expenses.length) return;
       const target = expenses[idx];
-      if (confirm(`¿Deseas eliminar el gasto "${target.desc || target.category}" por ${formatCLP(target.amount)}?`)) {
+      if (!(await confirmar(`¿Deseas eliminar el gasto "${target.desc || target.category}" por ${formatCLP(target.amount)}?`, 'Eliminar'))) return;
+      // Mientras la ventana estaba abierta el otro teléfono pudo cambiar la lista
+      idx = expenses.indexOf(target);
+      if (idx < 0) idx = expenses.findIndex(g => g.id && g.id === target.id);
+      if (idx < 0) return;
+      {
         const boleta = itemDeGasto(target);
       const deleted = expenses.splice(idx, 1)[0];
       if (boleta) {
@@ -6965,7 +7241,7 @@ main, .tab-pane {
     // ==============================================================
     let currentSalaryModalTarget = 'Diego';
 
-    function openSalaryModal(target = 'Diego') {
+    async function openSalaryModal(target = 'Diego') {
       currentSalaryModalTarget = target;
       const modal = document.getElementById('modalSalary');
       if (modal) {
@@ -6974,7 +7250,7 @@ main, .tab-pane {
       } else {
         // Fallback robusto en caso de que el modal no esté disponible en el DOM
         const currentVal = target === 'Diego' ? userProfile.diegoSalary : userProfile.soledadSalary;
-        const promptVal = prompt(`Ingresa el sueldo líquido final de ${target} ($ CLP):`, currentVal);
+        const promptVal = await pedirTexto(`Ingresa el sueldo líquido final de ${target} ($ CLP):`, currentVal);
         if (promptVal !== null) {
           const num = parseInt(promptVal.replace(/[^0-9]/g, ''), 10);
           if (num > 0) aplicarYGuardarSueldos(target, num);
@@ -7424,7 +7700,7 @@ function getMonthCode(monthLabel) {
           if (!hasNov) {
             const totalHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
             const fijosDiego = currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
-            const totalIng = (userProfile?.diegoSalary || 1214038) + (userProfile?.soledadSalary || 875000);
+            const totalIng = (userProfile?.diegoSalary || PERFIL_INICIAL.diegoSalary) + (userProfile?.soledadSalary || PERFIL_INICIAL.soledadSalary);
             const superavit = totalIng - (totalHogar + fijosDiego);
 
             list.unshift({
@@ -7433,8 +7709,8 @@ function getMonthCode(monthLabel) {
               nombre: 'Noviembre 2026',
               fecha: '2026-11-01',
               criterio: 'Mes Actual en Curso',
-              diegoSal: userProfile?.diegoSalary || 1214038,
-              soleSal: userProfile?.soledadSalary || 875000,
+              diegoSal: userProfile?.diegoSalary || PERFIL_INICIAL.diegoSalary,
+              soleSal: userProfile?.soledadSalary || PERFIL_INICIAL.soledadSalary,
               totalIng: totalIng,
               gastosHogar: totalHogar,
               fijosDiego: fijosDiego,
@@ -8023,7 +8299,7 @@ tr.innerHTML = `
 
       const totalHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
       const fijosDiego = currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
-      const totalIng = (userProfile?.diegoSalary || 1214038) + (userProfile?.soledadSalary || 875000);
+      const totalIng = (userProfile?.diegoSalary || PERFIL_INICIAL.diegoSalary) + (userProfile?.soledadSalary || PERFIL_INICIAL.soledadSalary);
       const superavit = totalIng - (totalHogar + fijosDiego);
       const code = getMonthCode(mesNombre);
 
@@ -8033,8 +8309,9 @@ tr.innerHTML = `
         nombre: mesNombre,
         fecha: new Date().toISOString().split('T')[0],
         criterio: isCerrado ? 'Mes Cerrado y Auditado' : 'Registro de boletas en curso',
-        diegoSal: userProfile?.diegoSalary || 1214038,
-        soleSal: userProfile?.soledadSalary || 875000,
+        lugarDiego: (({ Limache, Huasco }) => ({ Limache, Huasco }))(totalesLugarDiego()),
+        diegoSal: userProfile?.diegoSalary || PERFIL_INICIAL.diegoSalary,
+        soleSal: userProfile?.soledadSalary || PERFIL_INICIAL.soledadSalary,
         totalIng: totalIng,
         gastosHogar: totalHogar,
         fijosDiego: fijosDiego,
@@ -8086,7 +8363,7 @@ tr.innerHTML = `
       const code = getMonthCode(mesNombre);
       const totalHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
       const fijosDiego = currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
-      const totalIng = (userProfile?.diegoSalary || 1214038) + (userProfile?.soledadSalary || 875000);
+      const totalIng = (userProfile?.diegoSalary || PERFIL_INICIAL.diegoSalary) + (userProfile?.soledadSalary || PERFIL_INICIAL.soledadSalary);
       const superavit = totalIng - (totalHogar + fijosDiego);
 
       const activeRecord = {
@@ -8095,8 +8372,8 @@ tr.innerHTML = `
         nombre: mesNombre,
         fecha: new Date().toISOString().split('T')[0],
         criterio: 'Mes Actual en Curso',
-        diegoSal: userProfile?.diegoSalary || 1214038,
-        soleSal: userProfile?.soledadSalary || 875000,
+        diegoSal: userProfile?.diegoSalary || PERFIL_INICIAL.diegoSalary,
+        soleSal: userProfile?.soledadSalary || PERFIL_INICIAL.soledadSalary,
         totalIng: totalIng,
         gastosHogar: totalHogar,
         fijosDiego: fijosDiego,
@@ -8241,7 +8518,7 @@ tr.innerHTML = `
       };
 
       userProfile.smartVisaConfig = {
-        cupoTotal: userProfile.smartVisaConfig?.cupoTotal || 500000,
+        cupoTotal: userProfile.smartVisaConfig?.cupoTotal || PERFIL_INICIAL.smartVisaConfig.cupoTotal,
         deudaPrevia: deudaRestanteSmart,
         cuotaMes: userProfile.cofresSoledad?.smartVisa ?? 0
       };
@@ -8297,7 +8574,7 @@ tr.innerHTML = `
       showToast(`🎉 ¡Mes "${oldMonth}" cerrado con éxito! Bienvenido a ${currentActiveMonth}. Remanentes transferidos automáticamente.`);
     }
 
-    function deshacerUltimoCierreMes() {
+    async function deshacerUltimoCierreMes() {
       const raw = localStorage.getItem('ultimo_mes_cerrado_backup');
       if (!raw) {
         alert('No hay un cierre reciente disponible para deshacer.');
@@ -8305,8 +8582,8 @@ tr.innerHTML = `
       }
       const backup = parseSeguro(raw, null);
       if (!backup) { alert('El respaldo del último cierre está dañado y no se puede reabrir.'); return; }
-      const confirmar = confirm(`↩️ ¿Deseas reabrir el mes "${backup.closedMonth}" y deshacer el cierre?\n\nSe restaurarán todas las boletas, gastos diarios y el periodo activo volverá a ser "${backup.closedMonth}".`);
-      if (!confirmar) return;
+      const reabrir = await confirmar(`↩️ ¿Deseas reabrir el mes "${backup.closedMonth}" y deshacer el cierre?\n\nSe restaurarán todas las boletas, gastos diarios y el periodo activo volverá a ser "${backup.closedMonth}".`, 'Reabrir mes');
+      if (!reabrir) return;
 
       currentActiveMonth = backup.closedMonth;
       localStorage.setItem('app_active_month', currentActiveMonth);
@@ -9000,7 +9277,7 @@ let currentCardAnalysisFilter = 'all';
         owner: 'Diego',
         isPrimary: false,
         sourceAccount: 'Cuenta Fan',
-        getBudget: () => userProfile.cofresDiego?.tenpoHuasco ?? 300000,
+        getBudget: () => userProfile.cofresDiego?.tenpoHuasco ?? PERFIL_INICIAL.cofresDiego.tenpoHuasco,
         getRemanente: () => userProfile.remanentes?.tenpoDiego ?? 0,
         color: '#F59E0B',
         badgeClass: 'badge-amber',
@@ -9026,7 +9303,7 @@ let currentCardAnalysisFilter = 'all';
         owner: 'Diego',
         isPrimary: false,
         sourceAccount: 'Cuenta Fan',
-        getBudget: () => userProfile.cofresDiego?.mpAhorro ?? 130000,
+        getBudget: () => userProfile.cofresDiego?.mpAhorro ?? PERFIL_INICIAL.cofresDiego.mpAhorro,
         getRemanente: () => userProfile.remanentes?.mpDiego ?? 0,
         color: '#10B981',
         badgeClass: 'badge-emerald',
@@ -9040,12 +9317,12 @@ let currentCardAnalysisFilter = 'all';
         isPrimary: true,
         sourceAccount: 'Sueldo Líquido Diego',
         getBudget: () => {
-          const sal = userProfile.diegoSalary || 1214038;
-          const trans = (userProfile.cofresDiego?.tenpoHuasco ?? 300000) + getMachSemanal().liberado + (userProfile.cofresDiego?.mpAhorro ?? 130000);
+          const sal = userProfile.diegoSalary || PERFIL_INICIAL.diegoSalary;
+          const trans = (userProfile.cofresDiego?.tenpoHuasco ?? PERFIL_INICIAL.cofresDiego.tenpoHuasco) + getMachSemanal().liberado + (userProfile.cofresDiego?.mpAhorro ?? PERFIL_INICIAL.cofresDiego.mpAhorro);
           return Math.max(0, sal - trans);
         },
-        getTotalSalary: () => userProfile.diegoSalary || 1214038,
-        getTotalTransfersOut: () => (userProfile.cofresDiego?.tenpoHuasco ?? 300000) + getMachSemanal().liberado + (userProfile.cofresDiego?.mpAhorro ?? 130000),
+        getTotalSalary: () => userProfile.diegoSalary || PERFIL_INICIAL.diegoSalary,
+        getTotalTransfersOut: () => (userProfile.cofresDiego?.tenpoHuasco ?? PERFIL_INICIAL.cofresDiego.tenpoHuasco) + getMachSemanal().liberado + (userProfile.cofresDiego?.mpAhorro ?? PERFIL_INICIAL.cofresDiego.mpAhorro),
         getRemanente: () => userProfile.remanentes?.fanDiego ?? 0,
         color: '#3B82F6',
         badgeClass: 'badge-blue',
@@ -9059,12 +9336,12 @@ let currentCardAnalysisFilter = 'all';
         isPrimary: true,
         sourceAccount: 'Sueldo Líquido Soledad',
         getBudget: () => {
-          const sal = userProfile.soledadSalary || 875000;
-          const trans = (userProfile.cofresSoledad?.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad?.mpAhorro ?? 150000) + (userProfile.cofresSoledad?.bancoReserva ?? 150000) + getSmartReservaChequera();
+          const sal = userProfile.soledadSalary || PERFIL_INICIAL.soledadSalary;
+          const trans = (userProfile.cofresSoledad?.tenpoBolsillo ?? PERFIL_INICIAL.cofresSoledad.tenpoBolsillo) + (userProfile.cofresSoledad?.mpAhorro ?? PERFIL_INICIAL.cofresSoledad.mpAhorro) + (userProfile.cofresSoledad?.bancoReserva ?? PERFIL_INICIAL.cofresSoledad.bancoReserva) + getSmartReservaChequera();
           return Math.max(0, sal - trans);
         },
-        getTotalSalary: () => userProfile.soledadSalary || 875000,
-        getTotalTransfersOut: () => (userProfile.cofresSoledad?.tenpoBolsillo ?? 150000) + (userProfile.cofresSoledad?.mpAhorro ?? 150000) + (userProfile.cofresSoledad?.bancoReserva ?? 150000) + getSmartReservaChequera(),
+        getTotalSalary: () => userProfile.soledadSalary || PERFIL_INICIAL.soledadSalary,
+        getTotalTransfersOut: () => (userProfile.cofresSoledad?.tenpoBolsillo ?? PERFIL_INICIAL.cofresSoledad.tenpoBolsillo) + (userProfile.cofresSoledad?.mpAhorro ?? PERFIL_INICIAL.cofresSoledad.mpAhorro) + (userProfile.cofresSoledad?.bancoReserva ?? PERFIL_INICIAL.cofresSoledad.bancoReserva) + getSmartReservaChequera(),
         getRemanente: () => userProfile.remanentes?.chequeraSole ?? 0,
         color: '#A855F7',
         badgeClass: 'badge-purple',
@@ -9077,7 +9354,7 @@ let currentCardAnalysisFilter = 'all';
         owner: 'Soledad',
         isPrimary: false,
         sourceAccount: 'Chequera BancoEstado',
-        getBudget: () => userProfile.cofresSoledad?.tenpoBolsillo ?? 150000,
+        getBudget: () => userProfile.cofresSoledad?.tenpoBolsillo ?? PERFIL_INICIAL.cofresSoledad.tenpoBolsillo,
         getRemanente: () => userProfile.remanentes?.tenpoSoledad ?? 0,
         color: '#C084FC',
         badgeClass: 'badge-purple',
@@ -9090,7 +9367,7 @@ let currentCardAnalysisFilter = 'all';
         owner: 'Soledad',
         isPrimary: false,
         sourceAccount: 'Cupo BancoEstado',
-        getBudget: () => userProfile.smartVisaConfig?.cupoTotal ?? 500000,
+        getBudget: () => userProfile.smartVisaConfig?.cupoTotal ?? PERFIL_INICIAL.smartVisaConfig.cupoTotal,
         getRemanente: () => userProfile.smartVisaConfig?.deudaPrevia ?? 0,
         color: '#F43F5E',
         badgeClass: 'badge-rose',
@@ -9103,7 +9380,7 @@ let currentCardAnalysisFilter = 'all';
         owner: 'Soledad',
         isPrimary: false,
         sourceAccount: 'Chequera BancoEstado',
-        getBudget: () => userProfile.cofresSoledad?.mpAhorro ?? 150000,
+        getBudget: () => userProfile.cofresSoledad?.mpAhorro ?? PERFIL_INICIAL.cofresSoledad.mpAhorro,
         getRemanente: () => userProfile.remanentes?.mpSoledad ?? 0,
         color: '#34D399',
         badgeClass: 'badge-emerald',
@@ -9116,7 +9393,7 @@ let currentCardAnalysisFilter = 'all';
         owner: 'Soledad',
         isPrimary: false,
         sourceAccount: 'Chequera BancoEstado',
-        getBudget: () => userProfile.cofresSoledad?.bancoReserva ?? 150000,
+        getBudget: () => userProfile.cofresSoledad?.bancoReserva ?? PERFIL_INICIAL.cofresSoledad.bancoReserva,
         getRemanente: () => userProfile.remanentes?.bancoSole ?? 0,
         color: '#8B5CF6',
         badgeClass: 'badge-purple',
@@ -9199,7 +9476,7 @@ let currentCardAnalysisFilter = 'all';
         const isCreditCard = (cfg.key === 'smartVisaSole');
 
         // Métricas Smart Visa
-        const cardCreditCupo = isCreditCard ? (userProfile.smartVisaConfig?.cupoTotal ?? 500000) : 0;
+        const cardCreditCupo = isCreditCard ? (userProfile.smartVisaConfig?.cupoTotal ?? PERFIL_INICIAL.smartVisaConfig.cupoTotal) : 0;
         const cardCreditDeudaPrevia = isCreditCard ? (userProfile.smartVisaConfig?.deudaPrevia ?? 0) : 0;
         const cardCreditCuota = isCreditCard ? getSmartCuotaDelMes() : 0;
         const cardCreditDeuda = isCreditCard ? Math.max(0, cardCreditDeudaPrevia + totalSpent - cardCreditCuota) : 0;
@@ -9704,10 +9981,39 @@ const detalleCategoria = {};
     // ==============================================================
     // FUNCIÓN DE ANÁLISIS DEL MES ACTUAL (3 DONAS: GLOBAL, DIEGO, SOLEDAD)
     // ==============================================================
+    // Gastos de Diego por lugar; los antiguos sin lugar se estiman por su categoría
+    function totalesLugarDiego() {
+      const t = { Limache: 0, Huasco: 0, nLimache: 0, nHuasco: 0, estimados: 0 };
+      expenses.filter(g => g.payer === 'Diego').forEach(g => {
+        const lugar = g.lugar || adivinarLugar(`${g.category || ''} ${g.desc || ''}`);
+        if (!g.lugar) t.estimados++;
+        t[lugar] += Number(g.amount) || 0;
+        t['n' + lugar]++;
+      });
+      return t;
+    }
+
+    function renderLugarDiego() {
+      const t = totalesLugarDiego();
+      const total = t.Limache + t.Huasco;
+      const pctH = total > 0 ? Math.round(t.Huasco / total * 100) : 0;
+      const poner = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      poner('lugarTotLimache', formatCLP(t.Limache));
+      poner('lugarTotHuasco', formatCLP(t.Huasco));
+      poner('lugarCntLimache', `${t.nLimache} ${t.nLimache === 1 ? 'gasto' : 'gastos'} · ${total > 0 ? 100 - pctH : 0}%`);
+      poner('lugarCntHuasco', `${t.nHuasco} ${t.nHuasco === 1 ? 'gasto' : 'gastos'} · ${pctH}%`);
+      poner('lugarPctHuasco', total > 0 ? '' : 'Sin gastos');
+      poner('lugarSinAsignar', t.estimados ? `${t.estimados} ${t.estimados === 1 ? 'gasto sin lugar se estimó' : 'gastos sin lugar se estimaron'} por su categoría.` : '');
+      const bl = document.getElementById('lugarBarLimache'), bh = document.getElementById('lugarBarHuasco');
+      if (bl) bl.style.width = (total > 0 ? 100 - pctH : 50) + '%';
+      if (bh) bh.style.width = (total > 0 ? pctH : 50) + '%';
+    }
+
     function renderAnalisisMesActual() {
+      renderLugarDiego();
       // 1. Datos base de ingresos
-      const diegoSal = userProfile.diegoSalary || 1214038;
-      const soleSal = userProfile.soledadSalary || 875000;
+      const diegoSal = userProfile.diegoSalary || PERFIL_INICIAL.diegoSalary;
+      const soleSal = userProfile.soledadSalary || PERFIL_INICIAL.soledadSalary;
       const totalIng = diegoSal + soleSal;
 
       // 2. Gastos del mes actual calculados DIRECTAMENTE desde la tabla (expenses)
@@ -10173,7 +10479,7 @@ const detalleCategoria = {};
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=45').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=46').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
@@ -10245,6 +10551,17 @@ const detalleCategoria = {};
 
 
   <!-- MODAL DE SINCRONIZACIÓN EN PAREJA -->
+  <div id="modalRespaldos" class="modal-overlay" onclick="if(event.target === this) cerrarRespaldos()">
+    <div class="modal-card" style="max-width:480px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem;">
+        <h3 style="font-size:1.1rem; font-weight:800;">🛡️ Respaldos diarios</h3>
+        <button type="button" class="sheet-close" style="display:flex;" onclick="cerrarRespaldos()" aria-label="Cerrar">✕</button>
+      </div>
+      <p class="hist-nota" style="margin-top:0.4rem;">La app guarda una copia de todo una vez al día. Restaurar vuelve los datos de ambos teléfonos a esa fecha.</p>
+      <div id="respaldosLista"></div>
+    </div>
+  </div>
+
   <div id="modalSync" class="modal-overlay" onclick="if(event.target === this) closeSyncModal()">
     <div class="modal-card" style="max-width:620px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
