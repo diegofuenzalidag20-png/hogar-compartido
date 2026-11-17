@@ -16,7 +16,7 @@
     // ---------- Versión de la app ----------
     // Un teléfono con la app abierta desde antes de una actualización sigue con el código viejo.
     // Si hay una versión nueva publicada, no se registra ni se sube nada hasta actualizar.
-    const VERSION_APP = 60;
+    const VERSION_APP = 61;
     let versionBloqueada = false;
     async function revisarVersionApp() {
       try {

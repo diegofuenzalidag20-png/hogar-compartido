@@ -83,6 +83,31 @@ function getMonthCode(monthLabel) {
       { code: 'Sep-26', nombre: 'Septiembre 2026', luz: 17075, agua: 7460, gas: 22200, claro: 9938, gc: 53728, michis: 42900, hipo: 374199, smart: 110000, super: 0, total: 637500 }
     ];
 
+    // Cada gasto cuenta en la primera categoría que calza
+    const CATEGORIAS_HIST_EXTRA = [
+      { k: 'arriendo', nombre: 'Arriendo Huasco', p: /arriendo habitaci/ },
+      { k: 'servHuasco', nombre: 'Serv. Huasco', p: /servicios huasco/ },
+      { k: 'pasajes', nombre: 'Pasajes', p: /pasaje/ },
+      { k: 'traslados', nombre: 'Uber / Metro', p: /uber|colectivo|traslado|\bmetro\b|\befe\b/ },
+      { k: 'turno', nombre: 'Snacks turno', p: /snack|turno/ },
+      { k: 'internet', nombre: 'Internet', p: /internet|fibra/ },
+      { k: 'entel', nombre: 'Entel', p: /entel/ },
+      { k: 'streaming', nombre: 'Streaming', p: /netflix|crunchyroll|spotify|streaming/ },
+      { k: 'salidas', nombre: 'Comida fuera', p: /comida fuera|salida|delivery|almuerzo|desayuno|comida viaje|^alimentaci/ },
+      { k: 'remedios', nombre: 'Remedios', p: /eutirox|rupatadina|farmacia/ },
+      { k: 'imprevistos', nombre: 'Imprevistos', p: /imprevist|gastos hogar/ }
+    ];
+    function extrasDeGastos(gastos) {
+      if (!gastos.length) return {};
+      const r = Object.fromEntries(CATEGORIAS_HIST_EXTRA.map(c => [c.k, 0]));
+      gastos.forEach(g => {
+        const texto = `${g.category || ''} ${g.desc || ''}`.toLowerCase();
+        const c = CATEGORIAS_HIST_EXTRA.find(x => x.p.test(texto));
+        if (c) r[c.k] += Number(g.amount) || 0;
+      });
+      return r;
+    }
+
     function extractMonthlyBreakdown(monthRecord) {
       const items = monthRecord.items || [];
       const gastosDiarios = monthRecord.gastosDiarios || [];
@@ -150,7 +175,8 @@ function getMonthCode(monthLabel) {
       return {
         code: code || 'Oct-26',
         nombre: monthRecord.nombre || 'Octubre 2026',
-        luz, agua, gas, claro, gc, michis, hipo, smart, super: superOtros, total
+        luz, agua, gas, claro, gc, michis, hipo, smart, super: superOtros, total,
+        ...extrasDeGastos(gastosDiarios)
       };
     }
 
@@ -205,6 +231,32 @@ function getMonthCode(monthLabel) {
       let sumMichis = 0, sumHipo = 0, sumSmart = 0, sumSuper = 0, sumTotal = 0;
       let countHipo = 0, countSmart = 0;
 
+      // Encabezado con todas las categorías; las que no existían en meses antiguos quedan con "-"
+      const thead = document.querySelector('#tablaHistoricaDetallada thead tr');
+      if (thead) thead.innerHTML = ['Mes', 'Luz', 'Agua', 'Gas', 'Plan Claro', 'Gasto Común', 'Michis', 'Hipotecario', 'Smart Visa', 'Super / Otros', ...CATEGORIAS_HIST_EXTRA.map(c => c.nombre), 'Total Mes']
+        .map((h, i) => `<th style="${i ? 'text-align:right;' : ''}${h === 'Total Mes' ? ' font-weight:700;' : ''} white-space:nowrap;">${h}</th>`).join('');
+      const celda = (v, estilo = '') => `<td style="text-align:right; ${v > 0 ? estilo : 'color:var(--text-dim);'}">${v > 0 ? formatCLP(v) : '-'}</td>`;
+      const fila = (m, etiqueta) => {
+        const luzColor = m.luz === maxLuz ? 'color:#F43F5E;' : (m.luz === minLuz ? 'color:#10B981;' : '');
+        const gasColor = m.gas === maxGas ? 'color:#F43F5E;' : (m.gas === minGas ? 'color:#10B981;' : '');
+        const gcColor = m.gc === maxGC ? 'color:#F43F5E;' : (m.gc === minGC ? 'color:#10B981;' : '');
+        return `
+          <tr>
+            <td style="white-space:nowrap;"><strong>${escapeHtml(etiqueta)}</strong></td>
+            ${celda(m.luz, luzColor)}${celda(m.agua)}${celda(m.gas, gasColor)}${celda(m.claro)}${celda(m.gc, gcColor)}${celda(m.michis)}
+            ${celda(m.hipo)}${celda(m.smart)}${celda(m.super)}
+            ${CATEGORIAS_HIST_EXTRA.map(c => celda(m[c.k])).join('')}
+            <td style="text-align:right; font-weight:700;">${formatCLP(m.total)}</td>
+          </tr>`;
+      };
+
+      // El mes en curso va primero, con sus cifras de hoy, y no entra en los promedios
+      const yaCerrado = months.some(m => m.code === getMonthCode(currentActiveMonth));
+      if (!yaCerrado) {
+        const enCurso = extractMonthlyBreakdown({ nombre: currentActiveMonth, code: getMonthCode(currentActiveMonth), items: currentAuditItems, gastosDiarios: expenses });
+        html += fila(enCurso, `${enCurso.code} (en curso)`);
+      }
+
       [...months].reverse().forEach(m => {
         sumLuz += m.luz || 0;
         sumAgua += m.agua || 0;
@@ -214,35 +266,15 @@ function getMonthCode(monthLabel) {
         sumMichis += m.michis || 0;
         sumSuper += m.super || 0;
         sumTotal += m.total || 0;
+        if (m.hipo > 0) { sumHipo += m.hipo; countHipo++; }
+        if (m.smart > 0) { sumSmart += m.smart; countSmart++; }
+        html += fila(m, m.code);
+      });
 
-        if (m.hipo > 0) {
-          sumHipo += m.hipo;
-          countHipo++;
-        }
-        if (m.smart > 0) {
-          sumSmart += m.smart;
-          countSmart++;
-        }
-
-        const luzColor = m.luz === maxLuz ? 'color:#F43F5E;' : (m.luz === minLuz ? 'color:#10B981;' : '');
-        const gasColor = m.gas === maxGas ? 'color:#F43F5E;' : (m.gas === minGas ? 'color:#10B981;' : '');
-        const gcColor = m.gc === maxGC ? 'color:#F43F5E;' : (m.gc === minGC ? 'color:#10B981;' : '');
-
-        html += `
-          <tr>
-            <td><strong>${escapeHtml(m.code)}</strong></td>
-            <td style="text-align:right; ${luzColor}">${formatCLP(m.luz)}</td>
-            <td style="text-align:right;">${formatCLP(m.agua)}</td>
-            <td style="text-align:right; ${gasColor}">${formatCLP(m.gas)}</td>
-            <td style="text-align:right;">${formatCLP(m.claro)}</td>
-            <td style="text-align:right; ${gcColor}">${formatCLP(m.gc)}</td>
-            <td style="text-align:right;">${formatCLP(m.michis)}</td>
-            <td style="text-align:right; ${m.hipo === 0 ? 'color:var(--text-dim);' : ''}">${m.hipo > 0 ? formatCLP(m.hipo) : '-'}</td>
-            <td style="text-align:right; ${m.smart === 0 ? 'color:var(--text-dim);' : ''}">${m.smart > 0 ? formatCLP(m.smart) : '-'}</td>
-            <td style="text-align:right; ${m.super === 0 ? 'color:var(--text-dim);' : ''}">${m.super > 0 ? formatCLP(m.super) : '-'}</td>
-            <td style="text-align:right; font-weight:700;">${formatCLP(m.total)}</td>
-          </tr>
-        `;
+      // Promedio de las categorías nuevas: solo los meses que las tienen
+      const promediosExtra = CATEGORIAS_HIST_EXTRA.map(c => {
+        const v = months.map(m => m[c.k]).filter(x => x > 0);
+        return v.length ? Math.round(v.reduce((s, x) => s + x, 0) / v.length) : 0;
       });
 
       const n = months.length;
@@ -269,6 +301,7 @@ function getMonthCode(monthLabel) {
           <td style="text-align:right; color:var(--accent-diego);">${formatCLP(avgHipo)}</td>
           <td style="text-align:right; color:var(--accent-diego);">${formatCLP(avgSmart)}</td>
           <td style="text-align:right; color:var(--accent-diego);">${formatCLP(avgSuper)}</td>
+          ${promediosExtra.map(v => `<td style="text-align:right; color:var(--accent-diego);">${v > 0 ? formatCLP(v) : '-'}</td>`).join('')}
           <td style="text-align:right; color:var(--accent-emerald); font-size:1.05rem;">${formatCLP(avgTotal)}</td>
         </tr>
       `;

@@ -1444,6 +1444,7 @@
     .aviso-version strong { display: block; font-size: 0.92rem; }
     .aviso-version span { display: block; color: var(--text-muted); font-size: 0.8rem; margin-top: 0.15rem; }
     .aviso-version button { flex: none; min-height: 44px; }
+    #tablaHistoricaDetallada th:first-child, #tablaHistoricaDetallada td:first-child { position: sticky; left: 0; z-index: 2; background: var(--bg-surface-elevated, #111827); }
     .lugar-toggle { display: flex; gap: 0.4rem; }
     .lugar-toggle .lugar-opcion { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.55rem; border: 1px solid var(--border-color); border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; color: var(--text-muted); text-transform: none; letter-spacing: normal; margin: 0; }
     .lugar-toggle input { position: absolute; opacity: 0; pointer-events: none; }

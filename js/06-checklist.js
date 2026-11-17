@@ -13,7 +13,8 @@
       'item-20c': { p: /internet/ },
       'item-20': { p: /\bclaro\b/ },
       'item-20b': { p: /entel/ },
-      'item-23': { p: /smart visa/ },
+      // Solo la cuota mensual; una compra pagada con la tarjeta no es la cuota
+      'item-23': { p: /cuota.*(smart|tarjeta)|(smart|tarjeta).*cuota/, d: true },
       'item-24': { p: /aseo/ },
       // Premios y comida húmeda son gustos aparte: no cuentan como la compra de comida del mes
       'item-5': { p: /comida michis/, no: /h[uú]meda|premio|snack|golosina|churu/, gasto: /michi.*(h[uú]meda|premio|snack|golosina|churu)|(h[uú]meda|premio|churu).*michi/ },

@@ -186,6 +186,14 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-17] — Fijos vs Variables Corregido, Tabla del Historial Completa y Títulos en Blanco (v61)
+* **Motivo:** El gráfico de fijos vs variables contaba un premio de los michis como fijo y la arena como variable; la tabla del Historial solo tenía las categorías que paga Soledad; algunos títulos tenían colores distintos.
+* **Solución Técnica:**
+  * `isExpenseFijo()` (13-categorias) usa la misma regla que el checklist (`CHECKLIST_FIJOS`): fijo = calza con una cuenta fija. La cuota Smart Visa (`item-23`) se reconoce por su detalle ("cuota… tarjeta/smart"), no por compras con la tarjeta.
+  * Tabla "Ver tabla completa mes a mes": 11 columnas nuevas (Arriendo Huasco, Serv. Huasco, Pasajes, Uber/Metro, Snacks turno, Internet, Entel, Streaming, Comida fuera, Remedios, Imprevistos) calculadas de los gastos del mes (`CATEGORIAS_HIST_EXTRA`, `extrasDeGastos`); fila del mes en curso primero (sin contar en promedios); columna del mes fija al deslizar.
+  * Títulos en `var(--text-main)`: periodo en curso, "Diagnóstico & Semáforo", "Top 5 Mayores Desembolsos", "Cofres de Diego/Soledad", confirmación de cierre y guía de instalación.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `css/app.css`, `js/06-checklist.js`, `js/11-historial-cierre.js`, `js/13-categorias.js`, `sw.js`.
+* **Impacto:** Fijos y variables consistentes con el checklist; Diego puede seguir la evolución de sus gastos; títulos uniformes.
 ### [2026-11-17] — "Deshacer" a la Izquierda y Sin Toques Accidentales (v60)
 * **Motivo:** Al registrar, el pulgar derecho (ambos son diestros) caía sobre "Deshacer" del aviso y un doble toque borraba el gasto recién ingresado.
 * **Solución Técnica:** El aviso con acción (`#toast.has-action`) pone el botón a la izquierda (`row-reverse`). `showToast` ignora toques en el botón durante los primeros 0,7 s tras aparecer (el segundo toque de un doble toque).

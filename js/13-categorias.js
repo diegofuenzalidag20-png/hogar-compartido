@@ -28,48 +28,11 @@
       return regla ? regla.nombre : 'Bolsillo & Ahorro';
     }
 
+    // Fijo = calza con una cuenta fija del checklist (misma regla que el checklist y el recordatorio).
+    // Así los premios de los michis quedan como variables y la arena como fija.
     function isExpenseFijo(categoryName, descName) {
-      const text = `${categoryName || ''} ${descName || ''}`.toLowerCase();
-
-      // 1. Gastos indiscutiblemente VARIABLES (Consumo diario, movilidad, alimentación y compras personales)
-      if (
-        text.includes('pasaje') || text.includes('bus') || text.includes('uber') || text.includes('colectivo') ||
-        text.includes('metro valparaíso') || text.includes('metro valparaiso') || text.includes('efe') || text.includes('traslado') ||
-        text.includes('snack') || text.includes('comida turno') || text.includes('sushi') || text.includes('desayuno') || text.includes('al paso') ||
-        text.includes('supermercado') || text.includes('super') || text.includes('súper') || text.includes('lider') || text.includes('mayorista') ||
-        text.includes('jumbo') || text.includes('unimarc') || text.includes('tottus') || text.includes('santa isabel') ||
-        text.includes('feria') || text.includes('verdura') || text.includes('fruta') || text.includes('pan') || text.includes('carnicer') ||
-        text.includes('almacén') || text.includes('almacen') || text.includes('delivery') || text.includes('pedidosya') ||
-        text.includes('comida fuera') || text.includes('salida') || text.includes('restaurant') ||
-        text.includes('bolsillo') || text.includes('personal') || text.includes('sorteo') || text.includes('regalo') ||
-        text.includes('ropa') || text.includes('tienda') || text.includes('imprevisto') || text.includes('transferencia') || text.includes('tercero') ||
-        text.includes('arena sanitaria') || text.includes('arena michis') || text.includes('veterin') ||
-        text.includes('consulta médica') || text.includes('consulta medica') || text.includes('dental')
-      ) {
-        return false;
-      }
-
-      // 2. Compromisos ineludibles y cuentas estructuradas FIJAS
-      if (
-        text.includes('hipotec') || text.includes('dividendo') || text.includes('arriendo') ||
-        text.includes('gasto común') || text.includes('gasto comun') || text.includes('luz') || text.includes('chilquinta') ||
-        text.includes('agua') || text.includes('esval') || text.includes('gas') ||
-        text.includes('internet') || text.includes('fibra') || text.includes('entel') || text.includes('claro') ||
-        text.includes('aseo domiciliario') || text.includes('waldorf') || text.includes('curso') ||
-        text.includes('netflix') || text.includes('crunchyroll') || text.includes('streaming') || text.includes('spotify') ||
-        text.includes('eutirox') || text.includes('rupatadina') || text.includes('cuota smart visa') || text.includes('cuota tarjeta') ||
-        text.includes('ahorro') || text.includes('fondo emergencia')
-      ) {
-        return true;
-      }
-
-      // Comida regular de michis (compromiso alimentario base del hogar)
-      if (text.includes('comida michis') && !text.includes('snack') && !text.includes('premio')) {
-        return true;
-      }
-
-      // Por defecto, cualquier gasto no catalogado es variable
-      return false;
+      const gasto = { category: categoryName, desc: descName };
+      return Object.keys(CHECKLIST_FIJOS).some(id => gastoEsDeCuentaFija(id, gasto));
     }
 
     // Helper reutilizable para renderizar Donas con Frosted Glass Tooltips
