@@ -127,7 +127,7 @@
               <td><span style="font-size:0.82rem; font-weight:600; color:var(--text-main);">${escapeHtml(item.category || 'Otros')}</span></td>
               <td><strong style="font-size:0.88rem; color:var(--text-main);">${escapeHtml(item.desc || '-')}</strong></td>
               <td><span style="font-size:0.78rem; color:var(--text-muted); background:rgba(255,255,255,0.05); padding:0.2rem 0.5rem; border-radius:6px; border:1px solid rgba(255,255,255,0.08);">${escapeHtml(item.account || 'Efectivo/Otro')}</span></td>
-              <td style="font-weight:800; font-size:0.95rem; text-align:right; color:#10B981; font-family:monospace;">${formatCLP(item.amount)}</td>
+              <td style="font-weight:800; font-size:0.95rem; text-align:right; color:var(--text-main); font-variant-numeric:tabular-nums;">${formatCLP(item.amount)}</td>
               <td style="text-align:center; white-space:nowrap;">
                 <button type="button" onclick="openEditExpenseModal(${item._origIndex})" style="background:rgba(59, 130, 246, 0.15); border:1px solid rgba(59, 130, 246, 0.35); color:#93C5FD; border-radius:8px; padding:0.3rem 0.55rem; cursor:pointer; font-size:0.85rem; transition:all 0.2s; margin-right:0.3rem;" title="Editar este gasto">✏️</button>
                 <button type="button" onclick="deleteExpense(${item._origIndex})" style="background:rgba(239, 68, 68, 0.12); border:1px solid rgba(239, 68, 68, 0.3); color:#FCA5A5; border-radius:8px; padding:0.3rem 0.55rem; cursor:pointer; font-size:0.85rem; transition:all 0.2s;" title="Eliminar este gasto">🗑️</button>
@@ -147,7 +147,7 @@
                   ${payerMobileHtml}
                   <span style="font-size:0.75rem; color:var(--text-muted); font-family:monospace;">${item.date || ''}</span>
                 </div>
-                <div style="font-size:1.05rem; font-weight:800; color:#10B981; font-family:monospace;">
+                <div style="font-size:1.05rem; font-weight:800; color:var(--text-main); font-variant-numeric:tabular-nums;">
                   ${formatCLP(item.amount)}
                 </div>
               </div>

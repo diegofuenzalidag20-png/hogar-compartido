@@ -186,6 +186,15 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-17] — Unificación Visual e Inicio Reordenado (v69)
+* **Motivo:** La app se veía armada por partes: tarjetas con bordes de distintos colores, montos en letra de máquina y colores sueltos, etiquetas en mayúsculas de colores, títulos largos y un Inicio que no partía por lo que más se usa.
+* **Solución Técnica (solo apariencia, sin tocar datos ni cálculos):**
+  * Inicio reordenado: periodo, registro, tabla de gastos, cuentas fijas (checklist), liquidez, cifras del mes, co-aporte hipotecario y guía al final.
+  * Bloque "Unificación visual (v69)" al final de `css/app.css`: borde neutro en todas las tarjetas (salvo la liquidez de cada uno), cajas internas con degradado en un solo tono, montos con la letra general y cifras alineadas (`tabular-nums`), totales de cofres en blanco, etiquetas en mayúsculas pasadas a minúscula gris, filtros de 40 px de alto.
+  * Montos de la lista de gastos en blanco (el verde queda para lo que está a favor).
+  * Títulos cortos: "Cofres de cada uno", "Periodo en curso", "Gastos por categoría", "Los 5 gastos más grandes del mes", "Diagnóstico del mes". Se quitaron las listas fijas "• Paga…" de los cofres y el texto largo del pie.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `css/app.css`, `js/09-gastos.js`, `sw.js`.
+* **Impacto:** Una apariencia más homogénea y la información que más se usa, primero.
 ### [2026-11-17] — Grupos Renombrados: "Dividendo y créditos" y "Cuentas de la casa" (v68)
 * **Motivo:** "Vivienda & Crédito" y "Hogar Limache" se confundían.
 * **Solución Técnica:** En `CATEGORIAS_GASTO` (13-categorias) solo cambia el nombre que se muestra: "Vivienda & Crédito" → "Dividendo y créditos" (dividendo, diferencial UF, cuota Smart Visa) y "Hogar Limache" → "Cuentas de la casa" (luz, agua, gas, gasto común, internet, telefonía, aseo, imprevistos). Las reglas y los datos no cambian.

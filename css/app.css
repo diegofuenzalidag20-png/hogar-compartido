@@ -1999,3 +1999,30 @@ main, .tab-pane {
   [data-theme="light"] .app-menu.open { background: #FFFFFF; }
   [data-theme="light"] #quickBillCard { background: #FFFFFF !important; }
 }
+
+/* ==================================================================
+   Unificación visual (v69). Solo apariencia: sin cambios de datos.
+   ================================================================== */
+/* 2. Una sola tarjeta: borde neutro en todos los tamaños; el color queda para Diego (azul) y Soledad (morado) */
+.card:not(.liq-card) { border: 1px solid var(--border-glass) !important; }
+.card:hover { transform: none; }
+/* Cajas internas con degradados de color (cofres, resumen de la tabla) en un solo tono */
+.card [style*="linear-gradient(135deg, rgba("]:not(button):not(.btn-primary):not(.chip-btn) {
+  background: var(--bg-surface-elevated, rgba(255, 255, 255, 0.04)) !important;
+  border-color: var(--border-glass) !important;
+}
+/* 3. Montos con la misma letra que el resto y cifras alineadas */
+[style*="font-family:monospace"], [style*="font-family: monospace"] { font-family: inherit !important; font-variant-numeric: tabular-nums; }
+.kpi-value, .liq-pct, .lugar-totales strong, .categoria-detalle-fila > strong { font-variant-numeric: tabular-nums; }
+/* Totales de cofres: blanco (antes naranjo, celeste, amarillo según el cofre) */
+[id^="displayTotal"] { color: var(--text-main) !important; }
+/* 4. Etiquetas en minúscula y gris claro, para que destaquen los números */
+[style*="text-transform:uppercase"]:not(.badge):not(button),
+[style*="text-transform: uppercase"]:not(.badge):not(button) {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  color: var(--text-muted) !important;
+}
+#tab-cuentas [style*="color:#FCD34D"], #tab-cuentas [style*="color:#93C5FD"], #tab-cuentas [style*="color:#D8B4FE"] { color: var(--text-muted) !important; }
+/* 7. Botones de filtro del mismo alto en todas las pestañas */
+.chip-btn, .hist-chip, .dona-selector button { min-height: 40px; }
