@@ -427,7 +427,9 @@
         button.type = 'button';
         button.className = 'toast-action';
         button.textContent = action.label;
-        button.onclick = () => { t.classList.remove('show'); action.onClick(); };
+        // Un toque en el primer instante suele ser el segundo toque del botón "Registrar": se ignora
+        const aparecio = Date.now();
+        button.onclick = () => { if (Date.now() - aparecio < 700) return; t.classList.remove('show'); action.onClick(); };
         t.appendChild(button);
       }
       t.classList.add('show');

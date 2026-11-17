@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-17] — "Deshacer" a la Izquierda y Sin Toques Accidentales (v60)
+* **Motivo:** Al registrar, el pulgar derecho (ambos son diestros) caía sobre "Deshacer" del aviso y un doble toque borraba el gasto recién ingresado.
+* **Solución Técnica:** El aviso con acción (`#toast.has-action`) pone el botón a la izquierda (`row-reverse`). `showToast` ignora toques en el botón durante los primeros 0,7 s tras aparecer (el segundo toque de un doble toque).
+* **Archivos Modificados:** `css/app.css`, `js/09-gastos.js`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** Registrar con doble toque ya no deshace el gasto.
+
 ### [2026-11-17] — Bloqueo de Versiones Antiguas y Diario de Gastos del Teléfono (v59)
 * **Motivo:** Se perdió un gasto de comida de los gatos registrado desde el checklist; nunca llegó a la nube (no está en la nube ni en los respaldos del 16 y 17). Se sospecha de teléfonos con la app abierta desde una versión anterior.
 * **Solución Técnica (08-nube, 05-registro, 09-gastos):**
