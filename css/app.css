@@ -1440,6 +1440,10 @@
     @keyframes gastoNuevo { 50% { outline-color: transparent; } }
     .lugar-total { display: block; width: 100%; min-height: 44px; padding: 0.5rem 0.6rem; border: 1px solid var(--border-glass); border-radius: 12px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
     .lugar-total.activa { border-color: rgba(16, 185, 129, 0.6); background: rgba(16, 185, 129, 0.1); }
+    .aviso-version { position: fixed; left: 0.75rem; right: 0.75rem; top: calc(0.75rem + env(safe-area-inset-top)); z-index: 2500; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.85rem 1rem; border-radius: 16px; border: 1px solid rgba(245, 158, 11, 0.55); background: #1F2937; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45); color: var(--text-main); }
+    .aviso-version strong { display: block; font-size: 0.92rem; }
+    .aviso-version span { display: block; color: var(--text-muted); font-size: 0.8rem; margin-top: 0.15rem; }
+    .aviso-version button { flex: none; min-height: 44px; }
     .lugar-toggle { display: flex; gap: 0.4rem; }
     .lugar-toggle .lugar-opcion { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.55rem; border: 1px solid var(--border-color); border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; color: var(--text-muted); text-transform: none; letter-spacing: normal; margin: 0; }
     .lugar-toggle input { position: absolute; opacity: 0; pointer-events: none; }

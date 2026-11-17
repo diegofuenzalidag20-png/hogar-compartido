@@ -331,6 +331,8 @@
 
     async function handleQuickBillSubmit(e) {
       e.preventDefault();
+      // Sin esperar la red: la versión se revisa al abrir, al volver a la app y cada 5 minutos
+      if (versionBloqueada) { avisarVersionAntigua(); return; }
       const date = document.getElementById('quickDate').value || getLocalDateISO();
       const payer = document.getElementById('quickPayer').value;
       const cat = document.getElementById('quickCategory').value;
@@ -412,6 +414,7 @@
       };
       if (lugar) newExp.lugar = lugar;
       expenses.unshift(newExp);
+      anotarEnDiario(newExp);
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
       localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
       renderExpenses();
@@ -437,6 +440,7 @@
     }
 
     function undoQuickBill(expenseId, auditId, auditBefore) {
+      borrarDelDiario(expenseId);
       expenses = expenses.filter(e => e.id !== expenseId);
       const item = currentAuditItems.find(it => it.id === auditId);
       if (item && auditBefore) Object.assign(item, auditBefore);

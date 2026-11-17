@@ -318,6 +318,7 @@
 
     function saveEditedExpense(e) {
       e.preventDefault();
+      if (versionBloqueada) { avisarVersionAntigua(); return; }
       let idx = parseInt(document.getElementById('editExpIndex').value, 10);
       // La posición puede cambiar si el otro teléfono sincroniza mientras se edita
       if (editingExpenseId) {
@@ -389,6 +390,7 @@
     }
 
     async function deleteExpense(idx) {
+      if (versionBloqueada) { avisarVersionAntigua(); return; }
       if (idx < 0 || idx >= expenses.length) return;
       const target = expenses[idx];
       if (!(await confirmar(`¿Deseas eliminar el gasto "${target.desc || target.category}" por ${formatCLP(target.amount)}?`, 'Eliminar'))) return;
@@ -399,6 +401,7 @@
       {
         const boleta = itemDeGasto(target);
       const deleted = expenses.splice(idx, 1)[0];
+      borrarDelDiario(deleted?.id);
       if (boleta) {
         if (boleta.fromQuickBill) currentAuditItems = currentAuditItems.filter(it => it.id !== boleta.id);
         else if (target.auditBefore) Object.assign(boleta, target.auditBefore);

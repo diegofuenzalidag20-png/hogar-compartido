@@ -186,6 +186,15 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-17] — Bloqueo de Versiones Antiguas y Diario de Gastos del Teléfono (v59)
+* **Motivo:** Se perdió un gasto de comida de los gatos registrado desde el checklist; nunca llegó a la nube (no está en la nube ni en los respaldos del 16 y 17). Se sospecha de teléfonos con la app abierta desde una versión anterior.
+* **Solución Técnica (08-nube, 05-registro, 09-gastos):**
+  * `VERSION_APP` + `revisarVersionApp()`: al abrir, al volver a la app y cada 5 min compara con la versión publicada (`sw.js`). Si hay una más nueva, muestra un aviso fijo con "Actualizar", no deja registrar/editar/borrar y `writeCloudDoc` no sube nada.
+  * Cada escritura a la nube (documento y respaldos) lleva `appVersion`, para que las reglas de Firestore puedan rechazar versiones antiguas.
+  * Diario del teléfono (`diario_gastos_telefono`): guarda cada gasto registrado aquí; si tras sincronizar uno ya no está (y no se borró en este teléfono), avisa con botón "Recuperar".
+  * `qa-local/subir_version.py` también actualiza `VERSION_APP`; `publicar.ps1` lo verifica.
+* **Archivos Modificados:** `js/05-registro.js`, `js/08-nube.js`, `js/09-gastos.js`, `css/app.css`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** Un teléfono desactualizado ya no puede escribir datos y cualquier gasto que desaparezca se puede recuperar desde el teléfono donde se registró.
 ### [2026-11-17] — Fuera la Tarjeta "Periodo Activo" (v58)
 * **Motivo:** La tarjeta quedó obsoleta y tenía dos controles riesgosos: el selector de mes reemplazaba los presupuestos del mes en curso por los de otro mes (y podía subirlos a la nube), y "Restablecer a Promedio Base" volvía a los valores antiguos sin confirmar.
 * **Solución Técnica:** Se quitaron la tarjeta, "Restablecer a Promedio Base" (`resetAuditToBase`) y el banner "Criterio Unificado por Mes de Pago Real". El `<select id="audit-month-select">` queda oculto (`hidden`) porque el código guarda con su valor. "Agregar ítem al presupuesto" pasa al menú ☰.

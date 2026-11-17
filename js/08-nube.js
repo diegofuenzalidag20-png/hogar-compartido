@@ -12,6 +12,81 @@
     // ---------- Inicio de sesión con Google (Firebase Auth) ----------
     // Firestore sigue por REST: la sesión solo agrega el token. Sin sesión todo funciona mientras las reglas lo permitan.
     class ErrorSinPermiso extends Error { constructor() { super('La nube pide iniciar sesión'); } }
+
+    // ---------- Versión de la app ----------
+    // Un teléfono con la app abierta desde antes de una actualización sigue con el código viejo.
+    // Si hay una versión nueva publicada, no se registra ni se sube nada hasta actualizar.
+    const VERSION_APP = 59;
+    let versionBloqueada = false;
+    async function revisarVersionApp() {
+      try {
+        const r = await fetch(`sw.js?t=${Date.now()}`, { cache: 'no-store' });
+        const publicada = Number(((await r.text()).match(/finanzas-pareja-v(\d+)/) || [])[1]);
+        if (publicada > VERSION_APP) bloquearVersionAntigua(publicada);
+      } catch (e) { /* sin red: se revisa en la próxima vuelta */ }
+      return versionBloqueada;
+    }
+    function bloquearVersionAntigua(publicada) {
+      if (versionBloqueada) return;
+      versionBloqueada = true;
+      updateCloudStatusBadge(false, '⬆️ Actualiza la app');
+      const aviso = document.createElement('div');
+      aviso.className = 'aviso-version';
+      aviso.setAttribute('role', 'alert');
+      aviso.innerHTML = `<div><strong>Hay una versión nueva de la app (v${publicada})</strong><span>Para no perder datos, actualiza antes de registrar o editar gastos.</span></div><button type="button" class="btn-primary">Actualizar</button>`;
+      aviso.querySelector('button').onclick = actualizarApp;
+      document.body.appendChild(aviso);
+    }
+    async function actualizarApp() {
+      try { await Promise.all(((await navigator.serviceWorker?.getRegistrations?.()) || []).map(r => r.update())); } catch (e) {}
+      location.reload();
+    }
+    function avisarVersionAntigua() {
+      avisar('Hay una versión nueva de la app. Toca "Actualizar" arriba antes de registrar o editar, para no perder datos.');
+    }
+    setInterval(() => { if (!document.hidden) revisarVersionApp(); }, 5 * 60 * 1000);
+    window.addEventListener('visibilitychange', () => { if (!document.hidden) revisarVersionApp(); });
+
+    // ---------- Diario de este teléfono ----------
+    // Guarda lo que se registra aquí; si un gasto ya no está en la nube, avisa y permite recuperarlo.
+    const DIARIO_KEY = 'diario_gastos_telefono';
+    function anotarEnDiario(gasto) {
+      const d = leerJSON(DIARIO_KEY, []);
+      d.push({ gasto: JSON.parse(JSON.stringify(gasto)), en: Date.now() });
+      localStorage.setItem(DIARIO_KEY, JSON.stringify(d.slice(-200)));
+    }
+    function borrarDelDiario(id) {
+      localStorage.setItem(DIARIO_KEY, JSON.stringify(leerJSON(DIARIO_KEY, []).map(x => x.gasto?.id === id ? { ...x, borrado: true } : x)));
+    }
+    function enMesActivo(fecha) {
+      return new Date(`${fecha}T12:00:00`).toLocaleDateString('es-CL', { month: 'long', year: 'numeric' }).replace(' de ', ' ').toLowerCase() === String(currentActiveMonth).toLowerCase();
+    }
+    function gastosPerdidos() {
+      const ids = new Set(expenses.map(g => g.id));
+      return leerJSON(DIARIO_KEY, [])
+        .filter(x => !x.borrado && x.gasto?.id && !ids.has(x.gasto.id) && Date.now() - x.en < 40 * 864e5 && enMesActivo(x.gasto.date))
+        .map(x => x.gasto);
+    }
+    const perdidosAvisados = new Set();
+    function revisarGastosPerdidos() {
+      const perdidos = gastosPerdidos().filter(g => !perdidosAvisados.has(g.id));
+      if (!perdidos.length) return;
+      perdidos.forEach(g => perdidosAvisados.add(g.id));
+      const texto = perdidos.length === 1
+        ? `⚠️ "${perdidos[0].desc}" (${formatCLP(perdidos[0].amount)}) se registró en este teléfono y ya no está en la lista`
+        : `⚠️ ${perdidos.length} gastos registrados en este teléfono ya no están en la lista`;
+      showToast(texto, { label: 'Recuperar', onClick: () => recuperarGastos(perdidos) });
+    }
+    function recuperarGastos(lista) {
+      const ids = new Set(expenses.map(g => g.id));
+      lista.filter(g => !ids.has(g.id)).forEach(g => expenses.unshift(JSON.parse(JSON.stringify(g))));
+      localStorage.setItem('family_expenses', JSON.stringify(expenses));
+      localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
+      renderExpenses();
+      renderAuditTable();
+      triggerAutoSyncToCloud(true);
+      showToast(`✅ ${lista.length === 1 ? 'Gasto recuperado' : lista.length + ' gastos recuperados'}`);
+    }
     const FIREBASE_CONFIG = { apiKey: FIRESTORE_API_KEY, authDomain: `${FIRESTORE_PROJECT_ID}.firebaseapp.com`, projectId: FIRESTORE_PROJECT_ID };
     function authFirebase() {
       if (!window.firebase?.auth) return null;
@@ -80,7 +155,7 @@
       const res = await fetch(`${RESPALDOS_URL}/${id}?key=${FIRESTORE_API_KEY}`, {
         method: 'PATCH',
         headers: await encabezadosNube({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ fields: { appStateJson: { stringValue: JSON.stringify(payload) }, creado: { integerValue: String(Date.now()) } } })
+        body: JSON.stringify({ fields: { appStateJson: { stringValue: JSON.stringify(payload) }, creado: { integerValue: String(Date.now()) }, appVersion: { integerValue: String(VERSION_APP) } } })
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     }
@@ -363,6 +438,7 @@
 
     // Devuelve null si otro teléfono guardó después de nuestra lectura.
     async function writeCloudDoc(payload, updateTime) {
+      if (versionBloqueada) throw new Error('Versión antigua de la app: actualiza antes de guardar');
       const precondition = updateTime ? `currentDocument.updateTime=${encodeURIComponent(updateTime)}` : 'currentDocument.exists=false';
       const res = await fetch(`${FIRESTORE_DOC_URL}&${precondition}`, {
         method: 'PATCH',
@@ -373,7 +449,8 @@
             timestamp: { integerValue: payload.timestamp.toString() },
             sender: { stringValue: payload.sender || 'Diego o Soledad' },
             month: { stringValue: payload.month || 'Nov-26' },
-            activeMonth: { stringValue: payload.activeMonth || currentActiveMonth }
+            activeMonth: { stringValue: payload.activeMonth || currentActiveMonth },
+            appVersion: { integerValue: String(VERSION_APP) }
           }
         })
       });
@@ -474,10 +551,12 @@
         respaldarSiCorresponde();
         if (!isSilent) showToast('☁️ ¡Guardado en la nube de Firebase con éxito!');
         else if (result === 'pulled' || result === 'merged') showToast('☁️ ¡Sincronizado con tu pareja!');
+        revisarGastosPerdidos();
         return true;
       } catch (err) {
         console.error('Error guardando en Firestore:', err);
         if (err instanceof ErrorSinPermiso) { avisarSinSesion(); return false; }
+        if (versionBloqueada) { updateCloudStatusBadge(false, '⬆️ Actualiza la app'); return false; }
         updateCloudStatusBadge(false, '⚠️ Sin guardar en nube');
         if (!isSilent) alert('Error al guardar en Firebase: ' + err.message);
         return false;
@@ -496,11 +575,13 @@
           closeSyncModal();
         } else if (result === 'pulled' || result === 'merged') {
           showToast('☁️ ¡Sincronizado con tu pareja!');
-        }
+        }
+        revisarGastosPerdidos();
         return true;
       } catch (err) {
         console.error('Error sincronizando con Firestore:', err);
         if (err instanceof ErrorSinPermiso) { avisarSinSesion(); return false; }
+        if (versionBloqueada) { updateCloudStatusBadge(false, '⬆️ Actualiza la app'); return false; }
         updateCloudStatusBadge(false, '⚠️ Sin guardar en nube');
         if (!isSilent) alert('Error al descargar de Firebase: ' + err.message);
         return false;
@@ -523,6 +604,7 @@
     function initFirebaseSync() {
       // Descarga inicial automática al abrir la app
       iniciarSesionGoogle();
+      revisarVersionApp();
       pullFromFirestore(true);
 
       // El ciclo periódico también reintenta lo que no se pudo subir
