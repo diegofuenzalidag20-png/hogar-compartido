@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-17] — Presupuesto Propio para Salidas y Panoramas (v64)
+* **Motivo:** "Salidas & Panoramas" aparecía con ⚠️ porque no tenía presupuesto: su meta seguía dentro de "Comida fuera y salidas" (Alimentación).
+* **Solución Técnica:** `REGLAS_VARIABLES['item-31']` (/panorama|ocio/, antes que `item-27`) enlaza esos gastos a la nueva línea "Salidas y panoramas". En la nube: `item-27` pasa a "Comida fuera y delivery" con $125.000 y se crea `item-31` con $105.000 (la meta total no cambia).
+* **Archivos Modificados:** `js/06-checklist.js`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** Salidas y comida fuera con metas separadas y sin alerta falsa.
+
 ### [2026-11-17] — Editor de Gastos con las Categorías en el Mismo Orden (v63)
 * **Motivo:** Al editar un gasto, la lista de categorías salía plana y la categoría antigua aparecía al final, distinta al registro.
 * **Solución Técnica:** `copiarOpciones` (09-gastos) copia los mismos grupos (`optgroup`) y el mismo orden que el registro. Si el gasto tiene una categoría que ya no existe, va arriba en "Categoría actual (ya no está en la lista)" y queda seleccionada.

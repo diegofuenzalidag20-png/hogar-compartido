@@ -38,6 +38,8 @@
       'item-30': { p: /consulta|dental/ },
       'item-29': { p: /bolsillo personal|gastos propios/ },
       'item-28': { p: /imprevist|gastos hogar/ },
+      // Antes que comida fuera: "Salidas / Panoramas / Ocio" también dice "salidas"
+      'item-31': { p: /panorama|ocio/ },
       'item-27': { p: /comida fuera|salida|delivery|almuerzo|desayuno|comida viaje|^alimentaci/ }
     };
 
