@@ -256,3 +256,68 @@
         arrow.textContent = '▶';
       }
     }
+
+    // ---------- Píldora deslizante en los selectores ----------
+    // Un fondo que se desliza hasta la opción activa (filtros, pestañas de abajo, vistas del historial, Limache/Huasco).
+    // Solo apariencia: cada botón sigue haciendo lo mismo; la píldora se acomoda sola cuando cambia la opción activa.
+    const GRUPOS_PILDORA = [
+      { grupo: '.bottom-nav', activo: ':scope > .bottom-nav-item.active' },
+      { grupo: '.dona-selector', activo: ':scope > button.activa' },
+      { grupo: '#histVistas, #histRangos, #histServicios', activo: ':scope > .hist-chip.activa' },
+      { grupo: '.lugar-toggle', activo: ':scope > .lugar-opcion:has(input:checked)' }
+    ];
+    function gruposDePildora() {
+      const lista = [];
+      GRUPOS_PILDORA.forEach(g => document.querySelectorAll(g.grupo).forEach(el => lista.push([el, g.activo])));
+      // Cualquier fila de chips con una opción activa (filtros de gastos, checklist, tarjetas, sueldos)
+      document.querySelectorAll('.chip-btn.active').forEach(b => {
+        const p = b.parentElement;
+        if (p && p.querySelectorAll(':scope > .chip-btn').length >= 2 && !lista.some(([el]) => el === p)) lista.push([p, ':scope > .chip-btn.active']);
+      });
+      return lista;
+    }
+    function moverPildora(cont, selector) {
+      let pildora = cont.querySelector(':scope > .pill-fondo');
+      if (!pildora) {
+        pildora = document.createElement('span');
+        pildora.className = 'pill-fondo';
+        pildora.setAttribute('aria-hidden', 'true');
+        cont.classList.add('pill-grupo');
+        cont.appendChild(pildora); // al final: no cambia el orden (nth-child) de los botones
+        // Un grupo que se vuelve a dibujar parte desde donde estaba la píldora anterior
+        if (cont._pildora) Object.assign(pildora.style, cont._pildora, { transition: 'none' });
+      }
+      const activo = cont.querySelector(selector);
+      if (!activo || !activo.offsetParent || !activo.offsetWidth) { pildora.style.opacity = '0'; return; }
+      const pos = {
+        width: activo.offsetWidth + 'px',
+        height: activo.offsetHeight + 'px',
+        transform: `translate(${activo.offsetLeft}px, ${activo.offsetTop}px)`,
+        borderRadius: getComputedStyle(activo).borderRadius,
+        opacity: '1'
+      };
+      const primeraVez = pildora.style.opacity !== '1';
+      if (primeraVez && !cont._pildora) pildora.style.transition = 'none';
+      Object.assign(pildora.style, pos);
+      cont._pildora = pos;
+      if (pildora.style.transition === 'none') requestAnimationFrame(() => requestAnimationFrame(() => { pildora.style.transition = ''; }));
+    }
+    let pildoraPendiente = false;
+    function actualizarPildoras() {
+      if (pildoraPendiente) return;
+      pildoraPendiente = true;
+      requestAnimationFrame(() => {
+        pildoraPendiente = false;
+        gruposDePildora().forEach(([el, sel]) => moverPildora(el, sel));
+      });
+    }
+    function iniciarPildoras() {
+      actualizarPildoras();
+      new MutationObserver(actualizarPildoras).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+      document.addEventListener('change', actualizarPildoras, true);
+      window.addEventListener('resize', actualizarPildoras, { passive: true });
+      document.addEventListener('scroll', (e) => { if (e.target?.classList?.contains('pill-grupo')) actualizarPildoras(); }, true);
+      if (window.ResizeObserver) new ResizeObserver(actualizarPildoras).observe(document.body);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciarPildoras);
+    else iniciarPildoras();

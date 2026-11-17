@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-17] — Píldora Deslizante en los Selectores (v70)
+* **Motivo:** Animación de desplazamiento al cambiar de opción en los selectores.
+* **Solución Técnica:** `iniciarPildoras()` (01-base): un fondo `.pill-fondo` por grupo que se desliza (transform 0,32 s) hasta la opción activa. Grupos: barra inferior, filtros de gastos, checklist, tarjetas, sueldos (cualquier fila de `.chip-btn` con una activa), selector de donas, vistas/rangos/cuentas del Historial y Limache/Huasco. Se reacomoda sola con un `MutationObserver` (cambios de clase o de contenido), al cambiar tamaño y al desplazar. La píldora va al final de cada grupo para no alterar el orden de los botones. Sin animación si el teléfono pide reducir movimiento.
+* **Archivos Modificados:** `js/01-base.js`, `css/app.css`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** Cambiar de filtro o pestaña se siente más fluido; los botones hacen lo mismo que antes.
+
 ### [2026-11-17] — Unificación Visual e Inicio Reordenado (v69)
 * **Motivo:** La app se veía armada por partes: tarjetas con bordes de distintos colores, montos en letra de máquina y colores sueltos, etiquetas en mayúsculas de colores, títulos largos y un Inicio que no partía por lo que más se usa.
 * **Solución Técnica (solo apariencia, sin tocar datos ni cálculos):**
