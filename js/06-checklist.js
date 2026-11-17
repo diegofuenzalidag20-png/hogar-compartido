@@ -19,7 +19,8 @@
       'item-5': { p: /comida michis/, no: /h[uú]meda|premio|snack|golosina|churu/, gasto: /michi.*(h[uú]meda|premio|snack|golosina|churu)|(h[uú]meda|premio|churu).*michi/ },
       'item-6': { p: /arena/ },
       'item-7': { p: /netflix/, d: true },
-      'item-8': { p: /crunchyroll/, d: true },
+      // Se cobra cerca del día 19: antes de eso no está pendiente
+      'item-8': { p: /crunchyroll/, d: true, diaCobro: 19 },
       // Remedios: se recompran cada mes y medio, no todos los meses
       'item-9': { p: /eutirox/, cadaDias: 45 },
       'item-10': { p: /rupatadina/, cadaDias: 45 }
@@ -121,7 +122,8 @@
 
     function cuentasFijasPendientes(hoy = new Date()) {
       return currentAuditItems.filter(it => CHECKLIST_FIJOS[it.id] && Number(it.base) > 0 && !/trimestral/i.test(it.name)
-        && !pagosDeCuentaFija(it.id).length && !estadoCiclo(it.id, hoy)?.alDia);
+        && !pagosDeCuentaFija(it.id).length && !estadoCiclo(it.id, hoy)?.alDia
+        && !(CHECKLIST_FIJOS[it.id].diaCobro && hoy.getDate() < CHECKLIST_FIJOS[it.id].diaCobro));
     }
     function recordarCuentasPendientes(hoy = new Date()) {
       const dia = getLocalDateISO();
@@ -173,11 +175,14 @@
 
         const respColor = item.resp === 'Diego' ? 'var(--accent-diego)' : 'var(--accent-soledad)';
         const statusIcon = isDone ? '✅' : '⏳';
-        const statusText = pagos.length ? formatCLP(pagado) : alDia ? 'Al día' : 'Falta';
+        const diaCobro = CHECKLIST_FIJOS[item.id]?.diaCobro;
+        const aunNoSeCobra = !isDone && diaCobro && new Date().getDate() < diaCobro;
+        const statusText = pagos.length ? formatCLP(pagado) : alDia ? 'Al día' : aunNoSeCobra ? `Se cobra ~${diaCobro}` : 'Falta';
         const proxima = ciclo?.proxima ? ` · próxima compra ~${ciclo.proxima}` : '';
         const detalle = pagos.length
           ? (pagos.length > 1 && !ciclo ? `${pagos.length} pagos registrados · revisa si se repitió` : `Pagado el ${escapeHtml(pagos[pagos.length - 1].date || '')}${proxima}`)
           : alDia ? `Comprado el ${ciclo.ultima}${proxima}`
+          : aunNoSeCobra ? `Aún no toca · aprox. ${formatCLP(item.base)} cerca del día ${diaCobro}`
           : `${ciclo?.ultima ? `Última compra ${ciclo.ultima} · ` : ''}Aprox. ${formatCLP(item.base)} · toca para registrar`;
 
         div.innerHTML = `

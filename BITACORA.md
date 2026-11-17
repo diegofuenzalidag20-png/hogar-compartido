@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Crunchyroll Pendiente Solo Desde el Día 19 (v56)
+* **Motivo:** Crunchyroll se cobra cerca del día 19, pero el recordatorio lo pedía desde el día 10.
+* **Solución Técnica:** `CHECKLIST_FIJOS` acepta `diaCobro` (19 para `item-8`). Antes de ese día no cuenta como pendiente y el checklist muestra "Se cobra ~19 · Aún no toca".
+* **Archivos Modificados:** `js/06-checklist.js`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** El recordatorio no pide cuentas que todavía no se cobran.
+
 ### [2026-11-16] — Remedios con Ciclo de 45 Días (v55)
 * **Motivo:** Eutirox y Rupatadina se recompran cada mes y medio; el recordatorio los pedía todos los meses.
 * **Solución Técnica:** `CHECKLIST_FIJOS` acepta `cadaDias` (45 para `item-9` y `item-10`). `estadoCiclo()` busca la última compra en los gastos del mes y en los meses guardados, y calcula la próxima. El checklist muestra "Al día · Comprado el … · próxima compra ~…" y el recordatorio solo avisa cuando pasaron 45 días o no hay compra registrada.
