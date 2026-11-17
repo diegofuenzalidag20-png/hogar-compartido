@@ -1072,7 +1072,9 @@
       transition: all 0.15s ease;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
+      gap: 0.6rem;
+      text-align: left;
     }
 
     .glass-select-item:hover {

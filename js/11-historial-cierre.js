@@ -93,6 +93,7 @@ function getMonthCode(monthLabel) {
       { k: 'internet', nombre: 'Internet', p: /internet|fibra/ },
       { k: 'entel', nombre: 'Entel', p: /entel/ },
       { k: 'streaming', nombre: 'Streaming', p: /netflix|crunchyroll|spotify|streaming/ },
+      { k: 'panoramas', nombre: 'Salidas / Panoramas', p: /panorama|ocio/ },
       { k: 'salidas', nombre: 'Comida fuera', p: /comida fuera|salida|delivery|almuerzo|desayuno|comida viaje|^alimentaci/ },
       { k: 'remedios', nombre: 'Remedios', p: /eutirox|rupatadina|farmacia/ },
       { k: 'imprevistos', nombre: 'Imprevistos', p: /imprevist|gastos hogar/ }

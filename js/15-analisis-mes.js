@@ -100,35 +100,11 @@
       let fijosTotal = 0;
       let variablesTotal = 0;
 
-      const catTotalsGlobal = {
-        'Vivienda & Crédito': 0,
-        'Hogar Limache': 0,
-        'Alimentación': 0,
-        'Mascotas (Michis)': 0,
-        'Logística Huasco': 0,
-        'Salud & Educación': 0,
-        'Bolsillo & Ahorro': 0
-      };
+      const catTotalsGlobal = Object.fromEntries(CATEGORIAS_GASTO.map(c => [c.nombre, 0]));
 
-      const catTotalsDiego = {
-        'Vivienda & Crédito': 0,
-        'Hogar Limache': 0,
-        'Alimentación': 0,
-        'Mascotas (Michis)': 0,
-        'Logística Huasco': 0,
-        'Salud & Educación': 0,
-        'Bolsillo & Ahorro': 0
-      };
+      const catTotalsDiego = Object.fromEntries(CATEGORIAS_GASTO.map(c => [c.nombre, 0]));
 
-      const catTotalsSoledad = {
-        'Vivienda & Crédito': 0,
-        'Hogar Limache': 0,
-        'Alimentación': 0,
-        'Mascotas (Michis)': 0,
-        'Logística Huasco': 0,
-        'Salud & Educación': 0,
-        'Bolsillo & Ahorro': 0
-      };
+      const catTotalsSoledad = Object.fromEntries(CATEGORIAS_GASTO.map(c => [c.nombre, 0]));
 
       expenses.forEach(item => {
         const val = Number(item.amount) || 0;
@@ -159,15 +135,7 @@
       });
 
       // 3. Metas presupuestadas desde currentAuditItems para comparación
-      const categoryMetaMap = {
-        'Vivienda & Crédito': 0,
-        'Hogar Limache': 0,
-        'Alimentación': 0,
-        'Mascotas (Michis)': 0,
-        'Logística Huasco': 0,
-        'Salud & Educación': 0,
-        'Bolsillo & Ahorro': 0
-      };
+      const categoryMetaMap = Object.fromEntries(CATEGORIAS_GASTO.map(c => [c.nombre, 0]));
 
       let totalMeta = 0;
       if (Array.isArray(currentAuditItems)) {
@@ -556,7 +524,7 @@
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=61').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=62').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }

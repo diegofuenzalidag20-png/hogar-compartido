@@ -186,6 +186,14 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-17] — Lista de Categorías Ordenada y Salidas Separadas de la Comida (v62)
+* **Motivo:** En el desplegable el ícono quedaba a la izquierda y el texto pegado a la derecha. Además "Comida Fuera / Salidas / Delivery" sumaba a Alimentación salidas que no son comida (p. ej. una terapia de ~$66 mil).
+* **Solución Técnica:**
+  * `.glass-select-item`: ícono y texto juntos a la izquierda (`justify-content: flex-start`).
+  * La opción pasa a "🍽️ Comida Fuera / Delivery" y se agrega "🎟️ Salidas / Panoramas / Ocio" (grupo propio). `CATEGORIAS_GASTO` suma "Salidas & Panoramas" antes de Alimentación; los totales por grupo de Análisis se generan desde `CATEGORIAS_GASTO`; la tabla del Historial suma la columna "Salidas / Panoramas". Ícono `#i-ticket`.
+  * Los gastos antiguos conservan su categoría; se pueden mover editándolos.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `css/app.css`, `js/05-registro.js`, `js/11-historial-cierre.js`, `js/13-categorias.js`, `js/15-analisis-mes.js`, `sw.js`.
+* **Impacto:** Lista más legible y el indicador de alimentación ya no se infla con salidas.
 ### [2026-11-17] — Fijos vs Variables Corregido, Tabla del Historial Completa y Títulos en Blanco (v61)
 * **Motivo:** El gráfico de fijos vs variables contaba un premio de los michis como fijo y la arena como variable; la tabla del Historial solo tenía las categorías que paga Soledad; algunos títulos tenían colores distintos.
 * **Solución Técnica:**
