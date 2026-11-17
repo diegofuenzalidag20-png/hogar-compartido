@@ -186,6 +186,13 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-17] — Barra Inferior Fija de Nuevo (v71)
+* **Motivo:** Con la v70 la barra de navegación de abajo dejó de quedar fija y aparecía al final de cada pestaña.
+* **Causa:** La regla `.pill-grupo { position: relative }` de la píldora pisaba el `position: fixed` de `.bottom-nav`.
+* **Solución Técnica:** `position: relative` solo para `.pill-grupo:not(.bottom-nav)`. Prueba nueva: la barra debe estar `fixed` y pegada al borde inferior.
+* **Archivos Modificados:** `css/app.css`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** La barra de abajo vuelve a estar siempre visible.
+
 ### [2026-11-17] — Píldora Deslizante en los Selectores (v70)
 * **Motivo:** Animación de desplazamiento al cambiar de opción en los selectores.
 * **Solución Técnica:** `iniciarPildoras()` (01-base): un fondo `.pill-fondo` por grupo que se desliza (transform 0,32 s) hasta la opción activa. Grupos: barra inferior, filtros de gastos, checklist, tarjetas, sueldos (cualquier fila de `.chip-btn` con una activa), selector de donas, vistas/rangos/cuentas del Historial y Limache/Huasco. Se reacomoda sola con un `MutationObserver` (cambios de clase o de contenido), al cambiar tamaño y al desplazar. La píldora va al final de cada grupo para no alterar el orden de los botones. Sin animación si el teléfono pide reducir movimiento.

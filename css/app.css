@@ -2028,7 +2028,9 @@ main, .tab-pane {
 .chip-btn, .hist-chip, .dona-selector button { min-height: 40px; }
 
 /* Píldora deslizante (v70) */
-.pill-grupo { position: relative; isolation: isolate; }
+/* La barra de abajo ya es fixed: no se le cambia la posición (si no, deja de quedar fija abajo) */
+.pill-grupo { isolation: isolate; }
+.pill-grupo:not(.bottom-nav) { position: relative; }
 .pill-fondo {
   position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; opacity: 0;
   border-radius: 999px;
