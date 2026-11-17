@@ -65,6 +65,9 @@
         const id = itemIdDeGasto(g);
         if (id) suma[id] = (suma[id] || 0) + (Number(g.amount) || 0);
       });
+      // Una cuenta suelta creada al registrar un gasto (sin presupuesto) solo existe mientras tenga gastos propios;
+      // si su gasto ya cuenta en otra cuenta, o se borró, quedaba sumando dos veces en el Real
+      currentAuditItems = currentAuditItems.filter(it => !(it.fromQuickBill && !(Number(it.base) > 0) && !suma[it.id]));
       currentAuditItems.forEach(it => {
         if (suma[it.id] !== undefined) it.actual = suma[it.id];
         else if (CHECKLIST_FIJOS[it.id] || REGLAS_VARIABLES[it.id]) it.actual = 0;

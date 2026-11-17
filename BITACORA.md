@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-17] — Real Ingresado sin Duplicados (v66)
+* **Motivo:** "Real Ingresado" marcaba $2.391.150 con $1.640.555 de gastos registrados. Las cuentas sueltas creadas al registrar (`fromQuickBill`, sin presupuesto) seguían con su monto aunque su gasto ya se sumaba en la cuenta correcta (Supermercado, Salidas…), y había cuentas sueltas sin ningún gasto ("Cuota Tarjeta Smart Visa" $110.000, "Compras Super", "Huellitas de Boco").
+* **Solución Técnica:** `sincronizarRealDesdeGastos()` quita las cuentas sueltas sin presupuesto que no tienen gastos propios. Los ítems agregados a mano no se tocan.
+* **Archivos Modificados:** `js/06-checklist.js`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** El Real del mes vuelve a corresponder a lo gastado (más las líneas de Mach y Mercado Pago).
+
 ### [2026-11-17] — Metas por Grupo Según sus Gastos y Salidas con Presupuesto (v65)
 * **Motivo:** En Análisis, la meta del arriendo y servicios de Huasco (categoría "Vivienda Huasco") se sumaba a "Vivienda & Crédito", aunque sus gastos van a "Logística Huasco": Huasco mostraba ~$290 mil de meta en vez de $453 mil.
 * **Solución Técnica:** `grupoDeItem()` (15-analisis-mes): cada meta va al grupo de sus gastos enlazados; sin gastos, por el nombre de la cuenta y luego por su categoría. En la nube: teleférico, Expo Quillota y bencina Santiago pasan a Salidas; `item-27` "Comida fuera y delivery" $125.000 y nuevo `item-31` "Salidas y panoramas" $150.000 (meta total $2.293.102).
