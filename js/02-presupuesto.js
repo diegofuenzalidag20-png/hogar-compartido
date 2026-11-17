@@ -176,12 +176,6 @@
       }
     }
 
-    function resetAuditToBase() {
-      currentAuditItems = JSON.parse(JSON.stringify(masterAuditItems));
-      renderAuditTable();
-      showToast('Cuentas restablecidas a valores base promedio');
-    }
-
     function saveAuditMonth() {
       const month = document.getElementById('audit-month-select').value;
       localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));

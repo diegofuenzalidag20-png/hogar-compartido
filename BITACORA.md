@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-17] — Fuera la Tarjeta "Periodo Activo" (v58)
+* **Motivo:** La tarjeta quedó obsoleta y tenía dos controles riesgosos: el selector de mes reemplazaba los presupuestos del mes en curso por los de otro mes (y podía subirlos a la nube), y "Restablecer a Promedio Base" volvía a los valores antiguos sin confirmar.
+* **Solución Técnica:** Se quitaron la tarjeta, "Restablecer a Promedio Base" (`resetAuditToBase`) y el banner "Criterio Unificado por Mes de Pago Real". El `<select id="audit-month-select">` queda oculto (`hidden`) porque el código guarda con su valor. "Agregar ítem al presupuesto" pasa al menú ☰.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `js/02-presupuesto.js`, `sw.js`.
+* **Impacto:** Menos ruido en Inicio y sin forma accidental de pisar los presupuestos del mes.
+
 ### [2026-11-16] — Ver los Gastos de Limache o de Huasco (v57)
 * **Motivo:** No había una forma directa de ver qué gastos de Diego son de la casa y cuáles del departamento.
 * **Solución Técnica:** En Análisis → "Limache vs Huasco", los totales son botones (`.lugar-total`); al tocar uno, `mostrarDetalleLugar()` (15-analisis-mes) despliega la lista de esos gastos (más recientes primero, con total y "lugar estimado" si no tiene lugar). Tocar de nuevo o la X lo cierra; se actualiza solo al sincronizar.
