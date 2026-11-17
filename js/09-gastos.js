@@ -258,12 +258,27 @@
       document.getElementById('editExpAmount').value = exp.amount || 0;
 
       // Las mismas opciones que el registro; un valor antiguo que ya no exista se conserva
+      // Mismos grupos y mismo orden que al registrar; una categoría antigua que ya no existe va arriba, aparte
       const copiarOpciones = (desde, hasta, actual, limpiar) => {
         const origen = typeof desde === 'string' ? document.getElementById(desde) : desde, destino = document.getElementById(hasta);
         if (!origen || !destino) return;
+        const valor = (o) => limpiar ? o.value.replace(/^[^\w\s]+\s*/, '') : o.value;
         destino.innerHTML = '';
-        [...origen.options].filter(o => o.value).forEach(o => destino.add(new Option(o.text, limpiar ? o.value.replace(/^[^\w\s]+\s*/, '') : o.value)));
-        if (actual && ![...destino.options].some(o => o.value === actual)) destino.add(new Option(actual, actual));
+        const todos = [...origen.options].filter(o => o.value).map(valor);
+        if (actual && !todos.includes(actual)) {
+          const g = document.createElement('optgroup');
+          g.label = 'Categoría actual (ya no está en la lista)';
+          g.appendChild(new Option(actual, actual));
+          destino.appendChild(g);
+        }
+        [...origen.children].forEach(n => {
+          if (n.tagName === 'OPTGROUP') {
+            const g = document.createElement('optgroup');
+            g.label = n.label;
+            [...n.children].filter(o => o.value).forEach(o => g.appendChild(new Option(o.text, valor(o))));
+            destino.appendChild(g);
+          } else if (n.tagName === 'OPTION' && n.value) destino.add(new Option(n.text, valor(n)));
+        });
         destino.value = actual || destino.options[0]?.value || '';
       };
       copiarOpciones('quickPayer', 'editExpPayer', exp.payer, false);

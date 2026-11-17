@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-17] — Editor de Gastos con las Categorías en el Mismo Orden (v63)
+* **Motivo:** Al editar un gasto, la lista de categorías salía plana y la categoría antigua aparecía al final, distinta al registro.
+* **Solución Técnica:** `copiarOpciones` (09-gastos) copia los mismos grupos (`optgroup`) y el mismo orden que el registro. Si el gasto tiene una categoría que ya no existe, va arriba en "Categoría actual (ya no está en la lista)" y queda seleccionada.
+* **Archivos Modificados:** `js/09-gastos.js`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** Encontrar la categoría al editar es igual que al registrar.
+
 ### [2026-11-17] — Lista de Categorías Ordenada y Salidas Separadas de la Comida (v62)
 * **Motivo:** En el desplegable el ícono quedaba a la izquierda y el texto pegado a la derecha. Además "Comida Fuera / Salidas / Delivery" sumaba a Alimentación salidas que no son comida (p. ej. una terapia de ~$66 mil).
 * **Solución Técnica:**
