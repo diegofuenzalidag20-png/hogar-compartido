@@ -327,7 +327,9 @@
 
     let ultimoRegistro = { firma: '', hora: 0 };
 
-    function handleQuickBillSubmit(e) {
+    let gastoRecienRegistrado = null;
+
+    async function handleQuickBillSubmit(e) {
       e.preventDefault();
       const date = document.getElementById('quickDate').value || getLocalDateISO();
       const payer = document.getElementById('quickPayer').value;
@@ -361,6 +363,13 @@
       const firmaRegistro = [date, payer, cat, amount, account, desc, lugar].join('|');
       if (firmaRegistro === ultimoRegistro.firma && Date.now() - ultimoRegistro.hora < 2500) return;
       ultimoRegistro = { firma: firmaRegistro, hora: Date.now() };
+
+      // Un gasto igual (mismo día, quién, monto y categoría) suele ser el mismo registrado otra vez
+      const igual = expenses.find(g => g.date === date && g.payer === payer && Number(g.amount) === amount && g.category === cat.replace(/^[^\w\s]+\s*/, ''));
+      if (igual) {
+        const cuando = /^exp-(\d+)/.test(igual.id || '') ? `, registrado el ${new Date(Number(igual.id.split('-')[1])).toLocaleString('es-CL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : '';
+        if (!(await confirmar(`Ya existe un gasto igual: "${igual.desc}" por ${formatCLP(amount)} con fecha ${date}${cuando}.\n\n¿Registrar otro igual?`, 'Sí, es otro gasto'))) return;
+      }
 
       // 1. Sincronizar en auditoría mensual y checklist
       const descLower = desc.toLowerCase();
@@ -418,6 +427,10 @@
       if (typeof renderCardAnalysis === 'function') renderCardAnalysis();
       if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();
 
+      // Si su fecha lo deja fuera de los primeros de la lista, igual se muestra destacado un rato
+      gastoRecienRegistrado = newExp.id;
+      setTimeout(() => { if (gastoRecienRegistrado === newExp.id) { gastoRecienRegistrado = null; renderExpenses(); } }, 20000);
+      renderExpenses();
       limpiarCajaRapida(true);
       if (mobileLayout.matches) closeQuickSheet();
       showToast(`✅ ${desc} · ${formatCLP(amount)}`, { label: 'Deshacer', onClick: () => undoQuickBill(newExp.id, auditId, auditBefore) });

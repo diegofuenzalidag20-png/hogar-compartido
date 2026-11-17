@@ -186,6 +186,15 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Aviso de Gasto Repetido y Gasto Nuevo Siempre Visible (v53)
+* **Motivo:** "Comida húmeda" ($5.000, Soledad, fecha 12-nov) quedó registrada 3 veces (19:21, 19:32 y 19:34).
+* **Causa:** Con fecha anterior, el gasto quedaba en el puesto 14 de la lista, oculto tras "Ver 8 más"; al no verlo, se volvió a registrar.
+* **Solución Técnica:**
+  * `handleQuickBillSubmit` (05-registro, ahora async): si ya existe un gasto con el mismo día, quién pagó, monto y categoría, pregunta "¿Registrar otro igual?" mostrando cuándo se registró el anterior.
+  * El gasto recién registrado se muestra destacado ("Recién registrado", borde verde) durante 20 s aunque su fecha lo deje fuera de los primeros 8 (`gastoRecienRegistrado`).
+  * Se quitó una línea duplicada en `renderExpenses` que pisaba la clase de la tarjeta.
+* **Archivos Modificados:** `js/05-registro.js`, `js/09-gastos.js`, `css/app.css`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** Registrar con fecha antigua ya no "desaparece" y un repetido accidental pide confirmación.
 ### [2026-11-16] — Sondeo Liviano, Chart.js Fijo, Recordatorio de Cuentas y Limache/Huasco por Mes (v52)
 * **Motivo:** Revisión de fallos y mejoras pendientes.
 * **Solución Técnica:**

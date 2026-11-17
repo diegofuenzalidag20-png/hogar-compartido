@@ -1435,6 +1435,9 @@
     .lugar-mes-cabeza, .lugar-mes-pie { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.85rem; }
     .lugar-mes-pie { margin-top: 0.35rem; color: var(--text-muted); font-size: 0.78rem; }
     .lugar-mes .lugar-barra { margin-top: 0.4rem; height: 8px; }
+    .mobile-exp-card.gasto-nuevo { outline: 2px solid #10B981; outline-offset: 2px; animation: gastoNuevo 1.2s ease 2; }
+    .mobile-exp-card.gasto-nuevo::before { content: 'Recién registrado'; display: block; margin-bottom: 0.35rem; color: #34D399; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+    @keyframes gastoNuevo { 50% { outline-color: transparent; } }
     .lugar-toggle { display: flex; gap: 0.4rem; }
     .lugar-toggle .lugar-opcion { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.55rem; border: 1px solid var(--border-color); border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; color: var(--text-muted); text-transform: none; letter-spacing: normal; margin: 0; }
     .lugar-toggle input { position: absolute; opacity: 0; pointer-events: none; }

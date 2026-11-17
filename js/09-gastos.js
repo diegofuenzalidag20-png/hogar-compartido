@@ -137,10 +137,10 @@
           }
 
           // 2. Mobile Card (100% Legible en Celulares)
-          if (mobileCards && (currentExpenseSearch || posicion < expenseVisibleLimit)) {
+          const esNuevo = item.id && item.id === gastoRecienRegistrado;
+          if (mobileCards && (currentExpenseSearch || posicion < expenseVisibleLimit || esNuevo)) {
             const card = document.createElement('div');
-            card.className = 'mobile-exp-card';
-            card.className = 'mobile-exp-card';
+            card.className = 'mobile-exp-card' + (esNuevo ? ' gasto-nuevo' : '');
             card.innerHTML = `
               <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div style="display:flex; align-items:center; gap:0.45rem;">
