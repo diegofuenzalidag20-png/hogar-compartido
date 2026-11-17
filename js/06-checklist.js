@@ -15,7 +15,8 @@
       'item-20b': { p: /entel/ },
       'item-23': { p: /smart visa/ },
       'item-24': { p: /aseo/ },
-      'item-5': { p: /comida michis/ },
+      // Premios y comida húmeda son gustos aparte: no cuentan como la compra de comida del mes
+      'item-5': { p: /comida michis/, no: /h[uú]meda|premio|snack|golosina|churu/, gasto: /michi.*(h[uú]meda|premio|snack|golosina|churu)|(h[uú]meda|premio|churu).*michi/ },
       'item-6': { p: /arena/ },
       'item-7': { p: /netflix/, d: true },
       'item-8': { p: /crunchyroll/, d: true },
@@ -40,7 +41,11 @@
     // A qué cuenta del presupuesto pertenece un gasto: primero por regla (corrige enlaces viejos mal hechos), si no por su enlace guardado
     function itemIdPorReglas(g) {
       const ids = [...Object.keys(CHECKLIST_FIJOS), ...Object.keys(REGLAS_VARIABLES)];
-      return ids.find(id => currentAuditItems.some(it => it.id === id) && gastoEsDeCuentaFija(id, g)) || null;
+      const existe = (id) => currentAuditItems.some(it => it.id === id);
+      const texto = `${g.category || ''} ${g.desc || ''}`.toLowerCase();
+      // "gasto": suma al Real de la cuenta sin contar como su pago del mes (ej. premios de los michis)
+      return ids.find(id => existe(id) && gastoEsDeCuentaFija(id, g))
+        || Object.keys(CHECKLIST_FIJOS).find(id => existe(id) && CHECKLIST_FIJOS[id].gasto?.test(texto)) || null;
     }
     function itemIdDeGasto(g) {
       return itemIdPorReglas(g) || (g.auditId && currentAuditItems.some(it => it.id === g.auditId) ? g.auditId : null);
@@ -65,7 +70,7 @@
       const regla = CHECKLIST_FIJOS[itemId] || REGLAS_VARIABLES[itemId];
       if (!regla) return false;
       const t = (regla.d ? `${g.desc || ''}` : `${g.category || ''} ${g.desc || ''}`).toLowerCase();
-      return regla.p.test(t) && (regla.conHuasco || !/huasco/.test(t));
+      return regla.p.test(t) && (regla.conHuasco || !/huasco/.test(t)) && !(regla.no && regla.no.test(t));
     }
 
     // Propone presupuestos con lo pagado este mes: fijas = lo pagado; variables = lo gastado, proyectado si el mes no termina
@@ -78,7 +83,8 @@
       const cambios = [];
       currentAuditItems.forEach(it => {
         let nuevo = null;
-        if (CHECKLIST_FIJOS[it.id] && it.actual > 0) nuevo = it.actual;
+        const pagadoFijo = CHECKLIST_FIJOS[it.id] ? pagosDeCuentaFija(it.id).reduce((s, g) => s + (Number(g.amount) || 0), 0) : 0;
+        if (pagadoFijo > 0) nuevo = pagadoFijo;
         if (REGLAS_VARIABLES[it.id] && it.actual > 0) nuevo = Math.ceil(it.actual / Math.max(avance, 0.25) / 1000) * 1000;
         if (nuevo !== null && nuevo !== it.base) cambios.push({ item: it, antes: it.base, despues: nuevo });
       });
@@ -111,8 +117,9 @@
       showToast(`📋 Faltan ${faltan.length} ${faltan.length === 1 ? 'cuenta fija' : 'cuentas fijas'}: ${nombres}`, { label: 'Ver', onClick: () => { goToTab('tab-auditoria'); document.getElementById('checklistContainer')?.scrollIntoView({ block: 'start' }); } });
     }
 
+    // Una cuenta fija está pagada solo si hay un gasto que calza con su regla (un premio enlazado a Comida Michis no la paga)
     function pagosDeCuentaFija(itemId) {
-      return expenses.filter(g => itemIdDeGasto(g) === itemId);
+      return expenses.filter(g => gastoEsDeCuentaFija(itemId, g));
     }
 
     function renderChecklist() {

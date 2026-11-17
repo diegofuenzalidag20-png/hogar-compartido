@@ -186,6 +186,14 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Premios de los Michis Separados de la Comida del Mes (v54)
+* **Motivo:** Un gasto de "Comida húmeda" ($5.000, premio) marcaba "Comida Michis (Promedio)" como pagada en el checklist y en el recordatorio. Además se borraron 2 copias repetidas de ese gasto (19:32 y 19:34), dejando la de las 19:21.
+* **Solución Técnica:**
+  * `CHECKLIST_FIJOS['item-5']` excluye húmeda/premio/snack/golosina/churu (`no`) para contar como pago del mes, pero esos gastos siguen sumando al Real de la cuenta (`gasto`, en `itemIdPorReglas`).
+  * El checklist y el recordatorio usan solo la regla de cada cuenta (`pagosDeCuentaFija` → `gastoEsDeCuentaFija`); el ajuste de presupuestos usa lo pagado según la regla, no el Real.
+  * Nueva categoría "🐱 Premios / Comida Húmeda Michis".
+* **Archivos Modificados:** `js/06-checklist.js`, `index.html`, `dashboard_pareja.html`, `sw.js`.
+* **Impacto:** Comida Michis solo aparece pagada con la compra real de comida.
 ### [2026-11-16] — Aviso de Gasto Repetido y Gasto Nuevo Siempre Visible (v53)
 * **Motivo:** "Comida húmeda" ($5.000, Soledad, fecha 12-nov) quedó registrada 3 veces (19:21, 19:32 y 19:34).
 * **Causa:** Con fecha anterior, el gasto quedaba en el puesto 14 de la lista, oculto tras "Ver 8 más"; al no verlo, se volvió a registrar.
