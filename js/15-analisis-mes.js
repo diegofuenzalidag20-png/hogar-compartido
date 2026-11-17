@@ -501,7 +501,7 @@
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=50').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=51').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }

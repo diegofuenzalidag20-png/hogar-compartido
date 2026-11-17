@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Botón "Ver todos" en la Lista de Gastos (v51)
+* **Motivo:** Para buscar un gasto o revisar el mes completo había que tocar "Ver 8 más" varias veces.
+* **Solución Técnica:** El pie de la lista (`09-gastos.js`) agrega "Ver todos (N)" cuando quedan más de 8 por mostrar; usa `verMasGastos(Infinity)`. "Ver menos" vuelve a 8.
+* **Archivos Modificados:** `js/09-gastos.js`, `sw.js`, `index.html`, `dashboard_pareja.html` (versión).
+* **Impacto:** La tabla completa se despliega con un toque.
+
 ### [2026-11-16] — Medio de Pago Ordenado y Separado por Persona (v50)
 * **Motivo:** La lista de medios de pago mezclaba cuentas de Diego y Soledad sin orden.
 * **Solución Técnica:** `#quickAccount` agrupado en "Cuentas de Diego", "Cuentas de Soledad" y "Otros" (`data-dueno`), con la cuenta principal primero y nombres más cortos. `filtrarCuentasPorPagador()` (05-registro) deja solo las cuentas de quien paga más Otros; "Ambos" ve todas; si la cuenta elegida no corresponde, se limpia. El editor de gastos copia la lista completa (`cuentasCompletas()`). Los valores guardados no cambian.

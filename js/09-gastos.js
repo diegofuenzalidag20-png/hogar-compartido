@@ -181,6 +181,7 @@
           pie.className = 'gastos-pie';
           pie.innerHTML = `<span>Mostrando ${Math.min(expenseVisibleLimit, filtered.length)} de ${filtered.length}</span>
             ${quedan > 0 ? `<button type="button" class="btn-secondary" onclick="verMasGastos(${EXPENSE_PAGE})">Ver ${Math.min(EXPENSE_PAGE, quedan)} más</button>` : ''}
+            ${quedan > EXPENSE_PAGE ? `<button type="button" class="btn-secondary" onclick="verMasGastos(Infinity)">Ver todos (${filtered.length})</button>` : ''}
             ${expenseVisibleLimit > EXPENSE_PAGE ? `<button type="button" class="btn-secondary" onclick="verMasGastos(0)">Ver menos</button>` : ''}`;
           mobileCards.appendChild(pie);
         }
