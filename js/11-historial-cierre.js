@@ -180,6 +180,7 @@ function getMonthCode(monthLabel) {
     }
 
     function renderDetailedHistoricalTable() {
+      if (typeof renderLugarHistorial === 'function') renderLugarHistorial();
       const tbody = document.getElementById('detailedHistoricalTableBody');
       if (!tbody) return;
 

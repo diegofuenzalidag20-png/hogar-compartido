@@ -15,6 +15,33 @@
       return t;
     }
 
+    // Reparto Limache/Huasco de un mes: usa lo guardado al cerrar o lo calcula de sus gastos
+    function lugarDeMes(mes) {
+      if (mes.lugarDiego) return mes.lugarDiego;
+      const t = { Limache: 0, Huasco: 0 };
+      (mes.gastosDiarios || []).filter(g => g.payer === 'Diego').forEach(g => {
+        t[g.lugar || adivinarLugar(`${g.category || ''} ${g.desc || ''}`)] += Number(g.amount) || 0;
+      });
+      return t;
+    }
+
+    function renderLugarHistorial() {
+      const cont = document.getElementById('lugarHistorialLista');
+      if (!cont) return;
+      const meses = parseSeguro(localStorage.getItem('db_historial_meses'), [])
+        .filter(m => m.estado === 'Cerrado' && (m.lugarDiego || (m.gastosDiarios || []).length))
+        .map(m => ({ nombre: m.nombre, ...lugarDeMes(m) }));
+      const actual = totalesLugarDiego();
+      if (!meses.some(m => matchMonth(m, currentActiveMonth))) meses.unshift({ nombre: `${currentActiveMonth} (en curso)`, Limache: actual.Limache, Huasco: actual.Huasco });
+      cont.innerHTML = meses.map(m => {
+        const total = m.Limache + m.Huasco;
+        const pctH = total > 0 ? Math.round(m.Huasco / total * 100) : 0;
+        return `<div class="lugar-mes"><div class="lugar-mes-cabeza"><strong>${escapeHtml(m.nombre)}</strong><span>${formatCLP(total)}</span></div>
+          <div class="lugar-barra"><span style="width:${total ? 100 - pctH : 50}%; background:#3B82F6;"></span><span style="width:${total ? pctH : 50}%; background:#14B8A6;"></span></div>
+          <div class="lugar-mes-pie"><span>🏡 ${formatCLP(m.Limache)}</span><span>⛰️ ${formatCLP(m.Huasco)} · ${pctH}%</span></div></div>`;
+      }).join('') || '<p class="hist-nota">Aún no hay meses con gastos guardados.</p>';
+    }
+
     function renderLugarDiego() {
       const t = totalesLugarDiego();
       const total = t.Limache + t.Huasco;
@@ -501,7 +528,7 @@
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=51').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=52').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }

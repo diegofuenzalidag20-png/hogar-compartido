@@ -1,4 +1,4 @@
-const CACHE_NAME = 'finanzas-pareja-v51';
+const CACHE_NAME = 'finanzas-pareja-v52';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -27,7 +27,7 @@ const ASSETS_TO_CACHE = [
   './icon-512.png',
   './apple-touch-icon.png',
   'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap',
-  'https://cdn.jsdelivr.net/npm/chart.js',
+  'https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js',
 ];
 
 self.addEventListener('install', (event) => {

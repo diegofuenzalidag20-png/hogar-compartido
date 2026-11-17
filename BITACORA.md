@@ -186,6 +186,17 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Sondeo Liviano, Chart.js Fijo, Recordatorio de Cuentas y Limache/Huasco por Mes (v52)
+* **Motivo:** Revisión de fallos y mejoras pendientes.
+* **Solución Técnica:**
+  * **Sondeo liviano** (`versionNube()` en 08-nube): sin cambios locales, cada 5 s se pide solo la versión del documento (`mask.fieldPaths=timestamp`, <1 KB) y el documento completo (~45 KB) se baja solo si el otro teléfono guardó. Antes eran ~32 MB por hora con la app abierta.
+  * **Chart.js fijo** en 4.6.1 (`chart.umd.min.js`), la misma versión que se usaba; ya no cambia sola.
+  * **Recordatorio** (`recordarCuentasPendientes()` en 06): desde el día 10, una vez al día por teléfono, avisa qué cuentas fijas faltan (sin cuotas trimestrales), con botón "Ver".
+  * **Limache vs Huasco por mes** en el Historial (`renderLugarHistorial()`), con el mes en curso y los meses cerrados con gastos guardados.
+  * **"Internet + Celular (Diego)"** eliminado del presupuesto (estaba en $0 y se repetía con Entel e Internet Hogar).
+  * Revisado: el registro "En Curso" de la BD guarda una copia vieja, pero todas las vistas usan los datos vigentes (`aplicarCifrasVigentes`) y el cierre guarda los reales; no requiere cambio.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `sw.js`, `css/app.css`, `js/02`, `js/06`, `js/08`, `js/11`, `js/15`.
+* **Impacto:** Mucho menos consumo de datos, gráficos estables y avisos útiles.
 ### [2026-11-16] — Botón "Ver todos" en la Lista de Gastos (v51)
 * **Motivo:** Para buscar un gasto o revisar el mes completo había que tocar "Ver 8 más" varias veces.
 * **Solución Técnica:** El pie de la lista (`09-gastos.js`) agrega "Ver todos (N)" cuando quedan más de 8 por mostrar; usa `verMasGastos(Infinity)`. "Ver menos" vuelve a 8.

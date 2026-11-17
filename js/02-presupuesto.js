@@ -9,7 +9,6 @@
       { id: 'item-1b', name: 'Crédito Hipotecario (Diferencial UF Soledad)', cat: 'Vivienda Co-Aporte', resp: 'Soledad', cuenta: 'Chequera BancoEstado', base: 10000, actual: 10000 },
       { id: 'item-2', name: 'Arriendo Habitación Huasco', cat: 'Vivienda Huasco', resp: 'Diego', cuenta: 'Cuenta Fan', base: 140000, actual: 140000 },
       { id: 'item-3', name: 'Pagos Servicios Huasco (Luz y Agua)', cat: 'Vivienda Huasco', resp: 'Diego', cuenta: 'Tenpo', base: 20000, actual: 20000 },
-      { id: 'item-4', name: 'Internet + Celular (Diego)', cat: 'Conectividad', resp: 'Diego', cuenta: 'Cuenta Fan', base: 22000, actual: 22000 },
       { id: 'item-5', name: 'Comida Michis (Promedio)', cat: 'Mascotas', resp: 'Diego', cuenta: 'Cuenta Fan', base: 42200, actual: 42200 },
       { id: 'item-6', name: 'Arena Sanitaria Michis', cat: 'Mascotas', resp: 'Diego', cuenta: 'Cuenta Fan', base: 20000, actual: 20000 },
       { id: 'item-7', name: 'Netflix', cat: 'Streaming', resp: 'Diego', cuenta: 'Cuenta Fan', base: 10700, actual: 10700 },

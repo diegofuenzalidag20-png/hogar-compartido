@@ -48,6 +48,8 @@
 
     // El "Real" de cada cuenta es la suma de sus pagos del mes, no el último pago
     function sincronizarRealDesdeGastos() {
+      // "Internet + Celular (Diego)" quedó en $0 por repetirse con Planes Entel e Internet Hogar
+      currentAuditItems = currentAuditItems.filter(it => !(it.id === 'item-4' && !(Number(it.base) > 0)));
       const suma = {};
       expenses.forEach(g => {
         const id = itemIdDeGasto(g);
@@ -93,6 +95,20 @@
       persistirBoletasActivas();
       triggerAutoSyncToCloud(true);
       showToast(`⚖️ ${cambios.length} presupuestos ajustados · Meta ${formatCLP(getMetaMensual())}`);
+    }
+
+    // Al abrir la app desde el día 10: avisa qué cuentas fijas aún no se registran (cuotas trimestrales no cuentan)
+    function cuentasFijasPendientes() {
+      return currentAuditItems.filter(it => CHECKLIST_FIJOS[it.id] && Number(it.base) > 0 && !/trimestral/i.test(it.name) && !pagosDeCuentaFija(it.id).length);
+    }
+    function recordarCuentasPendientes(hoy = new Date()) {
+      const dia = getLocalDateISO();
+      if (hoy.getDate() < 10 || localStorage.getItem('recordatorio_fijas_dia') === dia) return;
+      const faltan = cuentasFijasPendientes();
+      localStorage.setItem('recordatorio_fijas_dia', dia);
+      if (!faltan.length) return;
+      const nombres = faltan.slice(0, 3).map(it => it.name.replace(/\s*\(.*\)$/, '')).join(', ') + (faltan.length > 3 ? ` y ${faltan.length - 3} más` : '');
+      showToast(`📋 Faltan ${faltan.length} ${faltan.length === 1 ? 'cuenta fija' : 'cuentas fijas'}: ${nombres}`, { label: 'Ver', onClick: () => { goToTab('tab-auditoria'); document.getElementById('checklistContainer')?.scrollIntoView({ block: 'start' }); } });
     }
 
     function pagosDeCuentaFija(itemId) {

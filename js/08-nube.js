@@ -336,6 +336,14 @@
       return { ...local, expenses: (local.expenses || []).filter((e) => !isRescued(e)) };
     }
 
+    async function versionNube() {
+      const res = await fetch(`${FIRESTORE_DOC_URL}&mask.fieldPaths=timestamp`, { cache: 'no-store', headers: await encabezadosNube() });
+      if (res.status === 404) return null;
+      if (res.status === 401 || res.status === 403) throw new ErrorSinPermiso();
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return (await res.json()).updateTime || null;
+    }
+
     async function readCloudDoc() {
       const res = await fetch(FIRESTORE_DOC_URL, { cache: 'no-store', headers: await encabezadosNube() });
       if (res.status === 404) return { updateTime: null, payload: null };
@@ -389,7 +397,10 @@
       const baseConocida = leerJSON(SYNC_BASE_KEY, null);
       if (versionConocida && baseConocida) {
         const payloadRapido = JSON.parse(JSON.stringify(buildCompleteFamilyPayload()));
-        if (JSON.stringify(pickSyncState(payloadRapido)) !== JSON.stringify(baseConocida)) {
+        if (JSON.stringify(pickSyncState(payloadRapido)) === JSON.stringify(baseConocida)) {
+          // Sin cambios locales: se pide solo la versión (<1 KB); el documento completo se baja si el otro teléfono guardó
+          if (await versionNube() === versionConocida) return 'idle';
+        } else {
           payloadRapido.timestamp = Date.now();
           payloadRapido.clientSessionId = CLIENT_SESSION_ID;
           const versionNueva = await writeCloudDoc(payloadRapido, versionConocida);
@@ -479,6 +490,7 @@
         const result = await syncWithCloud();
         updateCloudStatusBadge(true, '🟢 Nube en Vivo');
         respaldarSiCorresponde();
+        recordarCuentasPendientes();
         if (!isSilent) {
           showToast('☁️ ¡Datos actualizados desde Firebase!');
           closeSyncModal();
