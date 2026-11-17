@@ -59,14 +59,19 @@
         menu.innerHTML = '';
         Array.from(selectEl.children).forEach(child => {
           if (child.tagName === 'OPTGROUP') {
+            // Cada grupo en su propia caja: su título queda fijo solo mientras se ven sus opciones,
+            // y el título del grupo siguiente lo empuja hacia arriba en vez de quedar uno encima del otro
+            const grupo = document.createElement('div');
+            grupo.className = 'glass-select-grupo';
             const groupHeader = document.createElement('div');
             groupHeader.className = 'glass-select-group-header';
             groupHeader.textContent = child.label;
-            menu.appendChild(groupHeader);
+            grupo.appendChild(groupHeader);
 
             Array.from(child.children).forEach(opt => {
-              menu.appendChild(createOptionItem(opt));
+              grupo.appendChild(createOptionItem(opt));
             });
+            menu.appendChild(grupo);
           } else if (child.tagName === 'OPTION') {
             menu.appendChild(createOptionItem(child));
           }

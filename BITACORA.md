@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-17] — Títulos de Grupo de los Desplegables sin Encimarse (v72)
+* **Motivo:** Al bajar por un desplegable (p. ej. Categoría), los títulos verdes de grupo quedaban uno encima del otro y se transparentaban.
+* **Solución Técnica:** `populateMenu` (12-desplegables) pone cada grupo (título + opciones) en su propia caja `.glass-select-grupo`: el título queda fijo solo mientras se ven sus opciones y el siguiente lo empuja. Fondo del título opaco (claro en tema claro). Aplica a todos los desplegables con grupos (categoría, medio de pago).
+* **Archivos Modificados:** `js/12-desplegables.js`, `css/app.css`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** Siempre se ve un solo título de grupo arriba.
+
 ### [2026-11-17] — Barra Inferior Fija de Nuevo (v71)
 * **Motivo:** Con la v70 la barra de navegación de abajo dejó de quedar fija y aparecía al final de cada pestaña.
 * **Causa:** La regla `.pill-grupo { position: relative }` de la píldora pisaba el `position: fixed` de `.bottom-nav`.
