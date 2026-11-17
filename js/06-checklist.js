@@ -43,6 +43,15 @@
       'item-27': { p: /comida fuera|salida|delivery|almuerzo|desayuno|comida viaje|^alimentaci/ }
     };
 
+    // Plata que se mueve a cuentas propias (fondo de emergencia, bolsillo semanal de Mach): no es gasto.
+    // Lo que se compra con Mach ya se registra como gasto en su categoría.
+    function esAhorroPropio(it) {
+      return it.id === 'item-15' || it.id === 'item-16' || /fondo emergencia|bolsillo mach/i.test(it.name || '');
+    }
+    function ahorroDelMes() {
+      return currentAuditItems.filter(esAhorroPropio).reduce((s, it) => s + (Number(it.base) || 0), 0);
+    }
+
     // A qué cuenta del presupuesto pertenece un gasto: primero por regla (corrige enlaces viejos mal hechos), si no por su enlace guardado
     function itemIdPorReglas(g) {
       const ids = [...Object.keys(CHECKLIST_FIJOS), ...Object.keys(REGLAS_VARIABLES)];

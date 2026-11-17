@@ -84,7 +84,7 @@ let currentCardAnalysisFilter = 'all';
     }
 
     function getMetaMensual() {
-      return currentAuditItems.reduce((acc, it) => acc + (Number(it.base) || 0), 0);
+      return currentAuditItems.filter(it => !esAhorroPropio(it)).reduce((acc, it) => acc + (Number(it.base) || 0), 0);
     }
 
     function getCompromisosPorPersona() {

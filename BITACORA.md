@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-17] — Ahorro y Bolsillo Mach Separados del Gasto (v67)
+* **Motivo:** El fondo de emergencia de Mercado Pago ($130.000) y el bolsillo semanal de Mach ($175.000) son transferencias a cuentas propias, pero sumaban en la meta de gasto y en "Real Ingresado" (y lo comprado con Mach ya se registra como gasto).
+* **Solución Técnica:** `esAhorroPropio()` y `ahorroDelMes()` (06-checklist). Se excluyen de los totales de Inicio (`renderAuditTable`), de `getMetaMensual()` y de las metas por grupo de Análisis. La tarjeta de meta muestra "ahorro y bolsillo Mach aparte: $305.000". Las líneas siguen en la tabla del presupuesto.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `js/02-presupuesto.js`, `js/06-checklist.js`, `js/14-tarjetas.js`, `js/15-analisis-mes.js`, `sw.js`.
+* **Impacto:** Meta de gasto ~$1.988.102 frente a $2.424.373 de ingresos; el ahorro se ve aparte.
+
 ### [2026-11-17] — Real Ingresado sin Duplicados (v66)
 * **Motivo:** "Real Ingresado" marcaba $2.391.150 con $1.640.555 de gastos registrados. Las cuentas sueltas creadas al registrar (`fromQuickBill`, sin presupuesto) seguían con su monto aunque su gasto ya se sumaba en la cuenta correcta (Supermercado, Salidas…), y había cuentas sueltas sin ningún gasto ("Cuota Tarjeta Smart Visa" $110.000, "Compras Super", "Huellitas de Boco").
 * **Solución Técnica:** `sincronizarRealDesdeGastos()` quita las cuentas sueltas sin presupuesto que no tienen gastos propios. Los ítems agregados a mano no se tocan.

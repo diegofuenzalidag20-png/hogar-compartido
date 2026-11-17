@@ -148,6 +148,7 @@
       let totalMeta = 0;
       if (Array.isArray(currentAuditItems)) {
         currentAuditItems.forEach(it => {
+          if (esAhorroPropio(it)) return;
           const base = Number(it.base) || 0;
           totalMeta += base;
           const assignedCat = grupoDeItem(it);
@@ -532,7 +533,7 @@
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=66').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=67').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }

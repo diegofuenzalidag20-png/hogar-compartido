@@ -74,8 +74,10 @@
       let totalReal = 0;
 
       currentAuditItems.forEach((item) => {
-        totalBase += item.base;
-        totalReal += item.actual;
+        if (!esAhorroPropio(item)) {
+          totalBase += item.base;
+          totalReal += item.actual;
+        }
 
         const diff = item.actual - item.base;
         const pct = item.base > 0 ? (diff / item.base) * 100 : 0;
@@ -126,6 +128,8 @@
       const superavitReal = householdIncome - totalReal;
 
       document.getElementById('audit-kpi-base').textContent = formatCLP(totalBase);
+      const subMeta = document.getElementById('audit-kpi-base-sub');
+      if (subMeta) subMeta.textContent = `Gastos del mes · ahorro y bolsillo Mach aparte: ${formatCLP(ahorroDelMes())}`;
       document.getElementById('audit-kpi-real').textContent = formatCLP(totalReal);
       document.getElementById('audit-kpi-diff').textContent = (netDiff > 0 ? '+' : '') + formatCLP(netDiff);
       document.getElementById('audit-kpi-superavit').textContent = formatCLP(superavitReal);
@@ -557,8 +561,10 @@
       let warnings = [];
 
       currentAuditItems.forEach(item => {
-        totalBase += item.base;
-        totalReal += item.actual;
+        if (!esAhorroPropio(item)) {
+          totalBase += item.base;
+          totalReal += item.actual;
+        }
         const diff = item.actual - item.base;
         const pct = item.base > 0 ? (diff / item.base) * 100 : 0;
         if (diff > 5000 || pct > 10) {

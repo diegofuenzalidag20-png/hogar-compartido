@@ -7,7 +7,7 @@ import { readdirSync } from 'node:fs';
 // El código vive en index.html y en los módulos de js/
 const html = [new URL('./index.html', import.meta.url), ...readdirSync(new URL('./js/', import.meta.url)).sort().map((m) => new URL(`./js/${m}`, import.meta.url))].map((u) => readFileSync(u, 'utf8')).join('\n');
 const fn = (name) => html.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n {4}}\\r?\\n`))[0];
-const names = ['normalizeAccountKey', 'getSmartCuotaPagada', 'getSmartCuotaDelMes', 'getSmartReservaChequera', 'getCuentaPrincipalDisponible', 'getMetaMensual'];
+const names = ['normalizeAccountKey', 'getSmartCuotaPagada', 'getSmartCuotaDelMes', 'getSmartReservaChequera', 'getCuentaPrincipalDisponible', 'getMetaMensual', 'esAhorroPropio'];
 const app = (expenses, cuota = 50000) => new Function('expenses', 'userProfile', 'CARDS_ANALYSIS_CONFIG', 'currentAuditItems',
   `${names.map(fn).join('\n')}\nreturn { ${names.join(', ')} };`)(
   expenses,
