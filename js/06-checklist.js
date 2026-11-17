@@ -20,8 +20,9 @@
       'item-6': { p: /arena/ },
       'item-7': { p: /netflix/, d: true },
       'item-8': { p: /crunchyroll/, d: true },
-      'item-9': { p: /eutirox/ },
-      'item-10': { p: /rupatadina/ }
+      // Remedios: se recompran cada mes y medio, no todos los meses
+      'item-9': { p: /eutirox/, cadaDias: 45 },
+      'item-10': { p: /rupatadina/, cadaDias: 45 }
     };
 
     // Cuentas variables del presupuesto; el orden importa (lo más específico primero)
@@ -104,8 +105,23 @@
     }
 
     // Al abrir la app desde el día 10: avisa qué cuentas fijas aún no se registran (cuotas trimestrales no cuentan)
-    function cuentasFijasPendientes() {
-      return currentAuditItems.filter(it => CHECKLIST_FIJOS[it.id] && Number(it.base) > 0 && !/trimestral/i.test(it.name) && !pagosDeCuentaFija(it.id).length);
+    // Cuentas que no son mensuales: busca la última compra (este mes o meses guardados) y calcula la próxima
+    function estadoCiclo(itemId, hoy = new Date()) {
+      const dias = CHECKLIST_FIJOS[itemId]?.cadaDias;
+      if (!dias) return null;
+      const todos = [...expenses, ...parseSeguro(localStorage.getItem('db_historial_meses'), []).flatMap(m => m.gastosDiarios || [])];
+      const ultima = todos.filter(g => g.date && gastoEsDeCuentaFija(itemId, g)).map(g => g.date).sort().pop();
+      if (!ultima) return { alDia: false };
+      const desde = new Date(`${ultima}T12:00:00`);
+      const proxima = new Date(desde);
+      proxima.setDate(proxima.getDate() + dias);
+      const fmt = (d) => d.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+      return { alDia: hoy < proxima, ultima: fmt(desde), proxima: fmt(proxima) };
+    }
+
+    function cuentasFijasPendientes(hoy = new Date()) {
+      return currentAuditItems.filter(it => CHECKLIST_FIJOS[it.id] && Number(it.base) > 0 && !/trimestral/i.test(it.name)
+        && !pagosDeCuentaFija(it.id).length && !estadoCiclo(it.id, hoy)?.alDia);
     }
     function recordarCuentasPendientes(hoy = new Date()) {
       const dia = getLocalDateISO();
@@ -146,7 +162,9 @@
       filteredItems.forEach(item => {
         const pagos = pagosDeCuentaFija(item.id);
         const pagado = pagos.reduce((s, g) => s + (Number(g.amount) || 0), 0);
-        const isDone = pagos.length > 0;
+        const ciclo = estadoCiclo(item.id);
+        const alDia = !pagos.length && !!ciclo?.alDia;
+        const isDone = pagos.length > 0 || alDia;
         if (isDone) doneCount++;
 
         const div = document.createElement('div');
@@ -155,10 +173,12 @@
 
         const respColor = item.resp === 'Diego' ? 'var(--accent-diego)' : 'var(--accent-soledad)';
         const statusIcon = isDone ? '✅' : '⏳';
-        const statusText = isDone ? formatCLP(pagado) : 'Falta';
-        const detalle = isDone
-          ? (pagos.length > 1 ? `${pagos.length} pagos registrados · revisa si se repitió` : `Pagado el ${escapeHtml(pagos[0].date || '')}`)
-          : `Aprox. ${formatCLP(item.base)} · toca para registrar`;
+        const statusText = pagos.length ? formatCLP(pagado) : alDia ? 'Al día' : 'Falta';
+        const proxima = ciclo?.proxima ? ` · próxima compra ~${ciclo.proxima}` : '';
+        const detalle = pagos.length
+          ? (pagos.length > 1 && !ciclo ? `${pagos.length} pagos registrados · revisa si se repitió` : `Pagado el ${escapeHtml(pagos[pagos.length - 1].date || '')}${proxima}`)
+          : alDia ? `Comprado el ${ciclo.ultima}${proxima}`
+          : `${ciclo?.ultima ? `Última compra ${ciclo.ultima} · ` : ''}Aprox. ${formatCLP(item.base)} · toca para registrar`;
 
         div.innerHTML = `
           <div>

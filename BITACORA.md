@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Remedios con Ciclo de 45 Días (v55)
+* **Motivo:** Eutirox y Rupatadina se recompran cada mes y medio; el recordatorio los pedía todos los meses.
+* **Solución Técnica:** `CHECKLIST_FIJOS` acepta `cadaDias` (45 para `item-9` y `item-10`). `estadoCiclo()` busca la última compra en los gastos del mes y en los meses guardados, y calcula la próxima. El checklist muestra "Al día · Comprado el … · próxima compra ~…" y el recordatorio solo avisa cuando pasaron 45 días o no hay compra registrada.
+* **Archivos Modificados:** `js/06-checklist.js`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** Los remedios se avisan cuando de verdad toca recomprarlos.
+
 ### [2026-11-16] — Premios de los Michis Separados de la Comida del Mes (v54)
 * **Motivo:** Un gasto de "Comida húmeda" ($5.000, premio) marcaba "Comida Michis (Promedio)" como pagada en el checklist y en el recordatorio. Además se borraron 2 copias repetidas de ese gasto (19:32 y 19:34), dejando la de las 19:21.
 * **Solución Técnica:**
