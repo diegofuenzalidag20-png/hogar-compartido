@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Medio de Pago Ordenado y Separado por Persona (v50)
+* **Motivo:** La lista de medios de pago mezclaba cuentas de Diego y Soledad sin orden.
+* **Solución Técnica:** `#quickAccount` agrupado en "Cuentas de Diego", "Cuentas de Soledad" y "Otros" (`data-dueno`), con la cuenta principal primero y nombres más cortos. `filtrarCuentasPorPagador()` (05-registro) deja solo las cuentas de quien paga más Otros; "Ambos" ve todas; si la cuenta elegida no corresponde, se limpia. El editor de gastos copia la lista completa (`cuentasCompletas()`). Los valores guardados no cambian.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `js/05-registro.js`, `js/09-gastos.js`, `sw.js`.
+* **Impacto:** Listas más cortas y claras al registrar.
+
 ### [2026-11-16] — No Pedir Sesión al Abrir Estando Iniciada (v49)
 * **Motivo:** Al abrir la app aparecía "La nube pide iniciar sesión" aunque la sesión estaba guardada.
 * **Causa:** La primera sincronización salía antes de que Firebase recuperara la sesión guardada (tarda un momento), así que iba sin token y las reglas la rechazaban.

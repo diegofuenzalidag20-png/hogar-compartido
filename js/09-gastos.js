@@ -258,7 +258,7 @@
 
       // Las mismas opciones que el registro; un valor antiguo que ya no exista se conserva
       const copiarOpciones = (desde, hasta, actual, limpiar) => {
-        const origen = document.getElementById(desde), destino = document.getElementById(hasta);
+        const origen = typeof desde === 'string' ? document.getElementById(desde) : desde, destino = document.getElementById(hasta);
         if (!origen || !destino) return;
         destino.innerHTML = '';
         [...origen.options].filter(o => o.value).forEach(o => destino.add(new Option(o.text, limpiar ? o.value.replace(/^[^\w\s]+\s*/, '') : o.value)));
@@ -266,7 +266,7 @@
         destino.value = actual || destino.options[0]?.value || '';
       };
       copiarOpciones('quickPayer', 'editExpPayer', exp.payer, false);
-      copiarOpciones('quickAccount', 'editExpAccount', exp.account, false);
+      copiarOpciones(cuentasCompletas(), 'editExpAccount', exp.account, false);
       copiarOpciones('quickCategory', 'editExpCategory', exp.category, true);
       const lugarEl = document.getElementById('editExpLugar');
       if (lugarEl) lugarEl.value = exp.lugar || adivinarLugar(`${exp.category || ''} ${exp.desc || ''}`);

@@ -295,7 +295,29 @@
         else if (/limache/i.test(cat)) marcarLugar('Limache');
       }
     }
+    // Medio de pago: cada persona ve solo sus cuentas (más Otros); "Ambos" o sin elegir ve todas
+    let plantillaCuentas = null;
+    function cuentasCompletas() {
+      return plantillaCuentas || document.getElementById('quickAccount');
+    }
+    function filtrarCuentasPorPagador() {
+      const sel = document.getElementById('quickAccount');
+      if (!sel) return;
+      plantillaCuentas = plantillaCuentas || sel.cloneNode(true);
+      const pagador = document.getElementById('quickPayer')?.value;
+      const previo = sel.value;
+      sel.innerHTML = '';
+      [...plantillaCuentas.children].forEach(n => {
+        const dueno = n.dataset?.dueno;
+        if (n.tagName === 'OPTGROUP' && (pagador === 'Diego' || pagador === 'Soledad') && dueno !== pagador && dueno !== 'Otros') return;
+        sel.appendChild(n.cloneNode(true));
+      });
+      sel.value = [...sel.options].some(o => o.value === previo) ? previo : '';
+      if (typeof sel._syncGlassDisplay === 'function') sel._syncGlassDisplay();
+    }
+
     document.addEventListener('change', e => {
+      if (e.target && e.target.id === 'quickPayer') filtrarCuentasPorPagador();
       if (e.target && (e.target.id === 'quickPayer' || e.target.id === 'quickCategory')) actualizarSelectorLugar(e);
       if (e.target && e.target.id === 'editExpPayer') {
         const g = document.getElementById('editExpLugarGroup');
