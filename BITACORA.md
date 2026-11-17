@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-17] — Grupos Renombrados: "Dividendo y créditos" y "Cuentas de la casa" (v68)
+* **Motivo:** "Vivienda & Crédito" y "Hogar Limache" se confundían.
+* **Solución Técnica:** En `CATEGORIAS_GASTO` (13-categorias) solo cambia el nombre que se muestra: "Vivienda & Crédito" → "Dividendo y créditos" (dividendo, diferencial UF, cuota Smart Visa) y "Hogar Limache" → "Cuentas de la casa" (luz, agua, gas, gasto común, internet, telefonía, aseo, imprevistos). Las reglas y los datos no cambian.
+* **Archivos Modificados:** `js/13-categorias.js`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** Gráficos y detalles más claros.
+
 ### [2026-11-17] — Ahorro y Bolsillo Mach Separados del Gasto (v67)
 * **Motivo:** El fondo de emergencia de Mercado Pago ($130.000) y el bolsillo semanal de Mach ($175.000) son transferencias a cuentas propias, pero sumaban en la meta de gasto y en "Real Ingresado" (y lo comprado con Mach ya se registra como gasto).
 * **Solución Técnica:** `esAhorroPropio()` y `ahorroDelMes()` (06-checklist). Se excluyen de los totales de Inicio (`renderAuditTable`), de `getMetaMensual()` y de las metas por grupo de Análisis. La tarjeta de meta muestra "ahorro y bolsillo Mach aparte: $305.000". Las líneas siguen en la tabla del presupuesto.
