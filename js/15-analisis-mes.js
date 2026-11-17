@@ -137,12 +137,20 @@
       // 3. Metas presupuestadas desde currentAuditItems para comparación
       const categoryMetaMap = Object.fromEntries(CATEGORIAS_GASTO.map(c => [c.nombre, 0]));
 
+      // Cada meta va al mismo grupo que sus gastos (el arriendo de Huasco es Logística, no Vivienda);
+      // sin gastos todavía, se decide por el nombre de la cuenta y luego por su categoría
+      const grupoPorItem = {};
+      expenses.forEach(g => { const id = itemIdDeGasto(g); if (id) grupoPorItem[id] = normalizeExpenseCategory(g.category, g.desc); });
+      const grupoDeItem = (it) => grupoPorItem[it.id]
+        || CATEGORIAS_GASTO.find(c => c.patron.test(String(it.name || '').toLowerCase()))?.nombre
+        || normalizeExpenseCategory(it.cat, it.name);
+
       let totalMeta = 0;
       if (Array.isArray(currentAuditItems)) {
         currentAuditItems.forEach(it => {
           const base = Number(it.base) || 0;
           totalMeta += base;
-          const assignedCat = normalizeExpenseCategory(it.cat, it.name);
+          const assignedCat = grupoDeItem(it);
           categoryMetaMap[assignedCat] = (categoryMetaMap[assignedCat] || 0) + base;
         });
       }
@@ -524,7 +532,7 @@
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=64').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=65').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }

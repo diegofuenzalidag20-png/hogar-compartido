@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-17] — Metas por Grupo Según sus Gastos y Salidas con Presupuesto (v65)
+* **Motivo:** En Análisis, la meta del arriendo y servicios de Huasco (categoría "Vivienda Huasco") se sumaba a "Vivienda & Crédito", aunque sus gastos van a "Logística Huasco": Huasco mostraba ~$290 mil de meta en vez de $453 mil.
+* **Solución Técnica:** `grupoDeItem()` (15-analisis-mes): cada meta va al grupo de sus gastos enlazados; sin gastos, por el nombre de la cuenta y luego por su categoría. En la nube: teleférico, Expo Quillota y bencina Santiago pasan a Salidas; `item-27` "Comida fuera y delivery" $125.000 y nuevo `item-31` "Salidas y panoramas" $150.000 (meta total $2.293.102).
+* **Archivos Modificados:** `js/15-analisis-mes.js`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** Presupuesto vs real por grupo comparable y sin alertas falsas.
+
 ### [2026-11-17] — Presupuesto Propio para Salidas y Panoramas (v64)
 * **Motivo:** "Salidas & Panoramas" aparecía con ⚠️ porque no tenía presupuesto: su meta seguía dentro de "Comida fuera y salidas" (Alimentación).
 * **Solución Técnica:** `REGLAS_VARIABLES['item-31']` (/panorama|ocio/, antes que `item-27`) enlaza esos gastos a la nueva línea "Salidas y panoramas". En la nube: `item-27` pasa a "Comida fuera y delivery" con $125.000 y se crea `item-31` con $105.000 (la meta total no cambia).
