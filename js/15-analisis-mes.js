@@ -42,7 +42,35 @@
       }).join('') || '<p class="hist-nota">Aún no hay meses con gastos guardados.</p>';
     }
 
+    // Lista de gastos de Diego de un lugar; tocar de nuevo el mismo lugar la cierra
+    let lugarAbierto = null;
+    function mostrarDetalleLugar(lugar, mantener = false) {
+      const caja = document.getElementById('lugarDetalle');
+      if (!caja) return;
+      if (!mantener && lugarAbierto === lugar) lugar = null;
+      lugarAbierto = lugar;
+      document.querySelectorAll('.lugar-total').forEach(b => b.classList.toggle('activa', b.dataset.lugar === lugar));
+      if (!lugar) { caja.innerHTML = ''; return; }
+      const gastos = expenses
+        .filter(g => g.payer === 'Diego' && (g.lugar || adivinarLugar(`${g.category || ''} ${g.desc || ''}`)) === lugar)
+        .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      const total = gastos.reduce((s, g) => s + (Number(g.amount) || 0), 0);
+      caja.innerHTML = `
+        <div class="categoria-detalle-cabeza">
+          <div><strong>${lugar === 'Huasco' ? '⛰️ Huasco (departamento)' : '🏡 Limache (casa)'}</strong><small>Gastos que pagó Diego este mes</small></div>
+          <button type="button" class="sheet-close" aria-label="Cerrar detalle" onclick="mostrarDetalleLugar('${lugar}')">✕</button>
+        </div>
+        <div class="categoria-detalle-total">${gastos.length} ${gastos.length === 1 ? 'gasto' : 'gastos'} · <strong>${formatCLP(total)}</strong></div>
+        ${gastos.map(g => `
+          <div class="categoria-detalle-fila">
+            <span><strong>${escapeHtml(g.desc || g.category)}</strong><small>${escapeHtml(g.date || '')} · ${escapeHtml(g.category || '')}${g.lugar ? '' : ' · lugar estimado'}</small></span>
+            <strong>${formatCLP(g.amount)}</strong>
+          </div>`).join('')}`;
+      if (!mantener) caja.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+
     function renderLugarDiego() {
+      if (lugarAbierto) setTimeout(() => mostrarDetalleLugar(lugarAbierto, true));
       const t = totalesLugarDiego();
       const total = t.Limache + t.Huasco;
       const pctH = total > 0 ? Math.round(t.Huasco / total * 100) : 0;
@@ -528,7 +556,7 @@
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=56').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=57').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }

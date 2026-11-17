@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-16] — Ver los Gastos de Limache o de Huasco (v57)
+* **Motivo:** No había una forma directa de ver qué gastos de Diego son de la casa y cuáles del departamento.
+* **Solución Técnica:** En Análisis → "Limache vs Huasco", los totales son botones (`.lugar-total`); al tocar uno, `mostrarDetalleLugar()` (15-analisis-mes) despliega la lista de esos gastos (más recientes primero, con total y "lugar estimado" si no tiene lugar). Tocar de nuevo o la X lo cierra; se actualiza solo al sincronizar.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `js/15-analisis-mes.js`, `css/app.css`, `sw.js`.
+* **Impacto:** Detalle de cada lugar con un toque.
+
 ### [2026-11-16] — Crunchyroll Pendiente Solo Desde el Día 19 (v56)
 * **Motivo:** Crunchyroll se cobra cerca del día 19, pero el recordatorio lo pedía desde el día 10.
 * **Solución Técnica:** `CHECKLIST_FIJOS` acepta `diaCobro` (19 para `item-8`). Antes de ese día no cuenta como pendiente y el checklist muestra "Se cobra ~19 · Aún no toca".
