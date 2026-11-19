@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-19] — Grupos "Salud y remedios", "Huasco y traslados" y "Salidas y panoramas" (v77)
+* **Motivo:** Nombres que ya no reflejaban su contenido (sin educación tras quitar Waldorf; "Logística" era vago) y uso mezclado de "&" e "y".
+* **Solución Técnica:** `CATEGORIAS_GASTO` (13-categorias): "Salud & Educación" → "Salud y remedios", "Logística Huasco" → "Huasco y traslados", "Salidas & Panoramas" → "Salidas y panoramas" (también el título del grupo en la lista de categorías). Solo cambia el nombre visible.
+* **Archivos Modificados:** `js/13-categorias.js`, `index.html`, `dashboard_pareja.html`, `sw.js`.
+* **Impacto:** Grupos con nombres claros y consistentes.
+
 ### [2026-11-19] — Grupo "Personales y suscripciones" (v76)
 * **Motivo:** "Bolsillo & Ahorro" ya no tenía ahorro (el fondo de emergencia y el bolsillo Mach salen del gasto desde la v67).
 * **Solución Técnica:** en `CATEGORIAS_GASTO` (13-categorias) el grupo pasa a llamarse "Personales y suscripciones" (gastos personales, streaming y transferencias a terceros), también como grupo por defecto. Solo cambia el nombre visible. En la nube, "Servidor Contabo" pasó a "Bolsillo Personal / Gastos Propios".
