@@ -432,9 +432,13 @@
         cuotaMes: smart
       };
 
-      // Sincronizar Smart Visa en tabla de boletas
-      const itemSmart = currentAuditItems.find(it => it.name.includes('Smart Visa') || it.id === 'item-23');
-      if (itemSmart) { itemSmart.base = smart; }
+      // Sincronizar Smart Visa en tabla de boletas. Si la cuota de este mes ya se pagó, el presupuesto no baja
+      // de lo pagado (antes, guardar los cofres con la cuota planificada dejaba la meta bajo lo real)
+      const itemSmart = currentAuditItems.find(it => it.id === 'item-23') || currentAuditItems.find(it => it.name.includes('Smart Visa'));
+      if (itemSmart) {
+        const cuotaPagada = pagosDeCuentaFija('item-23').reduce((s, g) => s + (Number(g.amount) || 0), 0);
+        itemSmart.base = Math.max(smart, cuotaPagada);
+      }
 
       saveUserProfile();
       renderAuditTable();

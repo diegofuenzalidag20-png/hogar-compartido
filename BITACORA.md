@@ -186,6 +186,13 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-19] — Guardar Cofres de Soledad no Baja la Meta de Smart Visa (v75)
+* **Motivo:** "Dividendo y créditos" apareció excedido sin gastos nuevos: la meta de "Tarjeta Smart Visa (Compromiso)" bajó de $118.345 a $50.000.
+* **Causa:** `saveSoleCofres` copia la casilla "Cuota Pagada Este Mes" (cuota planificada, $50.000) al presupuesto de la tarjeta al guardar los cofres de Soledad.
+* **Solución Técnica:** la meta queda en el mayor entre la cuota planificada y lo ya pagado este mes (`pagosDeCuentaFija('item-23')`). En la nube se restauró la meta a $118.345.
+* **Archivos Modificados:** `js/03-perfil-cofres.js`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** Guardar los cofres ya no deja la meta por debajo del pago real.
+
 ### [2026-11-19] — Aviso Oculto ya no Bloquea el Formulario (v74)
 * **Motivo:** Tras un rato sin usar la app (o de un día para otro), al registrar un gasto y cerrar el teclado con el gesto atrás, la descripción y el botón verde dejaban de responder.
 * **Causa:** Los avisos con botón (recordatorio diario "Faltan N cuentas fijas" con "Ver", o "Deshacer") quedaban con `pointer-events: auto` al ocultarse: transparentes pero encima de la parte baja del formulario (z-index 3000), atrapando los toques. El recordatorio aparece la primera vez que se abre la app en el día. Reproducido en una prueba.
