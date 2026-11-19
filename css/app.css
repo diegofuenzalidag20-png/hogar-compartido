@@ -1935,7 +1935,9 @@ main, .tab-pane {
 /* Navegación móvil: barra inferior, cabecera compacta y hoja de registro */
 .bottom-nav, .app-menu, .overlay-backdrop, .header-menu-btn, .sheet-close { display: none; }
 /* Botón a la izquierda: los dos son diestros y el pulgar derecho caía sobre "Deshacer" al registrar */
-#toast.has-action { pointer-events: auto; display: flex; flex-direction: row-reverse; align-items: center; justify-content: space-between; gap: 0.85rem; text-align: right; }
+/* Solo atrapa toques mientras se ve: oculto (transparente) seguía encima del formulario y lo bloqueaba */
+#toast.has-action.show { pointer-events: auto; }
+#toast.has-action { display: flex; flex-direction: row-reverse; align-items: center; justify-content: space-between; gap: 0.85rem; text-align: right; }
 .toast-action { flex: none; min-height: 40px; padding: 0 0.9rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.6); background: rgba(0, 0, 0, 0.2); color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
 
 @media (max-width: 768px) {

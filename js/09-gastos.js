@@ -446,12 +446,12 @@
         button.textContent = action.label;
         // Un toque en el primer instante suele ser el segundo toque del botón "Registrar": se ignora
         const aparecio = Date.now();
-        button.onclick = () => { if (Date.now() - aparecio < 700) return; t.classList.remove('show'); action.onClick(); };
+        button.onclick = () => { if (Date.now() - aparecio < 700) return; t.classList.remove('show', 'has-action'); action.onClick(); };
         t.appendChild(button);
       }
       t.classList.add('show');
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => t.classList.remove('show'), action ? 6000 : 2500);
+      toastTimer = setTimeout(() => t.classList.remove('show', 'has-action'), action ? 6000 : 2500);
     }
 
     function exportToCSV() {

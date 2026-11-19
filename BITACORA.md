@@ -186,6 +186,13 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-19] — Aviso Oculto ya no Bloquea el Formulario (v74)
+* **Motivo:** Tras un rato sin usar la app (o de un día para otro), al registrar un gasto y cerrar el teclado con el gesto atrás, la descripción y el botón verde dejaban de responder.
+* **Causa:** Los avisos con botón (recordatorio diario "Faltan N cuentas fijas" con "Ver", o "Deshacer") quedaban con `pointer-events: auto` al ocultarse: transparentes pero encima de la parte baja del formulario (z-index 3000), atrapando los toques. El recordatorio aparece la primera vez que se abre la app en el día. Reproducido en una prueba.
+* **Solución Técnica:** `#toast.has-action` solo atrapa toques mientras está visible (`.show`) y `showToast` quita `has-action` al ocultarse.
+* **Archivos Modificados:** `css/app.css`, `js/09-gastos.js`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** El formulario de registro responde siempre.
+
 ### [2026-11-19] — Dos Copias de la App en el Mismo Teléfono ya no se Pisan (v73)
 * **Motivo:** Se perdió un pasaje recién registrado: al registrar después el "Servidor Contabo" (8:21), el pasaje desapareció. No está en la nube ni en ningún respaldo.
 * **Causa:** Dos copias de la app abiertas en el mismo teléfono (la app instalada y una pestaña del navegador, o una copia que quedó abierta) comparten lo guardado en el teléfono —incluida la "última versión sincronizada"— pero cada una tiene su lista en memoria. Si la copia A subía un gasto, la copia B (con la lista vieja) creía estar al día y al registrar subía su lista sin el gasto de A. Reproducido en una prueba con dos páginas que comparten almacenamiento.
