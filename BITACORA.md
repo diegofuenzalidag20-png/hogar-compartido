@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-19] — Grupo "Personales y suscripciones" (v76)
+* **Motivo:** "Bolsillo & Ahorro" ya no tenía ahorro (el fondo de emergencia y el bolsillo Mach salen del gasto desde la v67).
+* **Solución Técnica:** en `CATEGORIAS_GASTO` (13-categorias) el grupo pasa a llamarse "Personales y suscripciones" (gastos personales, streaming y transferencias a terceros), también como grupo por defecto. Solo cambia el nombre visible. En la nube, "Servidor Contabo" pasó a "Bolsillo Personal / Gastos Propios".
+* **Archivos Modificados:** `js/13-categorias.js`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** Nombre que describe lo que agrupa.
+
 ### [2026-11-19] — Guardar Cofres de Soledad no Baja la Meta de Smart Visa (v75)
 * **Motivo:** "Dividendo y créditos" apareció excedido sin gastos nuevos: la meta de "Tarjeta Smart Visa (Compromiso)" bajó de $118.345 a $50.000.
 * **Causa:** `saveSoleCofres` copia la casilla "Cuota Pagada Este Mes" (cuota planificada, $50.000) al presupuesto de la tarjeta al guardar los cofres de Soledad.

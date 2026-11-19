@@ -19,7 +19,7 @@
       { nombre: 'Salidas & Panoramas', patron: /panorama|ocio/, incluye: 'Salidas y panoramas que no son comida: paseos, entradas, actividades.' },
       { nombre: 'Alimentación', patron: /supermercado|s[uú]per\b|lider|mayorista|aliment|feria|verdul|\bpan\b|delivery|comida|salida|almuerzo|desayuno/, incluye: 'Supermercado, feria y comidas fuera de casa.' },
       { nombre: 'Salud & Educación', patron: /salud|farmacia|m[eé]dic|dental|consulta|eutirox|rupatadina|waldorf|curso/, incluye: 'Farmacia, consultas médicas y cursos.' },
-      { nombre: 'Bolsillo & Ahorro', patron: /streaming|netflix|spotify|crunchyroll|bolsillo|gastos propios|ahorro|transferencia|tercero/, incluye: 'Gastos personales, streaming, ahorro y transferencias a terceros.' },
+      { nombre: 'Personales y suscripciones', patron: /streaming|netflix|spotify|crunchyroll|bolsillo|gastos propios|ahorro|transferencia|tercero/, incluye: 'Gastos personales, suscripciones (streaming) y transferencias a terceros.' },
       { nombre: 'Cuentas de la casa', patron: /\bluz\b|chilquinta|\bagua\b|esval|\bgas\b|com[uú]n|condominio|\bclaro\b|entel|internet|aseo|servicios hogar|gastos hogar|imprevist|limache/, incluye: 'Cuentas de la casa: luz, agua, gas, gasto común, internet, telefonía, aseo e imprevistos del hogar.' }
     ];
 
@@ -27,7 +27,7 @@
       const texto = `${categoryName || ''} ${descName || ''}`.toLowerCase();
       // El orden importa: "Supermercado (... Limache)" es comida, no una cuenta de la casa
       const regla = CATEGORIAS_GASTO.find(c => c.patron.test(texto));
-      return regla ? regla.nombre : 'Bolsillo & Ahorro';
+      return regla ? regla.nombre : 'Personales y suscripciones';
     }
 
     // Fijo = calza con una cuenta fija del checklist (misma regla que el checklist y el recordatorio).
