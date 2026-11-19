@@ -333,6 +333,8 @@
       e.preventDefault();
       // Sin esperar la red: la versión se revisa al abrir, al volver a la app y cada 5 minutos
       if (versionBloqueada) { avisarVersionAntigua(); return; }
+      // Otra copia de la app sincronizó: esta tiene la lista vieja y guardar aquí borraría lo nuevo
+      if (recargarSiOtraCopiaSincronizo()) return;
       const date = document.getElementById('quickDate').value || getLocalDateISO();
       const payer = document.getElementById('quickPayer').value;
       const cat = document.getElementById('quickCategory').value;

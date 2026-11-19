@@ -16,7 +16,7 @@
     // ---------- Versión de la app ----------
     // Un teléfono con la app abierta desde antes de una actualización sigue con el código viejo.
     // Si hay una versión nueva publicada, no se registra ni se sube nada hasta actualizar.
-    const VERSION_APP = 72;
+    const VERSION_APP = 73;
     let versionBloqueada = false;
     async function revisarVersionApp() {
       try {
@@ -461,13 +461,33 @@
       throw new Error(error?.message || `HTTP ${res.status}`);
     }
 
+    // ---------- Dos copias de la app en el mismo teléfono ----------
+    // La app instalada y una pestaña del navegador (o una copia que quedó abierta) comparten lo guardado en el
+    // teléfono, pero cada una tiene su propia lista en memoria. Si otra copia sincronizó, esta quedó con datos viejos:
+    // guardar desde aquí borraba lo nuevo. Antes de registrar o sincronizar, una copia desactualizada se recarga.
+    let versionSincronizadaAqui = localStorage.getItem(SYNC_VERSION_KEY);
+    function otraCopiaSincronizo() {
+      return localStorage.getItem(SYNC_VERSION_KEY) !== versionSincronizadaAqui;
+    }
+    function recargarSiOtraCopiaSincronizo() {
+      if (!otraCopiaSincronizo()) return false;
+      location.reload();
+      return true;
+    }
+    window.addEventListener('storage', (e) => {
+      if (e.key === SYNC_VERSION_KEY && e.newValue !== versionSincronizadaAqui) location.reload();
+    });
+
     function rememberSyncedState(state, updateTime, timestamp) {
       localStorage.setItem(SYNC_BASE_KEY, JSON.stringify(state));
       localStorage.setItem(SYNC_VERSION_KEY, updateTime);
+      // Lo que quedó guardado de verdad (con la memoria llena el guardado puede fallar y no hay que recargar en bucle)
+      versionSincronizadaAqui = localStorage.getItem(SYNC_VERSION_KEY);
       localStorage.setItem('finanzas_last_local_update', String(timestamp));
     }
 
     async function runCloudSync() {
+      if (recargarSiOtraCopiaSincronizo()) return 'idle';
       // Camino rápido: si nadie cambió la nube desde nuestra última sincronización, se sube sin leer antes.
       // Si otro teléfono guardó entremedio, Firestore lo rechaza y se sigue por el camino con combinación.
       const versionConocida = localStorage.getItem(SYNC_VERSION_KEY);
@@ -618,6 +638,7 @@
         if (document.hidden) {
           if (autoSyncCloudTimer) triggerAutoSyncToCloud(true);
         } else {
+          if (recargarSiOtraCopiaSincronizo()) return;
           pullFromFirestore(true);
         }
       });

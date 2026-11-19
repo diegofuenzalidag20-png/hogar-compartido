@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-19] — Dos Copias de la App en el Mismo Teléfono ya no se Pisan (v73)
+* **Motivo:** Se perdió un pasaje recién registrado: al registrar después el "Servidor Contabo" (8:21), el pasaje desapareció. No está en la nube ni en ningún respaldo.
+* **Causa:** Dos copias de la app abiertas en el mismo teléfono (la app instalada y una pestaña del navegador, o una copia que quedó abierta) comparten lo guardado en el teléfono —incluida la "última versión sincronizada"— pero cada una tiene su lista en memoria. Si la copia A subía un gasto, la copia B (con la lista vieja) creía estar al día y al registrar subía su lista sin el gasto de A. Reproducido en una prueba con dos páginas que comparten almacenamiento.
+* **Solución Técnica (08-nube, 05-registro, 09-gastos):** cada copia recuerda la versión que sincronizó ella (`versionSincronizadaAqui`). Si otra copia sincronizó (evento `storage`, al volver a la app, al sincronizar, al registrar, editar o borrar), la copia desactualizada se recarga con los datos al día antes de guardar nada. Con la memoria llena no se recarga en bucle.
+* **Archivos Modificados:** `js/05-registro.js`, `js/08-nube.js`, `js/09-gastos.js`, `sw.js`, `index.html`, `dashboard_pareja.html`.
+* **Impacto:** Registrar desde cualquier copia ya no borra lo registrado en otra.
 ### [2026-11-17] — Títulos de Grupo de los Desplegables sin Encimarse (v72)
 * **Motivo:** Al bajar por un desplegable (p. ej. Categoría), los títulos verdes de grupo quedaban uno encima del otro y se transparentaban.
 * **Solución Técnica:** `populateMenu` (12-desplegables) pone cada grupo (título + opciones) en su propia caja `.glass-select-grupo`: el título queda fijo solo mientras se ven sus opciones y el siguiente lo empuja. Fondo del título opaco (claro en tema claro). Aplica a todos los desplegables con grupos (categoría, medio de pago).
