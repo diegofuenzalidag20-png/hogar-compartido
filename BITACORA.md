@@ -115,6 +115,7 @@ Define la distribución del dinero líquido al inicio de cada mes y el control d
    * `Tenpo Prepago Diego`: Pasajes, Uber, Metro, Turno Huasco. Incluye casilla de **Remanente mes pasado**.
    * `Mach Prepago Diego`: Bolsillo semanal ($35k/semana). Incluye casilla de **Remanente mes pasado**.
    * `Mercado Pago Diego`: Fondo de emergencia con rendimiento diario. Incluye casilla de **Remanente mes pasado**.
+   * `Tarjeta de Crédito BCI (Mastercard)`: Control de Cupo Total ($900k), **Pago este mes**, Deuda anterior facturada, compras del mes en vivo, deuda actual y cupo disponible. Las compras con la tarjeta ya son gasto del mes en que se hacen; el pago **no es un gasto**: se aparta de la cuenta principal (baja su remanente como una transferencia a un cofre) y solo baja la deuda.
 3. **Cofres de Soledad (Distribución desde Chequera BancoEstado):**
    * `Chequera Electrónica`: Cuenta principal para cuentas del hogar Limache (~$286k).
    * `Tarjeta Smart Visa (BancoEstado)`: Línea de crédito en cuotas. Control de Cupo Total ($500k), Cuota pagada este mes ($50k), Deuda anterior facturada, compras del mes en vivo, deuda actual y cupo disponible.
@@ -163,6 +164,7 @@ sequenceDiagram
   $$\text{Remanente Nuevo Mes} = \max(0, \text{Remanente Anterior} + \text{Presupuesto Mes Cerrado} - \text{Gastos Registrados})$$
 * **Tarjeta Smart Visa (Crédito):**
   $$\text{Deuda Arrastrada al Nuevo Mes} = \max(0, \text{Deuda Anterior} + \text{Compras del Mes Cerrado} - \text{Cuota Pagada})$$
+* **Tarjeta de Crédito BCI (Diego):** misma fórmula con `Pago este mes` en lugar de la cuota; al cerrar, `tcBciConfig.pagoMes` vuelve a 0 (cada estado de cuenta es distinto) y el cupo se conserva.
 
 ---
 
@@ -170,7 +172,7 @@ sequenceDiagram
 
 | Clave en LocalStorage | Tipo de Dato | Descripción |
 | :--- | :--- | :--- |
-| `finanzas_user_profile` | Objeto JSON | Perfil financiero (`diegoSalary`, `soledadSalary`, `cofresDiego`, `cofresSoledad`, `remanentes`, `smartVisaConfig`). |
+| `finanzas_user_profile` | Objeto JSON | Perfil financiero (`diegoSalary`, `soledadSalary`, `cofresDiego`, `cofresSoledad`, `remanentes`, `smartVisaConfig`, `tcBciConfig`). |
 | `app_active_month` | String | Nombre del mes activo actual (ej: `"Noviembre 2026"`). |
 | `family_expenses` / `hogar_gastos` | Array JSON | Lista de gastos registrados del mes en curso. |
 | `audit_<Mes>` | Array JSON | Lista de boletas y compromisos del mes (`currentAuditItems`). |
@@ -185,6 +187,17 @@ sequenceDiagram
 ## 📜 5. Historial de Modificaciones
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
+
+### [2026-11-20] — Cofre de la Tarjeta de Crédito BCI en Cuentas: cupo, pago del mes y deuda (v80)
+* **Motivo:** La tarjeta BCI de Diego (v79) solo aparecía en el análisis; faltaba su cofre en Cuentas, como la Smart Visa de Soledad. Modelo distinto en un punto para no contar doble: las compras con la tarjeta cuentan como gasto del mes en que se hacen, pero el **pago no es un gasto**: es plata que se aparta de la cuenta principal (como una transferencia a un cofre) y baja la deuda; por eso se ingresa a mano en el cofre ("Pago este mes").
+* **Cambios:**
+  * `index.html` / `dashboard_pareja.html`: bloque "💳 Tarjeta de Crédito BCI (Mastercard)" tras los cofres de Diego (`inputTcBciCupo`, `inputTcBciPago`, `inputTcBciDeudaPrevia`, `displayTcBciGastosMes`, `displayTcBciDeudaActual`, `displayTcBciCupoDisponible`).
+  * `js/03-perfil-cofres.js`: `PERFIL_INICIAL.tcBciConfig = { cupoTotal, deudaPrevia, pagoMes }` (se mezcla al cargar y se vuelca a los campos en `syncProfileToInputs`); `updateTcBciDisplay()` (se llama al final de `updateSmartVisaDisplay`); `saveDiegoCofres` guarda la config; `updateDiegoColchonDisplay` descuenta el pago del remanente de la cuenta principal y lo nombra en la fórmula solo si hay pago; el gráfico de cofres suma la tajada del pago.
+  * `js/14-tarjetas.js`: `getPago` en las tarjetas de crédito (Smart Visa: cuota del mes; BCI: `pagoMes`) que usa el análisis; `fanDiego` (`getBudget`, `getTotalTransfersOut`), `getMachSemanal` (tercer parámetro: el pago baja el fondo de Fan) y `getLiquidezPersona('Diego')` (fondos y usado suben el pago: es plata del mes ya usada) cuentan el pago.
+  * `js/11-historial-cierre.js`: `confirmarCierreMes` arrastra la deuda de la tarjeta BCI (`max(0, deuda previa + compras − pago)`) y reinicia `pagoMes` a 0. Resuelve el pendiente de la v79.
+  * `js/04-graficos-inicio.js`: décima tajada "Pago tarjeta BCI (Diego)" en el gráfico de cofres, visible en la leyenda solo si hay pago.
+* **Archivos:** `index.html`, `dashboard_pareja.html`, `js/03-perfil-cofres.js`, `js/04-graficos-inicio.js`, `js/11-historial-cierre.js`, `js/14-tarjetas.js` (pruebas: `cofre tarjeta BCI: cupo, pago y deuda` en `qa-local/qa.cjs` y dos aserciones del pago sobre Mach en `test_cofres.mjs`).
+* **Pendiente:** subir versión (`subir_version.py`) y publicar.
 
 ### [2026-11-20] — Tarjeta de Crédito BCI y Cuenta Corriente BCI como Principal desde Diciembre (v79)
 * **Motivo:** Diego abrió cuenta corriente y tarjeta de crédito BCI. Desde diciembre 2026 el sueldo llega a BCI; la Cuenta Fan sigue abierta y todo se paga con débito.

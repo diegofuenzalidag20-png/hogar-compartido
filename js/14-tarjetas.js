@@ -74,6 +74,10 @@ let currentCardAnalysisFilter = 'all';
       if (owner === 'Diego') {
         const ajuste = getMachSemanal().ajuste;
         if (ajuste < 0) usado -= ajuste;
+        // El pago de la tarjeta BCI sale de la cuenta principal: es plata del mes ya usada
+        const pagoBci = userProfile.tcBciConfig?.pagoMes ?? 0;
+        fondos += pagoBci;
+        usado += pagoBci;
       } else {
         // La cuota Smart Visa sale de la Chequera: es plata del mes ya usada
         const cuota = getSmartReservaChequera();
@@ -128,7 +132,7 @@ let currentCardAnalysisFilter = 'all';
     }
 
     // Mach recibe una transferencia cada lunes desde Cuenta Fan, solo si Fan tenía fondos ese día
-    function getMachSemanal(tenpo = userProfile.cofresDiego?.tenpoHuasco ?? 0, mp = userProfile.cofresDiego?.mpAhorro ?? 0) {
+    function getMachSemanal(tenpo = userProfile.cofresDiego?.tenpoHuasco ?? 0, mp = userProfile.cofresDiego?.mpAhorro ?? 0, pagoBci = userProfile.tcBciConfig?.pagoMes ?? 0) {
       const cfg = userProfile.machSemanal || {};
       const monto = cfg.monto ?? 35000;
       const ajuste = cfg.ajuste ?? 0;
@@ -138,7 +142,7 @@ let currentCardAnalysisFilter = 'all';
       const mes = meses.indexOf(String(nombreMes).toLowerCase());
       const anio = parseInt(anioMes, 10);
       const hoy = getLocalDateISO();
-      const fondoFan = (userProfile.diegoSalary || 0) - tenpo - mp;
+      const fondoFan = (userProfile.diegoSalary || 0) - tenpo - mp - pagoBci;
       const gastosFan = expenses.filter(e => normalizeAccountKey(e.account) === 'fanDiego');
       const lunes = [];
       let liberado = 0;
@@ -283,6 +287,8 @@ let currentCardAnalysisFilter = 'all';
         sourceAccount: 'Cupo BCI',
         getBudget: () => userProfile.tcBciConfig?.cupoTotal ?? 900000,
         getRemanente: () => userProfile.tcBciConfig?.deudaPrevia ?? 0,
+        // El pago no es un gasto: sale de la cuenta principal y solo baja la deuda (las compras ya cuentan en su mes)
+        getPago: () => userProfile.tcBciConfig?.pagoMes ?? 0,
         color: '#F43F5E',
         badgeClass: 'badge-rose',
         icon: '💳'
@@ -296,11 +302,11 @@ let currentCardAnalysisFilter = 'all';
         sourceAccount: 'Sueldo Líquido Diego',
         getBudget: () => {
           const sal = userProfile.diegoSalary || PERFIL_INICIAL.diegoSalary;
-          const trans = (userProfile.cofresDiego?.tenpoHuasco ?? PERFIL_INICIAL.cofresDiego.tenpoHuasco) + getMachSemanal().liberado + (userProfile.cofresDiego?.mpAhorro ?? PERFIL_INICIAL.cofresDiego.mpAhorro);
+          const trans = (userProfile.cofresDiego?.tenpoHuasco ?? PERFIL_INICIAL.cofresDiego.tenpoHuasco) + getMachSemanal().liberado + (userProfile.cofresDiego?.mpAhorro ?? PERFIL_INICIAL.cofresDiego.mpAhorro) + (userProfile.tcBciConfig?.pagoMes ?? 0);
           return Math.max(0, sal - trans);
         },
         getTotalSalary: () => userProfile.diegoSalary || PERFIL_INICIAL.diegoSalary,
-        getTotalTransfersOut: () => (userProfile.cofresDiego?.tenpoHuasco ?? PERFIL_INICIAL.cofresDiego.tenpoHuasco) + getMachSemanal().liberado + (userProfile.cofresDiego?.mpAhorro ?? PERFIL_INICIAL.cofresDiego.mpAhorro),
+        getTotalTransfersOut: () => (userProfile.cofresDiego?.tenpoHuasco ?? PERFIL_INICIAL.cofresDiego.tenpoHuasco) + getMachSemanal().liberado + (userProfile.cofresDiego?.mpAhorro ?? PERFIL_INICIAL.cofresDiego.mpAhorro) + (userProfile.tcBciConfig?.pagoMes ?? 0),
         getRemanente: () => userProfile.remanentes?.fanDiego ?? 0,
         color: '#3B82F6',
         badgeClass: 'badge-blue',
@@ -348,6 +354,7 @@ let currentCardAnalysisFilter = 'all';
         sourceAccount: 'Cupo BancoEstado',
         getBudget: () => userProfile.smartVisaConfig?.cupoTotal ?? PERFIL_INICIAL.smartVisaConfig.cupoTotal,
         getRemanente: () => userProfile.smartVisaConfig?.deudaPrevia ?? 0,
+        getPago: () => getSmartCuotaDelMes(),
         color: '#F43F5E',
         badgeClass: 'badge-rose',
         icon: '💳'
@@ -454,10 +461,10 @@ let currentCardAnalysisFilter = 'all';
         const isSavingsCard = (cfg.key === 'mpDiego' || cfg.key === 'mpSoledad' || cfg.key === 'reservaSole');
         const isCreditCard = !!cfg.esCredito;
 
-        // Métricas de crédito: cupo y deuda previa salen de la config; solo la Smart Visa descuenta una cuota del mes
+        // Métricas de crédito: cupo y deuda previa salen de la config; cada tarjeta descuenta su pago del mes (getPago)
         const cardCreditCupo = isCreditCard ? budget : 0;
         const cardCreditDeudaPrevia = isCreditCard ? remanente : 0;
-        const cardCreditCuota = cfg.key === 'smartVisaSole' ? getSmartCuotaDelMes() : 0;
+        const cardCreditCuota = isCreditCard ? cfg.getPago() : 0;
         const cardCreditDeuda = isCreditCard ? Math.max(0, cardCreditDeudaPrevia + totalSpent - cardCreditCuota) : 0;
         const cardCreditDisponible = isCreditCard ? Math.max(0, cardCreditCupo - cardCreditDeuda) : 0;
 

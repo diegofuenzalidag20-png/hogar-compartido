@@ -1159,6 +1159,9 @@ tr.innerHTML = `
       const comprasSmartMes = spentByAcc['smartVisaSole'] || 0;
       const deudaRestanteSmart = Math.max(0, deudaAnteriorSmart + comprasSmartMes - cuotaSmart);
 
+      // Tarjeta de crédito BCI: la deuda anterior más las compras del mes, menos lo pagado, pasa al siguiente mes
+      const deudaRestanteBci = Math.max(0, (userProfile.tcBciConfig?.deudaPrevia || 0) + (spentByAcc['tcBciDiego'] || 0) - (userProfile.tcBciConfig?.pagoMes || 0));
+
       // Asignar los saldos sobrantes como Remanente Mes Pasado del NUEVO mes
       userProfile.remanentes = {
         mpDiego: saldoRemanenteMPDiego,
@@ -1175,6 +1178,13 @@ tr.innerHTML = `
         cupoTotal: userProfile.smartVisaConfig?.cupoTotal || PERFIL_INICIAL.smartVisaConfig.cupoTotal,
         deudaPrevia: deudaRestanteSmart,
         cuotaMes: userProfile.cofresSoledad?.smartVisa ?? 0
+      };
+
+      // El pago de la tarjeta BCI vale solo para el estado de cuenta que se cierra: el siguiente parte en $0
+      userProfile.tcBciConfig = {
+        cupoTotal: userProfile.tcBciConfig?.cupoTotal ?? PERFIL_INICIAL.tcBciConfig.cupoTotal,
+        deudaPrevia: deudaRestanteBci,
+        pagoMes: 0
       };
 
       // El ajuste y las excepciones valen solo para el mes que se cierra

@@ -22,7 +22,8 @@
         const tenpoS = userProfile.cofresSoledad?.tenpoBolsillo ?? PERFIL_INICIAL.cofresSoledad.tenpoBolsillo;
         const mpS = userProfile.cofresSoledad?.mpAhorro ?? PERFIL_INICIAL.cofresSoledad.mpAhorro;
         const bancoS = userProfile.cofresSoledad?.bancoReserva ?? PERFIL_INICIAL.cofresSoledad.bancoReserva;
-        const totalCofres = fan + tenpoD + mach + mpD + cheq + smart + tenpoS + mpS + bancoS;
+        const pagoBci = userProfile.tcBciConfig?.pagoMes ?? 0;
+        const totalCofres = fan + tenpoD + mach + mpD + cheq + smart + tenpoS + mpS + bancoS + pagoBci;
 
         const subTitleEl = document.getElementById('dashCofresSubtitle');
         if (subTitleEl) subTitleEl.textContent = `Asignación porcentual de compromisos mensuales (${formatCLP(totalCofres)})`;
@@ -39,13 +40,14 @@
               'Smart Visa (Soledad)',
               'Bolsillo Tenpo (Soledad)',
               'Ahorro MP (Soledad)',
-              'Reserva BancoEstado (Soledad)'
+              'Reserva BancoEstado (Soledad)',
+              'Pago tarjeta BCI (Diego)'
             ],
             datasets: [{
-              data: [fan, tenpoD, mach, mpD, cheq, smart, tenpoS, mpS, bancoS],
+              data: [fan, tenpoD, mach, mpD, cheq, smart, tenpoS, mpS, bancoS, pagoBci],
               backgroundColor: [
                 '#3B82F6', '#F59E0B', '#06B6D4', '#10B981',
-                '#A855F7', '#EC4899', '#8B5CF6', '#14B8A6', '#38BDF8'
+                '#A855F7', '#EC4899', '#8B5CF6', '#14B8A6', '#38BDF8', '#F43F5E'
               ],
               borderWidth: 2,
               borderColor: chartBorderColor()
@@ -57,7 +59,8 @@
             plugins: {
               legend: {
                 position: mobileLayout.matches ? 'bottom' : 'right',
-                labels: { color: chartTextColor(), font: { size: 10, weight: '600' }, boxWidth: 12 }
+                // La tajada del pago de la tarjeta BCI (la décima) solo sale en la leyenda cuando hay pago
+                labels: { color: chartTextColor(), font: { size: 10, weight: '600' }, boxWidth: 12, filter: (item, data) => item.index < 9 || data.datasets[0].data[item.index] > 0 }
               },
               tooltip: {
                 callbacks: {

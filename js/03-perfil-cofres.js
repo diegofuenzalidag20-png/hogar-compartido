@@ -34,6 +34,11 @@
         cupoTotal: 500000,
         deudaPrevia: 0,
         cuotaMes: 50000
+      },
+      tcBciConfig: {
+        cupoTotal: 900000,
+        deudaPrevia: 0,
+        pagoMes: 0
       }
     });
     let userProfile = JSON.parse(JSON.stringify(PERFIL_INICIAL));
@@ -49,7 +54,8 @@
             cofresDiego: { ...userProfile.cofresDiego, ...(parsed.cofresDiego || {}) },
             cofresSoledad: { ...userProfile.cofresSoledad, ...(parsed.cofresSoledad || {}) },
             remanentes: { ...userProfile.remanentes, ...(parsed.remanentes || {}) },
-            smartVisaConfig: { ...userProfile.smartVisaConfig, ...(parsed.smartVisaConfig || {}) }
+            smartVisaConfig: { ...userProfile.smartVisaConfig, ...(parsed.smartVisaConfig || {}) },
+            tcBciConfig: { ...userProfile.tcBciConfig, ...(parsed.tcBciConfig || {}) }
           };
         } catch(e) {}
       }
@@ -118,6 +124,16 @@
 
       const inRemDiegoMP = document.getElementById('inputRemanenteMPDiego');
       if (inRemDiegoMP) inRemDiegoMP.value = userProfile.remanentes?.mpDiego ?? 0;
+
+      // 4c. Tarjeta de crédito BCI de Diego
+      const inTcCupo = document.getElementById('inputTcBciCupo');
+      if (inTcCupo) inTcCupo.value = userProfile.tcBciConfig?.cupoTotal ?? PERFIL_INICIAL.tcBciConfig.cupoTotal;
+
+      const inTcPago = document.getElementById('inputTcBciPago');
+      if (inTcPago) inTcPago.value = userProfile.tcBciConfig?.pagoMes ?? 0;
+
+      const inTcDeuda = document.getElementById('inputTcBciDeudaPrevia');
+      if (inTcDeuda) inTcDeuda.value = userProfile.tcBciConfig?.deudaPrevia ?? 0;
 
       // 5. Inputs de Cofres Soledad
       const elSoleSmart = document.getElementById('inputCofreSoleSmart');
@@ -188,17 +204,18 @@
       const salary = userProfile.diegoSalary || PERFIL_INICIAL.diegoSalary;
       const tenpo = parseInt(document.getElementById('inputCofreTenpo')?.value, 10) || 0;
       const mp = parseInt(document.getElementById('inputCofreMP')?.value, 10) || 0;
+      const pagoBci = readMoney('inputTcBciPago', userProfile.tcBciConfig?.pagoMes ?? 0);
       const montoMach = readMoney('inputCofreMach', userProfile.machSemanal?.monto ?? 35000);
       if (montoMach !== (userProfile.machSemanal?.monto ?? 35000)) userProfile.machSemanal = { ...(userProfile.machSemanal || {}), monto: montoMach };
-      const machPlan = getMachSemanal(tenpo, mp);
+      const machPlan = getMachSemanal(tenpo, mp, pagoBci);
       const mach = machPlan.liberado;
       const remTenpo = parseInt(document.getElementById('inputRemanenteTenpoDiego')?.value, 10) || 0;
       const remMach = parseInt(document.getElementById('inputRemanenteMachDiego')?.value, 10) || 0;
       const remMP = parseInt(document.getElementById('inputRemanenteMPDiego')?.value, 10) || 0;
 
       const totalTransferencias = tenpo + mach + mp;
-      // Remanente en Cuenta Fan = Sueldo - Transferencias a Tenpo, Mach y MP
-      const remanenteFan = Math.max(0, salary - totalTransferencias);
+      // Remanente en Cuenta Fan = Sueldo - Transferencias a Tenpo, Mach y MP - pago de la tarjeta BCI (no es un gasto: se aparta de la cuenta principal)
+      const remanenteFan = Math.max(0, salary - totalTransferencias - pagoBci);
 
       const elFan = document.getElementById('inputCofreFan');
       if (elFan) {
@@ -209,6 +226,7 @@
       userProfile.cofresDiego.tenpoHuasco = tenpo;
       userProfile.cofresDiego.machBolsillo = mach;
       userProfile.cofresDiego.mpAhorro = mp;
+      userProfile.tcBciConfig = { ...userProfile.tcBciConfig, pagoMes: pagoBci };
 
       userProfile.remanentes = userProfile.remanentes || {};
       userProfile.remanentes.tenpoDiego = remTenpo;
@@ -232,7 +250,7 @@
 
       const elDesc = document.getElementById('diegoFanFormulaDesc');
       if (elDesc) {
-        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, Mach: ${formatCLP(mach)}, MP: ${formatCLP(mp)})<br>💰 <strong>Saldo disponible restante en ${nombreCuenta}:</strong> <strong style="color:#60A5FA;">${formatCLP(remanenteFan)}</strong>${overAssignWarning(totalTransferencias, salary)}`;
+        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, Mach: ${formatCLP(mach)}, MP: ${formatCLP(mp)})${pagoBci > 0 ? ` · Pago tarjeta BCI: ${formatCLP(pagoBci)}` : ''}<br>💰 <strong>Saldo disponible restante en ${nombreCuenta}:</strong> <strong style="color:#60A5FA;">${formatCLP(remanenteFan)}</strong>${overAssignWarning(totalTransferencias + pagoBci, salary)}`;
       }
 
       const colchon = getCuentaPrincipalDisponible('Diego');
@@ -345,6 +363,31 @@
       if (elCupoDisp) elCupoDisp.textContent = formatCLP(cupoDisponible);
 
       localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
+      updateTcBciDisplay(); // la tarjeta BCI de Diego se refresca en los mismos lugares que la Smart Visa
+    }
+
+    // CÁLCULO Y CONTROL EN TIEMPO REAL: TARJETA DE CRÉDITO BCI (DIEGO)
+    // Las compras ya son gasto del mes en que se hacen; el pago no es gasto: sale de la cuenta principal y baja la deuda
+    function updateTcBciDisplay() {
+      const cupo = readMoney('inputTcBciCupo', userProfile.tcBciConfig?.cupoTotal ?? PERFIL_INICIAL.tcBciConfig.cupoTotal);
+      const pago = readMoney('inputTcBciPago', userProfile.tcBciConfig?.pagoMes ?? 0);
+      const deudaPrevia = readMoney('inputTcBciDeudaPrevia', userProfile.tcBciConfig?.deudaPrevia ?? 0);
+      const comprasMes = expenses.reduce((acc, e) => normalizeAccountKey(e.account) === 'tcBciDiego' ? acc + (Number(e.amount) || 0) : acc, 0);
+      const deudaActual = Math.max(0, deudaPrevia + comprasMes - pago);
+      const cupoDisponible = Math.max(0, cupo - deudaActual);
+
+      userProfile.tcBciConfig = { cupoTotal: cupo, deudaPrevia, pagoMes: pago };
+
+      const elCompras = document.getElementById('displayTcBciGastosMes');
+      if (elCompras) elCompras.textContent = formatCLP(comprasMes);
+
+      const elDeuda = document.getElementById('displayTcBciDeudaActual');
+      if (elDeuda) elDeuda.textContent = formatCLP(deudaActual);
+
+      const elCupoDisp = document.getElementById('displayTcBciCupoDisponible');
+      if (elCupoDisp) elCupoDisp.textContent = formatCLP(cupoDisponible);
+
+      localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
     }
 
     // Modificación de sueldo en vivo al teclear en las casillas de tab-cuentas
@@ -378,16 +421,22 @@
       const salary = userProfile.diegoSalary || PERFIL_INICIAL.diegoSalary;
       const tenpo = readMoney('inputCofreTenpo', userProfile.cofresDiego?.tenpoHuasco ?? 0);
       const mp = readMoney('inputCofreMP', userProfile.cofresDiego?.mpAhorro ?? 0);
+      const pagoBci = readMoney('inputTcBciPago', userProfile.tcBciConfig?.pagoMes ?? 0);
       const montoMach = readMoney('inputCofreMach', userProfile.machSemanal?.monto ?? 35000);
       if (montoMach !== (userProfile.machSemanal?.monto ?? 35000)) userProfile.machSemanal = { ...(userProfile.machSemanal || {}), monto: montoMach };
-      const mach = getMachSemanal(tenpo, mp).liberado;
-      const fan = Math.max(0, salary - (tenpo + mach + mp));
+      const mach = getMachSemanal(tenpo, mp, pagoBci).liberado;
+      const fan = Math.max(0, salary - (tenpo + mach + mp + pagoBci));
 
       const remanenteTenpo = parseInt(document.getElementById('inputRemanenteTenpoDiego')?.value, 10) || 0;
       const remanenteMach = parseInt(document.getElementById('inputRemanenteMachDiego')?.value, 10) || 0;
       const remanenteMP = parseInt(document.getElementById('inputRemanenteMPDiego')?.value, 10) || 0;
 
       userProfile.cofresDiego = { fanFijos: fan, tenpoHuasco: tenpo, machBolsillo: mach, mpAhorro: mp };
+      userProfile.tcBciConfig = {
+        cupoTotal: readMoney('inputTcBciCupo', userProfile.tcBciConfig?.cupoTotal ?? PERFIL_INICIAL.tcBciConfig.cupoTotal),
+        deudaPrevia: readMoney('inputTcBciDeudaPrevia', userProfile.tcBciConfig?.deudaPrevia ?? 0),
+        pagoMes: pagoBci
+      };
       userProfile.remanentes = userProfile.remanentes || {};
       userProfile.remanentes.tenpoDiego = remanenteTenpo;
       userProfile.remanentes.machDiego = remanenteMach;
@@ -465,11 +514,12 @@
         const tenpoS = userProfile.cofresSoledad?.tenpoBolsillo ?? PERFIL_INICIAL.cofresSoledad.tenpoBolsillo;
         const mpS = userProfile.cofresSoledad?.mpAhorro ?? PERFIL_INICIAL.cofresSoledad.mpAhorro;
         const bancoS = userProfile.cofresSoledad?.bancoReserva ?? PERFIL_INICIAL.cofresSoledad.bancoReserva;
+        const pagoBci = userProfile.tcBciConfig?.pagoMes ?? 0;
 
-        chartCofres.data.datasets[0].data = [fan, tenpoD, mach, mpD, cheq, smart, tenpoS, mpS, bancoS];
+        chartCofres.data.datasets[0].data = [fan, tenpoD, mach, mpD, cheq, smart, tenpoS, mpS, bancoS, pagoBci];
         chartCofres.update();
 
-        const totalCofres = fan + tenpoD + mach + mpD + cheq + smart + tenpoS + mpS + bancoS;
+        const totalCofres = fan + tenpoD + mach + mpD + cheq + smart + tenpoS + mpS + bancoS + pagoBci;
         const subTitleEl = document.getElementById('dashCofresSubtitle');
         if (subTitleEl) subTitleEl.textContent = `Asignación porcentual de compromisos mensuales (${formatCLP(totalCofres)})`;
       }

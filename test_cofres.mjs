@@ -50,9 +50,9 @@ assert.deepEqual(items.map((i) => i.base), [0, 5000, 20000]);
 assert.equal(items[0].fromQuickBill, true);
 
 // Mach: cada lunes se transfiere solo si Cuenta Fan tenía fondos
-const mach = (salario, gastos, cfg = {}, rem = 22725) => new Function('expenses', 'userProfile', 'currentActiveMonth', 'getLocalDateISO',
+const mach = (salario, gastos, cfg = {}, rem = 22725, pagoBci = 0) => new Function('expenses', 'userProfile', 'currentActiveMonth', 'getLocalDateISO',
   `${fn('normalizeAccountKey')}\n${fn('getMachSemanal')}\nreturn getMachSemanal();`)(
-  gastos, { diegoSalary: salario, cofresDiego: { tenpoHuasco: 0, mpAhorro: 0 }, remanentes: { machDiego: rem }, machSemanal: cfg }, 'Noviembre 2026', () => '2026-11-09',
+  gastos, { diegoSalary: salario, cofresDiego: { tenpoHuasco: 0, mpAhorro: 0 }, remanentes: { machDiego: rem }, machSemanal: cfg, tcBciConfig: { pagoMes: pagoBci } }, 'Noviembre 2026', () => '2026-11-09',
 );
 const fan = (date, amount) => ({ account: 'Cuenta Fan', date, amount });
 const normal = mach(1000000, []);
@@ -68,5 +68,8 @@ assert.equal(mach(500000, [fan('2026-11-05', 480000)], { excepciones: { '2026-11
 assert.equal(mach(1000000, [], { excepciones: { '2026-11-02': false } }).liberado, 35000);
 assert.equal(mach(1000000, [], { ajuste: -43880 }).disponible, 48845);
 assert.equal(mach(1000000, [{ account: 'Mach', date: '2026-11-03', amount: 5000 }]).disponible, 87725);
+// El pago de la tarjeta BCI sale de Cuenta Fan: si lo aparta casi todo, Mach no recibe el lunes
+assert.equal(mach(500000, [], {}, 22725, 0).liberado, 70000);
+assert.equal(mach(500000, [], {}, 22725, 480000).liberado, 0);
 
 console.log('OK: cuota Smart Visa, disponible, presupuesto y Mach semanal');
