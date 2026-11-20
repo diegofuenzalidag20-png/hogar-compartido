@@ -186,6 +186,14 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-20] — Cuentas BCI de Diego: Mantención y Administración de Tarjeta (v78)
+* **Motivo:** Diego abrió cuenta corriente BCI (Plan Bci Plus+, 0,15 UF/mes con sueldo abonado; 0,30 UF sin él) y tarjeta de crédito Mastercard Platinum (administración 0,17 UF/mes; la semestral de 2 UF queda exenta con el plan). Total ~$13.221/mes.
+* **Solución Técnica:**
+  * Categorías nuevas en "Vivienda & Compromisos Financieros": "Mantención Cuenta Corriente BCI" y "Administración Tarjeta de Crédito BCI" (grupo "Dividendo y créditos").
+  * Medios de pago de Diego: "BCI · Cuenta corriente" y "BCI · Tarjeta de crédito".
+  * Cuentas fijas `item-32` (mantención, $6.197) e `item-33` (administración tarjeta, $7.024) en el checklist, el recordatorio y la plantilla de meses nuevos; en la nube se agregan al presupuesto de noviembre.
+* **Archivos Modificados:** `index.html`, `dashboard_pareja.html`, `js/02-presupuesto.js`, `js/06-checklist.js`, `js/13-categorias.js`, `sw.js`.
+* **Impacto:** Los dos cobros mensuales de BCI se registran, se recuerdan y cuentan como gasto fijo.
 ### [2026-11-19] — Grupos "Salud y remedios", "Huasco y traslados" y "Salidas y panoramas" (v77)
 * **Motivo:** Nombres que ya no reflejaban su contenido (sin educación tras quitar Waldorf; "Logística" era vago) y uso mezclado de "&" e "y".
 * **Solución Técnica:** `CATEGORIAS_GASTO` (13-categorias): "Salud & Educación" → "Salud y remedios", "Logística Huasco" → "Huasco y traslados", "Salidas & Panoramas" → "Salidas y panoramas" (también el título del grupo en la lista de categorías). Solo cambia el nombre visible.

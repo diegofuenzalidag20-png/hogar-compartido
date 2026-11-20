@@ -12,7 +12,7 @@
 
     // Normalizador de categorías para vincular la tabla de gastos a los gráficos
     const CATEGORIAS_GASTO = [
-      { nombre: 'Dividendo y créditos', patron: /hipotec|vivienda|smart visa|cr[eé]dito|dividendo/, incluye: 'Dividendo hipotecario y cuota de la tarjeta Smart Visa.' },
+      { nombre: 'Dividendo y créditos', patron: /hipotec|vivienda|smart visa|cr[eé]dito|dividendo|mantenci[oó]n cuenta/, incluye: 'Dividendo hipotecario y cuota de la tarjeta Smart Visa.' },
       { nombre: 'Mascotas (Michis)', patron: /michi|mascota|\bgatos?\b|arena|veterin/, incluye: 'Comida, arena y veterinario de los michis.' },
       { nombre: 'Huasco y traslados', patron: /huasco|pasaje|\bbus\b|arriendo habitaci|turno|uber|colectivo|traslado|metro|moviliz|operaciones/, incluye: 'Arriendo y servicios en Huasco, pasajes, Uber, metro y comida de turno.' },
       // Antes que Alimentación: una salida que no es comida (paseo, entrada, terapia) no infla lo que se gasta en comer

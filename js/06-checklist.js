@@ -4,6 +4,9 @@
     const CHECKLIST_FIJOS = {
       'item-1': { p: /aporte fijo/ },
       'item-1b': { p: /diferencial uf/ },
+      // Cuentas BCI de Diego: dos cobros mensuales en UF (plan de la cuenta corriente y administración de la tarjeta)
+      'item-32': { p: /mantenci[oó]n cuenta corriente/ },
+      'item-33': { p: /administraci[oó]n tarjeta de cr[eé]dito/ },
       'item-2': { p: /arriendo habitaci/, conHuasco: true },
       'item-3': { p: /servicios huasco/, conHuasco: true },
       'item-17': { p: /\bluz\b|chilquinta/ },

@@ -29,6 +29,8 @@
       { id: 'item-20c', name: 'Internet Hogar', cat: 'Hogar Limache', resp: 'Soledad', cuenta: 'Chequera BancoEstado', base: 22000, actual: 22000 },
       { id: 'item-21', name: 'Gasto Común Condominio', cat: 'Hogar Limache', resp: 'Soledad', cuenta: 'Chequera BancoEstado', base: 56315, actual: 56315 },
       { id: 'item-22', name: 'Supermercado Hogar Limache', cat: 'Alimentación', resp: 'Soledad', cuenta: 'Chequera BancoEstado', base: 120000, actual: 120000 },
+      { id: 'item-32', name: 'Mantención Cuenta Corriente BCI (0,15 UF)', cat: 'Mantención Cuenta Corriente BCI', resp: 'Diego', cuenta: 'BCI Cuenta Corriente', base: 6197, actual: 0 },
+      { id: 'item-33', name: 'Administración Tarjeta de Crédito BCI (0,17 UF)', cat: 'Administración Tarjeta de Crédito BCI', resp: 'Diego', cuenta: 'BCI Cuenta Corriente', base: 7024, actual: 0 },
       { id: 'item-23', name: 'Tarjeta Smart Visa (Compromiso)', cat: 'Compromisos / Crédito', resp: 'Soledad', cuenta: 'Tarjeta Smart Visa', base: 50000, actual: 50000 },
       { id: 'item-24', name: 'Aseo Domiciliario (Cuota Trimestral)', cat: 'Contribuciones', resp: 'Soledad', cuenta: 'Chequera BancoEstado', base: 13841, actual: 13841 },
       { id: 'item-26', name: 'Vacunas / Salud Michis', cat: 'Mascotas', resp: 'Soledad', cuenta: 'Chequera BancoEstado', base: 45000, actual: 45000 }
