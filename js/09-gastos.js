@@ -253,7 +253,7 @@
       if (index < 0 || index >= expenses.length) return;
       const exp = expenses[index];
       document.getElementById('editExpIndex').value = index;
-      document.getElementById('editExpDate').value = exp.date || new Date().toISOString().split('T')[0];
+      document.getElementById('editExpDate').value = exp.date || getLocalDateISO();
       document.getElementById('editExpPayer').value = exp.payer || 'Diego';
       document.getElementById('editExpDesc').value = exp.desc || '';
       document.getElementById('editExpAmount').value = exp.amount || 0;
@@ -466,7 +466,7 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `Gastos_Hogar_${new Date().toISOString().slice(0,10)}.csv`);
+      link.setAttribute('download', `Gastos_Hogar_${getLocalDateISO()}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

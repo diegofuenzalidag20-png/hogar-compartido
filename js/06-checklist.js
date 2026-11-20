@@ -198,8 +198,8 @@
         const statusText = pagos.length ? formatCLP(pagado) : alDia ? 'Al día' : aunNoSeCobra ? `Se cobra ~${diaCobro}` : 'Falta';
         const proxima = ciclo?.proxima ? ` · próxima compra ~${ciclo.proxima}` : '';
         const detalle = pagos.length
-          ? (pagos.length > 1 && !ciclo ? `${pagos.length} pagos registrados · revisa si se repitió` : `Pagado el ${escapeHtml(pagos[pagos.length - 1].date || '')}${proxima}`)
-          : alDia ? `Comprado el ${ciclo.ultima}${proxima}`
+          ? (pagos.length > 1 && !ciclo ? `${pagos.length} pagos registrados · revisa si se repitió` : `Pagado el <span style="white-space:nowrap">${escapeHtml(pagos[pagos.length - 1].date || '')}</span>${proxima}`)
+          : alDia ? `Comprado el <span style="white-space:nowrap">${ciclo.ultima}</span>${proxima}`
           : aunNoSeCobra ? `Aún no toca · aprox. ${formatCLP(item.base)} cerca del día ${diaCobro}`
           : `${ciclo?.ultima ? `Última compra ${ciclo.ultima} · ` : ''}Aprox. ${formatCLP(item.base)} · toca para registrar`;
 

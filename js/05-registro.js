@@ -507,7 +507,7 @@
       if (elAmt) elAmt.value = '';
       if (elDesc) elDesc.value = '';
       const elDate = document.getElementById('exp-date');
-      if (elDate) elDate.value = new Date().toISOString().split('T')[0];
+      if (elDate) elDate.value = getLocalDateISO();
       if (elAmt) elAmt.focus();
       syncAllGlassSelects();
       showToast('🧹 Casillas de gasto diario limpiadas');

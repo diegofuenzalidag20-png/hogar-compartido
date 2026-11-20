@@ -803,8 +803,8 @@ let currentCardAnalysisFilter = 'all';
         <div class="hist-principal"><small>${r.ultimo.code}</small><strong>${formatCLP(r.ultimo[cuenta.k])}</strong>${comparacionHist(r, cuenta.k)}</div>
         <div class="hist-datos">
           <div><small>Promedio</small><strong>${formatCLP(r.promedio)}</strong></div>
-          <div><small>Máximo · ${r.maximo.code}</small><strong class="hist-sube">${formatCLP(r.maximo[cuenta.k])}</strong></div>
-          <div><small>Mínimo · ${r.minimo.code}</small><strong class="hist-baja">${formatCLP(r.minimo[cuenta.k])}</strong></div>
+          <div><small>Máximo · <span style="white-space:nowrap">${r.maximo.code}</span></small><strong class="hist-sube">${formatCLP(r.maximo[cuenta.k])}</strong></div>
+          <div><small>Mínimo · <span style="white-space:nowrap">${r.minimo.code}</span></small><strong class="hist-baja">${formatCLP(r.minimo[cuenta.k])}</strong></div>
         </div>`;
 
       document.getElementById('histResumen').innerHTML = HIST_CUENTAS.map(c => {

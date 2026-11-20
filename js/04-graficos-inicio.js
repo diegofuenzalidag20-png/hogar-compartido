@@ -168,7 +168,7 @@
       }
 
       // 2. Crear o actualizar inteligentemente en la Tabla de Gastos Registrados Diarios
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateISO();
       const dateStr = currentActiveMonth && currentActiveMonth.includes('-') ? `${currentActiveMonth}-05` : today;
 
       // Gasto Diego ($365.000)

@@ -540,6 +540,8 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      // Destapa el contenido en el primer cuadro después de dibujar (ver html.cargando en css/app.css)
+      requestAnimationFrame(() => document.documentElement.classList.remove('cargando'));
       initTheme();
       placeQuickCard();
       mobileLayout.addEventListener('change', placeQuickCard);
@@ -577,7 +579,7 @@
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=82').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=83').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }

@@ -1464,7 +1464,7 @@ tr.innerHTML = `
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `base_de_datos_finanzas_pareja_${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `base_de_datos_finanzas_pareja_${getLocalDateISO()}.json`;
       a.click();
       URL.revokeObjectURL(url);
       showToast('📥 Base de Datos descargada en formato JSON.');
