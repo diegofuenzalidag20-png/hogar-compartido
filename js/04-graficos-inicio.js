@@ -23,7 +23,8 @@
         const mpS = userProfile.cofresSoledad?.mpAhorro ?? PERFIL_INICIAL.cofresSoledad.mpAhorro;
         const bancoS = userProfile.cofresSoledad?.bancoReserva ?? PERFIL_INICIAL.cofresSoledad.bancoReserva;
         const pagoBci = userProfile.tcBciConfig?.pagoMes ?? 0;
-        const totalCofres = fan + tenpoD + mach + mpD + cheq + smart + tenpoS + mpS + bancoS + pagoBci;
+        const pagoSmart = userProfile.smartVisaConfig?.pagoCompras ?? 0;
+        const totalCofres = fan + tenpoD + mach + mpD + cheq + smart + tenpoS + mpS + bancoS + pagoBci + pagoSmart;
 
         const subTitleEl = document.getElementById('dashCofresSubtitle');
         if (subTitleEl) subTitleEl.textContent = `Asignación porcentual de compromisos mensuales (${formatCLP(totalCofres)})`;
@@ -41,13 +42,14 @@
               'Bolsillo Tenpo (Soledad)',
               'Ahorro MP (Soledad)',
               'Reserva BancoEstado (Soledad)',
-              'Pago tarjeta BCI (Diego)'
+              'Pago tarjeta BCI (Diego)',
+              'Pago compras Smart (Soledad)'
             ],
             datasets: [{
-              data: [fan, tenpoD, mach, mpD, cheq, smart, tenpoS, mpS, bancoS, pagoBci],
+              data: [fan, tenpoD, mach, mpD, cheq, smart, tenpoS, mpS, bancoS, pagoBci, pagoSmart],
               backgroundColor: [
                 '#3B82F6', '#F59E0B', '#06B6D4', '#10B981',
-                '#A855F7', '#EC4899', '#8B5CF6', '#14B8A6', '#38BDF8', '#F43F5E'
+                '#A855F7', '#EC4899', '#8B5CF6', '#14B8A6', '#38BDF8', '#F43F5E', '#84CC16'
               ],
               borderWidth: 2,
               borderColor: chartBorderColor()
@@ -59,7 +61,7 @@
             plugins: {
               legend: {
                 position: mobileLayout.matches ? 'bottom' : 'right',
-                // La tajada del pago de la tarjeta BCI (la décima) solo sale en la leyenda cuando hay pago
+                // Las tajadas de pago de tarjeta (BCI y compras Smart, la décima y la undécima) solo salen en la leyenda cuando hay pago
                 labels: { color: chartTextColor(), font: { size: 10, weight: '600' }, boxWidth: 12, filter: (item, data) => item.index < 9 || data.datasets[0].data[item.index] > 0 }
               },
               tooltip: {

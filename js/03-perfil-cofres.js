@@ -33,7 +33,8 @@
       smartVisaConfig: {
         cupoTotal: 500000,
         deudaPrevia: 0,
-        cuotaMes: 50000
+        cuotaMes: 50000,
+        pagoCompras: 0
       },
       tcBciConfig: {
         cupoTotal: 900000,
@@ -162,6 +163,9 @@
       const inSmartDeuda = document.getElementById('inputSmartVisaDeudaPrevia');
       if (inSmartDeuda) inSmartDeuda.value = userProfile.smartVisaConfig?.deudaPrevia ?? 0;
 
+      const inSmartPagoCompras = document.getElementById('inputSmartVisaPagoCompras');
+      if (inSmartPagoCompras) inSmartPagoCompras.value = userProfile.smartVisaConfig?.pagoCompras ?? 0;
+
       // 6. Actualizar KPIs del Dashboard Resumen
       const dashIngTotal = document.getElementById('dashKpiIngresosTotal');
       const dashIngSub = document.getElementById('dashKpiIngresosSub');
@@ -277,10 +281,12 @@
       const remTenpo = parseInt(document.getElementById('inputRemanenteTenpoSole')?.value, 10) || 0;
       const remMP = parseInt(document.getElementById('inputRemanenteMPSole')?.value, 10) || 0;
       const remBanco = parseInt(document.getElementById('inputRemanenteBancoSole')?.value, 10) || 0;
+      const pagoCompras = readMoney('inputSmartVisaPagoCompras', userProfile.smartVisaConfig?.pagoCompras ?? 0);
 
-      // Smart Visa cuota ES parte de las transferencias desde Chequera
+      // Smart Visa cuota ES parte de las transferencias desde Chequera; el pago de las compras nuevas también
+      // (no es un gasto: las compras ya cuentan al hacerlas, el pago solo aparta plata de la Chequera)
       const smartReserva = getSmartReservaChequera(smart);
-      const totalTransferencias = tenpo + mp + banco + smartReserva;
+      const totalTransferencias = tenpo + mp + banco + smartReserva + pagoCompras;
       const remanenteChequera = Math.max(0, salary - totalTransferencias);
 
       const elCheq = document.getElementById('inputCofreSoleChequera');
@@ -293,6 +299,7 @@
       userProfile.cofresSoledad.tenpoBolsillo = tenpo;
       userProfile.cofresSoledad.mpAhorro = mp;
       userProfile.cofresSoledad.bancoReserva = banco;
+      userProfile.smartVisaConfig = { ...userProfile.smartVisaConfig, pagoCompras };
 
       userProfile.remanentes = userProfile.remanentes || {};
       userProfile.remanentes.tenpoSoledad = remTenpo;
@@ -311,7 +318,7 @@
 
       const elDesc = document.getElementById('soleChequeraFormulaDesc');
       if (elDesc) {
-        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, MP: ${formatCLP(mp)}, Reserva: ${formatCLP(banco)}, Smart Visa: ${formatCLP(smartReserva)})<br>💰 <strong>Saldo disponible restante en Chequera:</strong> <strong style="color:#C084FC;">${formatCLP(remanenteChequera)}</strong>${overAssignWarning(totalTransferencias, salary)}`;
+        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, MP: ${formatCLP(mp)}, Reserva: ${formatCLP(banco)}, Smart Visa: ${formatCLP(smartReserva)}${pagoCompras > 0 ? `, Pago compras Smart: ${formatCLP(pagoCompras)}` : ''})<br>💰 <strong>Saldo disponible restante en Chequera:</strong> <strong style="color:#C084FC;">${formatCLP(remanenteChequera)}</strong>${overAssignWarning(totalTransferencias, salary)}`;
       }
 
       const remanenteLibre = getCuentaPrincipalDisponible('Soledad');
@@ -333,6 +340,7 @@
       const cupo = readMoney('inputSmartVisaCupo', userProfile.smartVisaConfig?.cupoTotal ?? PERFIL_INICIAL.smartVisaConfig.cupoTotal);
       const cuota = readMoney('inputCofreSoleSmart', userProfile.cofresSoledad?.smartVisa ?? 0);
       const deudaPrevia = readMoney('inputSmartVisaDeudaPrevia', userProfile.smartVisaConfig?.deudaPrevia ?? 0);
+      const pagoCompras = readMoney('inputSmartVisaPagoCompras', userProfile.smartVisaConfig?.pagoCompras ?? 0);
 
       // Calcular compras de este mes con Smart Visa en vivo desde expenses
       let comprasMes = 0;
@@ -344,13 +352,15 @@
         });
       }
 
-      const deudaActual = Math.max(0, deudaPrevia + comprasMes - getSmartCuotaDelMes(cuota));
+      // La cuota baja la deuda antigua (cuenta como gasto); el pago de compras nuevas baja la deuda de lo ya contado al comprar (no es gasto)
+      const deudaActual = Math.max(0, deudaPrevia + comprasMes - getSmartCuotaDelMes(cuota) - pagoCompras);
       const cupoDisponible = Math.max(0, cupo - deudaActual);
 
       userProfile.smartVisaConfig = {
         cupoTotal: cupo,
         deudaPrevia: deudaPrevia,
-        cuotaMes: cuota
+        cuotaMes: cuota,
+        pagoCompras
       };
 
       const elCompras = document.getElementById('displaySmartVisaGastosMes');
@@ -459,7 +469,8 @@
       const tenpo = readMoney('inputCofreSoleTenpo', userProfile.cofresSoledad?.tenpoBolsillo ?? 0);
       const mp = readMoney('inputCofreSoleMP', userProfile.cofresSoledad?.mpAhorro ?? 0);
       const banco = readMoney('inputCofreSoleBanco', userProfile.cofresSoledad?.bancoReserva ?? 0);
-      const chequera = Math.max(0, salary - (tenpo + mp + banco + getSmartReservaChequera(smart)));
+      const pagoCompras = readMoney('inputSmartVisaPagoCompras', userProfile.smartVisaConfig?.pagoCompras ?? 0);
+      const chequera = Math.max(0, salary - (tenpo + mp + banco + getSmartReservaChequera(smart) + pagoCompras));
 
       const remanenteTenpo = parseInt(document.getElementById('inputRemanenteTenpoSole')?.value, 10) || 0;
       const remanenteMPSole = parseInt(document.getElementById('inputRemanenteMPSole')?.value, 10) || 0;
@@ -481,7 +492,8 @@
       userProfile.smartVisaConfig = {
         cupoTotal: cupoSmart,
         deudaPrevia: deudaSmart,
-        cuotaMes: smart
+        cuotaMes: smart,
+        pagoCompras
       };
 
       // Sincronizar Smart Visa en tabla de boletas. Si la cuota de este mes ya se pagó, el presupuesto no baja
@@ -515,11 +527,12 @@
         const mpS = userProfile.cofresSoledad?.mpAhorro ?? PERFIL_INICIAL.cofresSoledad.mpAhorro;
         const bancoS = userProfile.cofresSoledad?.bancoReserva ?? PERFIL_INICIAL.cofresSoledad.bancoReserva;
         const pagoBci = userProfile.tcBciConfig?.pagoMes ?? 0;
+        const pagoSmart = userProfile.smartVisaConfig?.pagoCompras ?? 0;
 
-        chartCofres.data.datasets[0].data = [fan, tenpoD, mach, mpD, cheq, smart, tenpoS, mpS, bancoS, pagoBci];
+        chartCofres.data.datasets[0].data = [fan, tenpoD, mach, mpD, cheq, smart, tenpoS, mpS, bancoS, pagoBci, pagoSmart];
         chartCofres.update();
 
-        const totalCofres = fan + tenpoD + mach + mpD + cheq + smart + tenpoS + mpS + bancoS + pagoBci;
+        const totalCofres = fan + tenpoD + mach + mpD + cheq + smart + tenpoS + mpS + bancoS + pagoBci + pagoSmart;
         const subTitleEl = document.getElementById('dashCofresSubtitle');
         if (subTitleEl) subTitleEl.textContent = `Asignación porcentual de compromisos mensuales (${formatCLP(totalCofres)})`;
       }

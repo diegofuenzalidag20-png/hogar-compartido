@@ -118,7 +118,7 @@ Define la distribución del dinero líquido al inicio de cada mes y el control d
    * `Tarjeta de Crédito BCI (Mastercard)`: Control de Cupo Total ($900k), **Pago este mes**, Deuda anterior facturada, compras del mes en vivo, deuda actual y cupo disponible. Las compras con la tarjeta ya son gasto del mes en que se hacen; el pago **no es un gasto**: se aparta de la cuenta principal (baja su remanente como una transferencia a un cofre) y solo baja la deuda.
 3. **Cofres de Soledad (Distribución desde Chequera BancoEstado):**
    * `Chequera Electrónica`: Cuenta principal para cuentas del hogar Limache (~$286k).
-   * `Tarjeta Smart Visa (BancoEstado)`: Línea de crédito en cuotas. Control de Cupo Total ($500k), Cuota pagada este mes ($50k), Deuda anterior facturada, compras del mes en vivo, deuda actual y cupo disponible.
+   * `Tarjeta Smart Visa (BancoEstado)`: Línea de crédito en cuotas. Control de Cupo Total ($500k), **Cuota deuda antigua (este mes)** ($50k; paga la deuda anterior a la app y cuenta como gasto/compromiso), **Pago de compras nuevas** (las compras con la tarjeta ya son gasto al comprar; su pago **no es un gasto**: se aparta de la Chequera y solo baja la deuda), Deuda anterior facturada, compras del mes en vivo, deuda actual y cupo disponible.
    * `Tenpo Prepago Soledad`: Bolsillo personal. Incluye casilla de **Remanente mes pasado**.
    * `Mercado Pago Soledad`: Ahorro diario remunerado. Incluye casilla de **Remanente mes pasado**.
    * `Cuenta Ahorro Reserva (BancoEstado)`: Fondo de reserva protegido. Incluye casilla de **Remanente mes pasado**.
@@ -163,7 +163,8 @@ sequenceDiagram
 * **Tarjetas Prepago Operativas (Tenpo / Mach):**
   $$\text{Remanente Nuevo Mes} = \max(0, \text{Remanente Anterior} + \text{Presupuesto Mes Cerrado} - \text{Gastos Registrados})$$
 * **Tarjeta Smart Visa (Crédito):**
-  $$\text{Deuda Arrastrada al Nuevo Mes} = \max(0, \text{Deuda Anterior} + \text{Compras del Mes Cerrado} - \text{Cuota Pagada})$$
+  $$\text{Deuda Arrastrada al Nuevo Mes} = \max(0, \text{Deuda Anterior} + \text{Compras del Mes Cerrado} - \text{Cuota Pagada} - \text{Pago de Compras Nuevas})$$
+  Al cerrar, `smartVisaConfig.pagoCompras` vuelve a 0.
 * **Tarjeta de Crédito BCI (Diego):** misma fórmula con `Pago este mes` en lugar de la cuota; al cerrar, `tcBciConfig.pagoMes` vuelve a 0 (cada estado de cuenta es distinto) y el cupo se conserva.
 
 ---
@@ -187,6 +188,17 @@ sequenceDiagram
 ## 📜 5. Historial de Modificaciones
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
+
+### [2026-11-20] — Smart Visa: pago de compras nuevas separado de la cuota de la deuda antigua (v81)
+* **Motivo:** La cuota de la Smart Visa de Soledad (`inputCofreSoleSmart`) paga la **deuda antigua** (anterior a la app) y está bien que cuente como gasto/compromiso (`item-23`). Pero las compras **nuevas** con la tarjeta (gastos con medio de pago `smartVisaSole`) ya cuentan como gasto al comprar: pagarlas después registrándolas como cuota las contaría dos veces. Mismo modelo que la tarjeta BCI (v80): el **pago de compras nuevas no es un gasto**, es plata que se aparta de la Chequera (como una transferencia a un cofre) y solo baja la deuda. Se ingresa a mano en el cofre ("Pago de compras nuevas").
+* **Cambios:** la lógica de la cuota (`getSmartCuotaPagada`, `getSmartCuotaDelMes`, `getSmartReservaChequera`) no cambia; solo se agrega el pago.
+  * `index.html` / `dashboard_pareja.html`: campo `inputSmartVisaPagoCompras` ("Pago de compras nuevas") en el bloque Smart Visa; el rótulo "Cuota Pagada Este Mes" pasa a "Cuota deuda antigua (este mes)"; segunda línea de ayuda bajo el bloque. Los cuatro campos van en una grilla de 2x2 (`repeat(2, 1fr)` con `align-items:end`, para que no queden 3 + 1 en escritorio ni desalineados cuando una etiqueta ocupa dos líneas); en móvil la regla global (≤768 px) los apila en una columna, como los demás cofres.
+  * `js/03-perfil-cofres.js`: `PERFIL_INICIAL.smartVisaConfig.pagoCompras = 0` (el merge al cargar ya hace spread del objeto); `syncProfileToInputs` vuelca el campo; `updateSmartVisaDisplay` calcula `deudaActual = max(0, deudaPrevia + comprasMes − cuota del mes − pagoCompras)` y conserva `pagoCompras` al reescribir `smartVisaConfig`; `updateSoleMargenDisplay` y `saveSoleCofres` descuentan el pago del remanente de la Chequera (igual que la cuota reservada), `overAssignWarning` lo cuenta, la fórmula lo nombra solo si hay pago y `saveSoleCofres` también lo conserva en `smartVisaConfig`; el gráfico de cofres (`updateChartsWithNewSalary`) suma la tajada.
+  * `js/14-tarjetas.js`: `chequeraSole` (`getBudget`, `getTotalTransfersOut`) incluye el pago; `smartVisaSole.getPago = cuota del mes + pagoCompras` (lo usa la tarjeta del análisis); `getLiquidezPersona('Soledad')` sube `fondos` y `usado` con el pago (plata del mes ya usada, igual que la cuota).
+  * `js/04-graficos-inicio.js`: undécima tajada "Pago compras Smart (Soledad)" en el gráfico de cofres, visible en la leyenda solo si hay pago (el filtro ya ocultaba las tajadas de índice ≥ 9 sin monto).
+  * `js/11-historial-cierre.js`: `confirmarCierreMes` arrastra `max(0, deuda anterior + compras del mes − cuota − pagoCompras)` y deja `pagoCompras` en 0 (cupo y `cuotaMes` se conservan como antes).
+* **Archivos:** `index.html`, `dashboard_pareja.html`, `js/03-perfil-cofres.js`, `js/04-graficos-inicio.js`, `js/11-historial-cierre.js`, `js/14-tarjetas.js` (pruebas: `Smart Visa: compras nuevas no se cuentan dos veces` en `qa-local/qa.cjs`; `test_cofres.mjs` no cambia).
+* **Pendiente:** subir versión (`subir_version.py 81`) y publicar. Los datos que ya están en la nube no necesitan migración: sin `pagoCompras` se lee como $0.
 
 ### [2026-11-20] — Cofre de la Tarjeta de Crédito BCI en Cuentas: cupo, pago del mes y deuda (v80)
 * **Motivo:** La tarjeta BCI de Diego (v79) solo aparecía en el análisis; faltaba su cofre en Cuentas, como la Smart Visa de Soledad. Modelo distinto en un punto para no contar doble: las compras con la tarjeta cuentan como gasto del mes en que se hacen, pero el **pago no es un gasto**: es plata que se aparta de la cuenta principal (como una transferencia a un cofre) y baja la deuda; por eso se ingresa a mano en el cofre ("Pago este mes").

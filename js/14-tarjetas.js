@@ -79,10 +79,11 @@ let currentCardAnalysisFilter = 'all';
         fondos += pagoBci;
         usado += pagoBci;
       } else {
-        // La cuota Smart Visa sale de la Chequera: es plata del mes ya usada
+        // La cuota Smart Visa y el pago de sus compras nuevas salen de la Chequera: es plata del mes ya usada
         const cuota = getSmartReservaChequera();
-        fondos += cuota;
-        usado += cuota;
+        const pagoCompras = userProfile.smartVisaConfig?.pagoCompras ?? 0;
+        fondos += cuota + pagoCompras;
+        usado += cuota + pagoCompras;
       }
       return { fondos, usado, pct: fondos > 0 ? Math.round(usado / fondos * 100) : 0 };
     }
@@ -321,11 +322,11 @@ let currentCardAnalysisFilter = 'all';
         sourceAccount: 'Sueldo Líquido Soledad',
         getBudget: () => {
           const sal = userProfile.soledadSalary || PERFIL_INICIAL.soledadSalary;
-          const trans = (userProfile.cofresSoledad?.tenpoBolsillo ?? PERFIL_INICIAL.cofresSoledad.tenpoBolsillo) + (userProfile.cofresSoledad?.mpAhorro ?? PERFIL_INICIAL.cofresSoledad.mpAhorro) + (userProfile.cofresSoledad?.bancoReserva ?? PERFIL_INICIAL.cofresSoledad.bancoReserva) + getSmartReservaChequera();
+          const trans = (userProfile.cofresSoledad?.tenpoBolsillo ?? PERFIL_INICIAL.cofresSoledad.tenpoBolsillo) + (userProfile.cofresSoledad?.mpAhorro ?? PERFIL_INICIAL.cofresSoledad.mpAhorro) + (userProfile.cofresSoledad?.bancoReserva ?? PERFIL_INICIAL.cofresSoledad.bancoReserva) + getSmartReservaChequera() + (userProfile.smartVisaConfig?.pagoCompras ?? 0);
           return Math.max(0, sal - trans);
         },
         getTotalSalary: () => userProfile.soledadSalary || PERFIL_INICIAL.soledadSalary,
-        getTotalTransfersOut: () => (userProfile.cofresSoledad?.tenpoBolsillo ?? PERFIL_INICIAL.cofresSoledad.tenpoBolsillo) + (userProfile.cofresSoledad?.mpAhorro ?? PERFIL_INICIAL.cofresSoledad.mpAhorro) + (userProfile.cofresSoledad?.bancoReserva ?? PERFIL_INICIAL.cofresSoledad.bancoReserva) + getSmartReservaChequera(),
+        getTotalTransfersOut: () => (userProfile.cofresSoledad?.tenpoBolsillo ?? PERFIL_INICIAL.cofresSoledad.tenpoBolsillo) + (userProfile.cofresSoledad?.mpAhorro ?? PERFIL_INICIAL.cofresSoledad.mpAhorro) + (userProfile.cofresSoledad?.bancoReserva ?? PERFIL_INICIAL.cofresSoledad.bancoReserva) + getSmartReservaChequera() + (userProfile.smartVisaConfig?.pagoCompras ?? 0),
         getRemanente: () => userProfile.remanentes?.chequeraSole ?? 0,
         color: '#A855F7',
         badgeClass: 'badge-purple',
@@ -354,7 +355,8 @@ let currentCardAnalysisFilter = 'all';
         sourceAccount: 'Cupo BancoEstado',
         getBudget: () => userProfile.smartVisaConfig?.cupoTotal ?? PERFIL_INICIAL.smartVisaConfig.cupoTotal,
         getRemanente: () => userProfile.smartVisaConfig?.deudaPrevia ?? 0,
-        getPago: () => getSmartCuotaDelMes(),
+        // La cuota paga la deuda antigua (cuenta como gasto); el pago de compras nuevas no es gasto: baja la deuda de lo que ya contó al comprar
+        getPago: () => getSmartCuotaDelMes() + (userProfile.smartVisaConfig?.pagoCompras ?? 0),
         color: '#F43F5E',
         badgeClass: 'badge-rose',
         icon: '💳'
