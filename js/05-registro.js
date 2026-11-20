@@ -151,7 +151,10 @@
       }
 
       if (/smart|visa/i.test(acc)) return findIndexBySubstr('Tarjeta Smart Visa');
-      if (/fan/i.test(acc)) return findIndexBySubstr('Cuenta Fan');
+      if (/bci/i.test(acc) && /cr[eé]d|tarjeta/i.test(acc)) return findIndexBySubstr('Tarjeta de Crédito BCI');
+      if (/bci/i.test(acc)) return findIndexBySubstr('BCI Cuenta Corriente');
+      // Los accesos rápidos y las cuentas fijas dicen "Cuenta Fan": desde diciembre se preselecciona la cuenta principal nueva
+      if (/fan/i.test(acc)) return findIndexBySubstr(cuentaPrincipalDiego());
       if (/chequera/i.test(acc) || (/bancoestado/i.test(acc) && !/ahorro/i.test(acc))) {
         return findIndexBySubstr('Chequera BancoEstado');
       }

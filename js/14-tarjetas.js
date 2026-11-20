@@ -67,7 +67,7 @@ let currentCardAnalysisFilter = 'all';
     // Fondos del mes de todas las cuentas de una persona (sin la tarjeta de crédito) y lo gastado en ellas
     function getLiquidezPersona(owner) {
       let fondos = 0, usado = 0;
-      CARDS_ANALYSIS_CONFIG.filter(c => c.owner === owner && c.key !== 'smartVisaSole').forEach(cfg => {
+      CARDS_ANALYSIS_CONFIG.filter(c => c.owner === owner && !c.esCredito).forEach(cfg => {
         fondos += cfg.getRemanente() + cfg.getBudget();
         usado += expenses.reduce((acc, e) => normalizeAccountKey(e.account) === cfg.key ? acc + (Number(e.amount) || 0) : acc, 0);
       });
@@ -113,6 +113,18 @@ let currentCardAnalysisFilter = 'all';
 
     function overAssignWarning(asignado, sueldo) {
       return asignado > sueldo ? `<br><strong style="color:#F43F5E;">⚠️ Asignaste ${formatCLP(asignado - sueldo)} más que el sueldo.</strong>` : '';
+    }
+
+    // Desde diciembre 2026 el sueldo de Diego cae en la cuenta corriente BCI; la Cuenta Fan sigue abierta
+    function bciEsPrincipal() {
+      const [nombreMes, anioMes] = String(currentActiveMonth).trim().split(/\s+/);
+      const mes = monthNamesList.findIndex(m => m.toLowerCase() === String(nombreMes).toLowerCase());
+      const anio = parseInt(anioMes, 10);
+      return anio > 2026 || (anio === 2026 && mes >= 11);
+    }
+
+    function cuentaPrincipalDiego() {
+      return bciEsPrincipal() ? 'BCI Cuenta Corriente' : 'Cuenta Fan';
     }
 
     // Mach recibe una transferencia cada lunes desde Cuenta Fan, solo si Fan tenía fondos ese día
@@ -210,6 +222,9 @@ let currentCardAnalysisFilter = 'all';
         if (a.includes('soledad') || a.includes('sole')) return 'mpSoledad';
         return 'mpDiego';
       }
+      if (a.includes('bci') && (a.includes('créd') || a.includes('cred') || a.includes('tarjeta'))) return 'tcBciDiego';
+      // La cuenta corriente BCI forma parte del fondo principal de Diego, junto con la Cuenta Fan
+      if (a.includes('bci')) return 'fanDiego';
       if (a.includes('fan') || a.includes('chile')) return 'fanDiego';
       if (a.includes('smart') || a.includes('visa')) return 'smartVisaSole';
       if (a.includes('reserva') || (a.includes('ahorro') && a.includes('bancoestado'))) return 'reservaSole';
@@ -225,7 +240,7 @@ let currentCardAnalysisFilter = 'all';
         desc: 'Operaciones Huasco (Pasajes, Uber, Metro, Turno)',
         owner: 'Diego',
         isPrimary: false,
-        sourceAccount: 'Cuenta Fan',
+        get sourceAccount() { return cuentaPrincipalDiego(); },
         getBudget: () => userProfile.cofresDiego?.tenpoHuasco ?? PERFIL_INICIAL.cofresDiego.tenpoHuasco,
         getRemanente: () => userProfile.remanentes?.tenpoDiego ?? 0,
         color: '#F59E0B',
@@ -238,7 +253,7 @@ let currentCardAnalysisFilter = 'all';
         desc: 'Bolsillo Semanal ($35k/sem) & Modo Recuperación',
         owner: 'Diego',
         isPrimary: false,
-        sourceAccount: 'Cuenta Fan',
+        get sourceAccount() { return cuentaPrincipalDiego(); },
         getBudget: () => getMachSemanal().liberado,
         getRemanente: () => (userProfile.remanentes?.machDiego ?? 0) + Math.max(0, getMachSemanal().ajuste),
         color: '#06B6D4',
@@ -251,7 +266,7 @@ let currentCardAnalysisFilter = 'all';
         desc: 'Ahorro Activo & Fondo de Emergencia con Rendimiento',
         owner: 'Diego',
         isPrimary: false,
-        sourceAccount: 'Cuenta Fan',
+        get sourceAccount() { return cuentaPrincipalDiego(); },
         getBudget: () => userProfile.cofresDiego?.mpAhorro ?? PERFIL_INICIAL.cofresDiego.mpAhorro,
         getRemanente: () => userProfile.remanentes?.mpDiego ?? 0,
         color: '#10B981',
@@ -259,9 +274,23 @@ let currentCardAnalysisFilter = 'all';
         icon: '📈'
       },
       {
+        key: 'tcBciDiego',
+        name: 'Tarjeta de Crédito BCI',
+        desc: 'Mastercard Platinum · cupo nacional (solo si se usa; hoy todo va por débito)',
+        owner: 'Diego',
+        isPrimary: false,
+        esCredito: true,
+        sourceAccount: 'Cupo BCI',
+        getBudget: () => userProfile.tcBciConfig?.cupoTotal ?? 900000,
+        getRemanente: () => userProfile.tcBciConfig?.deudaPrevia ?? 0,
+        color: '#F43F5E',
+        badgeClass: 'badge-rose',
+        icon: '💳'
+      },
+      {
         key: 'fanDiego',
-        name: 'Cuenta Fan Banco de Chile',
-        desc: 'Cuenta Principal Diego (Dividendo, Arriendo, Michis, Fijos)',
+        get name() { return bciEsPrincipal() ? 'Cuenta Corriente BCI (+ Cuenta Fan)' : 'Cuenta Fan Banco de Chile'; },
+        get desc() { return bciEsPrincipal() ? 'Cuenta Principal Diego (Sueldo, Dividendo, Arriendo, Michis, Fijos)' : 'Cuenta Principal Diego (Dividendo, Arriendo, Michis, Fijos)'; },
         owner: 'Diego',
         isPrimary: true,
         sourceAccount: 'Sueldo Líquido Diego',
@@ -315,6 +344,7 @@ let currentCardAnalysisFilter = 'all';
         desc: 'Línea de Crédito en Cuotas Programadas',
         owner: 'Soledad',
         isPrimary: false,
+        esCredito: true,
         sourceAccount: 'Cupo BancoEstado',
         getBudget: () => userProfile.smartVisaConfig?.cupoTotal ?? PERFIL_INICIAL.smartVisaConfig.cupoTotal,
         getRemanente: () => userProfile.smartVisaConfig?.deudaPrevia ?? 0,
@@ -422,12 +452,12 @@ let currentCardAnalysisFilter = 'all';
         }
 
         const isSavingsCard = (cfg.key === 'mpDiego' || cfg.key === 'mpSoledad' || cfg.key === 'reservaSole');
-        const isCreditCard = (cfg.key === 'smartVisaSole');
+        const isCreditCard = !!cfg.esCredito;
 
-        // Métricas Smart Visa
-        const cardCreditCupo = isCreditCard ? (userProfile.smartVisaConfig?.cupoTotal ?? PERFIL_INICIAL.smartVisaConfig.cupoTotal) : 0;
-        const cardCreditDeudaPrevia = isCreditCard ? (userProfile.smartVisaConfig?.deudaPrevia ?? 0) : 0;
-        const cardCreditCuota = isCreditCard ? getSmartCuotaDelMes() : 0;
+        // Métricas de crédito: cupo y deuda previa salen de la config; solo la Smart Visa descuenta una cuota del mes
+        const cardCreditCupo = isCreditCard ? budget : 0;
+        const cardCreditDeudaPrevia = isCreditCard ? remanente : 0;
+        const cardCreditCuota = cfg.key === 'smartVisaSole' ? getSmartCuotaDelMes() : 0;
         const cardCreditDeuda = isCreditCard ? Math.max(0, cardCreditDeudaPrevia + totalSpent - cardCreditCuota) : 0;
         const cardCreditDisponible = isCreditCard ? Math.max(0, cardCreditCupo - cardCreditDeuda) : 0;
 

@@ -227,9 +227,12 @@
       const elDispMP = document.getElementById('displayTotalAcumuladoMPDiego');
       if (elDispMP) elDispMP.textContent = formatCLP(remMP + mp);
 
+      const nombreCuenta = bciEsPrincipal() ? 'Cuenta corriente BCI' : 'Cuenta Fan';
+      document.querySelectorAll('.nombre-cuenta-diego').forEach(el => el.textContent = nombreCuenta);
+
       const elDesc = document.getElementById('diegoFanFormulaDesc');
       if (elDesc) {
-        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, Mach: ${formatCLP(mach)}, MP: ${formatCLP(mp)})<br>💰 <strong>Saldo disponible restante en Cuenta Fan:</strong> <strong style="color:#60A5FA;">${formatCLP(remanenteFan)}</strong>${overAssignWarning(totalTransferencias, salary)}`;
+        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, Mach: ${formatCLP(mach)}, MP: ${formatCLP(mp)})<br>💰 <strong>Saldo disponible restante en ${nombreCuenta}:</strong> <strong style="color:#60A5FA;">${formatCLP(remanenteFan)}</strong>${overAssignWarning(totalTransferencias, salary)}`;
       }
 
       const colchon = getCuentaPrincipalDisponible('Diego');
@@ -398,7 +401,7 @@
       saveUserProfile();
       renderAuditTable();
       updateChartsWithNewSalary();
-      showToast(`💾 ¡Cofres de Diego guardados! Remanente Cuenta Fan: ${formatCLP(fan)}`);
+      showToast(`💾 ¡Cofres de Diego guardados! Remanente ${bciEsPrincipal() ? 'Cuenta corriente BCI' : 'Cuenta Fan'}: ${formatCLP(fan)}`);
     }
 
     function saveSoleCofres() {

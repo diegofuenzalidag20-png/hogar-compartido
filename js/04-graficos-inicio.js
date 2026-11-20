@@ -171,7 +171,7 @@
       if (expDiego) {
         expDiego.amount = diegoFijo;
         expDiego.desc = 'Dividendo Limache (Aporte Fijo Diego)';
-        expDiego.account = 'Cuenta Fan';
+        expDiego.account = cuentaPrincipalDiego();
       } else {
         expenses.unshift({
           id: 'hipo-diego',
@@ -179,7 +179,7 @@
           payer: 'Diego',
           category: 'Crédito Hipotecario',
           amount: diegoFijo,
-          account: 'Cuenta Fan',
+          account: cuentaPrincipalDiego(),
           desc: 'Dividendo Limache (Aporte Fijo Diego)'
         });
       }

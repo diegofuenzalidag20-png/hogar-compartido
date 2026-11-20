@@ -186,6 +186,12 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-20] — Tarjeta de Crédito BCI y Cuenta Corriente BCI como Principal desde Diciembre (v79)
+* **Motivo:** Diego abrió cuenta corriente y tarjeta de crédito BCI. Desde diciembre 2026 el sueldo llega a BCI; la Cuenta Fan sigue abierta y todo se paga con débito.
+* **Cambios:** `normalizeAccountKey` manda "BCI Cuenta Corriente" al fondo principal de Diego (`fanDiego`, junto con la Fan) y la tarjeta a `tcBciDiego`. Nueva tarjeta de crédito en el análisis (cupo $900.000) con `esCredito: true`, igual que Smart Visa; el crédito no suma a la liquidez (`getLiquidezPersona` excluye `esCredito`). `bciEsPrincipal()` / `cuentaPrincipalDiego()`: desde diciembre 2026 los accesos rápidos y cuentas fijas preseleccionan BCI, el dividendo automático usa BCI y los textos `.nombre-cuenta-diego` dicen "Cuenta corriente BCI". Noviembre y meses anteriores quedan igual.
+* **Archivos:** `index.html`, `dashboard_pareja.html`, `js/03-perfil-cofres.js`, `js/04-graficos-inicio.js`, `js/05-registro.js`, `js/14-tarjetas.js`.
+* **Pendiente:** el cierre de mes no arrastra deuda de la tarjeta BCI (no se usa mientras todo vaya por débito).
+
 ### [2026-11-20] — Cuentas BCI de Diego: Mantención y Administración de Tarjeta (v78)
 * **Motivo:** Diego abrió cuenta corriente BCI (Plan Bci Plus+, 0,15 UF/mes con sueldo abonado; 0,30 UF sin él) y tarjeta de crédito Mastercard Platinum (administración 0,17 UF/mes; la semestral de 2 UF queda exenta con el plan). Total ~$13.221/mes.
 * **Solución Técnica:**
