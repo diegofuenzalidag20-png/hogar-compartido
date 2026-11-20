@@ -2054,3 +2054,31 @@ main, .tab-pane {
 .glass-select-grupo { position: relative; }
 .glass-select-group-header { top: 0 !important; background: #0F172A !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 [data-theme="light"] .glass-select-group-header { background: #F8FAFC !important; }
+
+/* Traspasos entre cuentas propias (v82): mueven plata entre cuentas, no son gasto */
+.traspaso-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; align-items: end; }
+.traspaso-detalle { grid-column: span 3; }
+.traspaso-form .btn-primary { min-height: 44px; justify-content: center; white-space: nowrap; }
+.traspasos-lista { margin-top: 1rem; }
+.traspasos-lista .hist-nota { margin: 0; }
+.traspaso-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto 44px; align-items: center; gap: 0.1rem 0.6rem; padding: 0.55rem 0; border-top: 1px solid var(--border-glass); }
+.traspaso-info { min-width: 0; }
+.traspaso-info strong { display: block; font-size: 0.9rem; overflow-wrap: anywhere; }
+.traspaso-info small { display: block; color: var(--text-muted); font-size: 0.75rem; overflow-wrap: anywhere; }
+.traspaso-monto { font-size: 0.98rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.traspaso-borrar { width: 44px; height: 44px; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; background: rgba(239, 68, 68, 0.12); color: #FCA5A5; font-size: 0.95rem; cursor: pointer; }
+@media (max-width: 768px) {
+  .traspaso-form { grid-template-columns: 1fr 1fr; }
+  .traspaso-detalle, .traspaso-form .btn-primary { grid-column: 1 / -1; }
+}
+
+/* Proyección de fin de mes (v82): verde bajo la meta, ámbar si la pasa, rojo si pasa los ingresos */
+.proyeccion { --proy: #10B981; margin: 0 0 1rem; padding: 0.85rem 0.95rem; border: 1px solid var(--border-glass); border-left: 4px solid var(--proy); border-radius: 12px; background: var(--bg-surface-elevated); }
+.proyeccion[hidden] { display: none; }
+.proyeccion[data-nivel="ambar"] { --proy: #F59E0B; }
+.proyeccion[data-nivel="rojo"] { --proy: #F43F5E; }
+.proyeccion-cabeza { color: var(--text-muted); font-size: 0.78rem; font-weight: 700; }
+.proyeccion-monto { display: block; margin: 0.15rem 0 0.4rem; color: var(--proy); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.proyeccion-comp { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; font-size: 0.82rem; color: var(--text-muted); }
+.proyeccion-comp strong { color: var(--text-main); }
+.proyeccion-nota { margin: 0.45rem 0 0; color: var(--text-muted); font-size: 0.75rem; line-height: 1.4; }

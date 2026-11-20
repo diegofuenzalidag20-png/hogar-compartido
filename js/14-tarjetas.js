@@ -57,18 +57,29 @@ let currentCardAnalysisFilter = 'all';
       return Number.isNaN(value) ? fallback : value;
     }
 
+    // Plata que se mueve entre cuentas propias (traspasos): lo que entra menos lo que sale de una cuenta. No es gasto.
+    // antesDe (AAAA-MM-DD) cuenta solo los traspasos de días anteriores.
+    function netoTraspasos(key, antesDe) {
+      return traspasos.reduce((acc, t) => {
+        if (antesDe && !((t.date || '') < antesDe)) return acc;
+        const monto = Number(t.amount) || 0;
+        return acc + (normalizeAccountKey(t.to) === key ? monto : 0) - (normalizeAccountKey(t.from) === key ? monto : 0);
+      }, 0);
+    }
+
     function getCuentaPrincipalDisponible(owner) {
       const key = owner === 'Diego' ? 'fanDiego' : 'chequeraSole';
       const cfg = CARDS_ANALYSIS_CONFIG.find(c => c.key === key);
       const gastado = expenses.reduce((acc, e) => normalizeAccountKey(e.account) === key ? acc + (Number(e.amount) || 0) : acc, 0);
-      return cfg.getRemanente() + cfg.getBudget() - gastado;
+      return cfg.getRemanente() + cfg.getBudget() - gastado + netoTraspasos(key);
     }
 
     // Fondos del mes de todas las cuentas de una persona (sin la tarjeta de crédito) y lo gastado en ellas
     function getLiquidezPersona(owner) {
       let fondos = 0, usado = 0;
       CARDS_ANALYSIS_CONFIG.filter(c => c.owner === owner && !c.esCredito).forEach(cfg => {
-        fondos += cfg.getRemanente() + cfg.getBudget();
+        // Un traspaso entre cuentas de la misma persona suma y resta lo mismo; entre personas mueve liquidez
+        fondos += cfg.getRemanente() + cfg.getBudget() + netoTraspasos(cfg.key);
         usado += expenses.reduce((acc, e) => normalizeAccountKey(e.account) === cfg.key ? acc + (Number(e.amount) || 0) : acc, 0);
       });
       if (owner === 'Diego') {
@@ -151,7 +162,8 @@ let currentCardAnalysisFilter = 'all';
         if (d.getDay() !== 1) continue;
         const fecha = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         const futuro = fecha > hoy;
-        const gastadoAntes = gastosFan.reduce((acc, e) => e.date < fecha ? acc + (Number(e.amount) || 0) : acc, 0);
+        // Lo que salió de Fan antes del lunes (gastos y traspasos) resta fondos; lo que entró suma
+        const gastadoAntes = gastosFan.reduce((acc, e) => e.date < fecha ? acc + (Number(e.amount) || 0) : acc, 0) - netoTraspasos('fanDiego', fecha);
         const automatico = fondoFan - gastadoAntes - liberado >= monto;
         const transferido = !futuro && (excepciones[fecha] ?? automatico);
         if (transferido) liberado += monto;
@@ -164,7 +176,7 @@ let currentCardAnalysisFilter = 'all';
         porLiberar: pendientes.length * monto,
         totalMes: liberado + pendientes.length * monto,
         proximo: pendientes[0] || null,
-        disponible: (userProfile.remanentes?.machDiego ?? 0) + liberado + ajuste - gastado
+        disponible: (userProfile.remanentes?.machDiego ?? 0) + liberado + ajuste + netoTraspasos('machDiego') - gastado
       };
     }
 
@@ -437,7 +449,9 @@ let currentCardAnalysisFilter = 'all';
       grid.innerHTML = '';
 
       visibleConfigs.forEach(cfg => {
-        const budget = cfg.getBudget();
+        // Los traspasos entre cuentas propias suman o restan al fondo de la cuenta (no son gasto); el crédito no los recibe
+        const traspasoNeto = cfg.esCredito ? 0 : netoTraspasos(cfg.key);
+        const budget = cfg.getBudget() + traspasoNeto;
         const remanente = typeof cfg.getRemanente === 'function' ? cfg.getRemanente() : 0;
         let totalSpent = 0;
         const categoryMap = {};
@@ -485,6 +499,7 @@ let currentCardAnalysisFilter = 'all';
         const cardIsOverspent = isOverspent;
 
         // Subtítulo de transferencia interna
+        const traspasoHtml = traspasoNeto ? `<span>•</span> <span>🔁 Traspasos: ${traspasoNeto > 0 ? '+' : '-'}${formatCLP(Math.abs(traspasoNeto))}</span>` : '';
         let transferHtml = '';
         if (cfg.isPrimary) {
           const sal = cfg.getTotalSalary();
@@ -495,6 +510,7 @@ let currentCardAnalysisFilter = 'all';
               <span>•</span>
               <span>🔁 Transferido a cofres: -${formatCLP(transOut)}</span>
               ${remanente > 0 ? `<span>•</span> <span>⏱️ Remanente: ${formatCLP(remanente)}</span>` : ''}
+              ${traspasoHtml}
             </div>
           `;
         } else {
@@ -503,6 +519,7 @@ let currentCardAnalysisFilter = 'all';
               <span>📥 Fondos transferidos desde: <strong>${cfg.sourceAccount}</strong></span>
               ${machPlan ? `<span>•</span> <span>🗓️ ${machPlan.lunes.filter(l => l.transferido).length} de ${machPlan.lunes.length} lunes${machPlan.proximo ? ` · Próximo ${machPlan.proximo.etiqueta} +${formatCLP(machPlan.monto)}` : ''}</span>` : ''}
               ${remanente > 0 ? `<span>•</span> <span>⏱️ Remanente mes anterior: <strong>${formatCLP(remanente)}</strong></span>` : ''}
+              ${traspasoHtml}
             </div>
           `;
         }

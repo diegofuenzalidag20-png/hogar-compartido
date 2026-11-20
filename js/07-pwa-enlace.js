@@ -33,6 +33,7 @@
         currentActiveMonth: activeMonthName,
         auditItems: parseSeguro(boletasMesActivo, currentAuditItems || []),
         expenses: expenses || [],
+        traspasos: traspasos || [],
         userProfile: userProfile || {},
         customAuditItems: leerJSON('custom_audit_items', []),
         dbMeses: leerJSON('db_historial_meses', []),
@@ -145,6 +146,13 @@
           if (typeof renderAuditTable === 'function') renderAuditTable();
         }
 
+        // 1b. Traspasos entre cuentas propias (un enlace anterior no los trae: no se tocan). Antes de los gastos: su dibujo ya usa los saldos
+        if (Array.isArray(data.traspasos)) {
+          traspasos = data.traspasos;
+          localStorage.setItem('family_traspasos', JSON.stringify(traspasos));
+          if (typeof renderTraspasos === 'function') renderTraspasos();
+        }
+
         // 2. Aplicar Expenses (Gastos Diarios)
         if (Array.isArray(data.expenses)) {
           expenses = data.expenses;
@@ -217,6 +225,13 @@
             currentAuditItems = items;
             localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
             if (typeof renderAuditTable === 'function') renderAuditTable();
+          }
+
+          // 1b. Traspasos entre cuentas propias (un respaldo anterior no los trae: no se tocan). Antes de los gastos: su dibujo ya usa los saldos
+          if (Array.isArray(data.traspasos)) {
+            traspasos = data.traspasos;
+            localStorage.setItem('family_traspasos', JSON.stringify(traspasos));
+            if (typeof renderTraspasos === 'function') renderTraspasos();
           }
 
           // 2. Expenses

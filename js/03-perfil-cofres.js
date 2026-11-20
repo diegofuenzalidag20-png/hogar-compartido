@@ -238,16 +238,17 @@
       userProfile.remanentes.mpDiego = remMP;
 
       // Actualizar displays en tab-cuentas
+      // Los traspasos entre cuentas propias (no son gasto) suman o restan a los fondos de cada cofre
       const elDispTenpo = document.getElementById('displayTotalFondosTenpoDiego');
-      if (elDispTenpo) elDispTenpo.textContent = formatCLP(remTenpo + tenpo);
+      if (elDispTenpo) elDispTenpo.textContent = formatCLP(remTenpo + tenpo + netoTraspasos('tenpoDiego'));
 
       const elDispMach = document.getElementById('displayTotalFondosMachDiego');
-      if (elDispMach) elDispMach.textContent = formatCLP(remMach + mach + machPlan.ajuste - machPlan.gastado);
+      if (elDispMach) elDispMach.textContent = formatCLP(remMach + mach + machPlan.ajuste + netoTraspasos('machDiego') - machPlan.gastado);
       renderMachSemanal(machPlan);
       sincronizarItemMach(machPlan);
 
       const elDispMP = document.getElementById('displayTotalAcumuladoMPDiego');
-      if (elDispMP) elDispMP.textContent = formatCLP(remMP + mp);
+      if (elDispMP) elDispMP.textContent = formatCLP(remMP + mp + netoTraspasos('mpDiego'));
 
       const nombreCuenta = bciEsPrincipal() ? 'Cuenta corriente BCI' : 'Cuenta Fan';
       document.querySelectorAll('.nombre-cuenta-diego').forEach(el => el.textContent = nombreCuenta);
@@ -307,14 +308,15 @@
       userProfile.remanentes.bancoSole = remBanco;
 
       // Actualizar displays en tab-cuentas
+      // Los traspasos entre cuentas propias (no son gasto) suman o restan a los fondos de cada cofre
       const elDispTenpo = document.getElementById('displayTotalFondosTenpoSole');
-      if (elDispTenpo) elDispTenpo.textContent = formatCLP(remTenpo + tenpo);
+      if (elDispTenpo) elDispTenpo.textContent = formatCLP(remTenpo + tenpo + netoTraspasos('tenpoSoledad'));
 
       const elDispMP = document.getElementById('displayTotalAcumuladoMPSole');
-      if (elDispMP) elDispMP.textContent = formatCLP(remMP + mp);
+      if (elDispMP) elDispMP.textContent = formatCLP(remMP + mp + netoTraspasos('mpSoledad'));
 
       const elDispBanco = document.getElementById('displayTotalAcumuladoBancoSole');
-      if (elDispBanco) elDispBanco.textContent = formatCLP(remBanco + banco);
+      if (elDispBanco) elDispBanco.textContent = formatCLP(remBanco + banco + netoTraspasos('reservaSole'));
 
       const elDesc = document.getElementById('soleChequeraFormulaDesc');
       if (elDesc) {

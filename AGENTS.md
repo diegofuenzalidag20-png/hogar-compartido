@@ -40,7 +40,8 @@
 | `js/11-historial-cierre.js` | Base de datos de meses, historial, cierre y reapertura |
 | `js/12-desplegables.js` | Desplegables con estilo de vidrio |
 | `js/13-categorias.js` | `CATEGORIAS_GASTO`, fijo vs variable |
-| `js/14-tarjetas.js` | Saldos por cuenta, liquidez, meta, Smart Visa, Mach semanal, análisis por tarjeta |
-| `js/15-analisis-mes.js` | Pestaña Análisis y arranque de la app |
+| `js/14-tarjetas.js` | Saldos por cuenta (`netoTraspasos`), liquidez, meta, Smart Visa, Mach semanal, análisis por tarjeta |
+| `js/15-analisis-mes.js` | Pestaña Análisis, proyección de fin de mes (`proyeccionFinDeMes`) y arranque de la app |
+| `js/16-traspasos.js` | Traspasos entre cuentas propias (no son gasto): formulario, lista del mes, registro y borrado |
 
 7. **Pruebas:** `qa-local/` (fuera de git, tiene datos reales) contiene la batería y `publicar.ps1`; ver `qa-local/LEEME.md` para elegir qué pruebas correr según el cambio.

@@ -496,6 +496,49 @@
       }
     }
 
+    // ==============================================================
+    // PROYECCIÓN DE FIN DE MES (solo el mes en curso)
+    // ==============================================================
+    // Lo gastado hasta hoy + el ritmo diario de lo variable por los días que faltan + las cuentas fijas que aún no se pagan.
+    // Sin ahorro propio (fondo de emergencia, bolsillo Mach) y sin traspasos: ninguno es gasto. Devuelve null si el mes activo no es el de hoy.
+    function proyeccionFinDeMes(hoy = new Date()) {
+      const [nombreMes, anioMes] = String(currentActiveMonth).trim().split(/\s+/);
+      const mes = monthNamesList.findIndex(m => m.toLowerCase() === String(nombreMes).toLowerCase());
+      const anio = parseInt(anioMes, 10);
+      if (mes < 0 || anio !== hoy.getFullYear() || mes !== hoy.getMonth()) return null;
+      const diasMes = new Date(anio, mes + 1, 0).getDate();
+      const transcurridos = hoy.getDate();
+      const restantes = diasMes - transcurridos;
+      const hoyISO = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(transcurridos).padStart(2, '0')}`;
+
+      const gastos = expenses.filter(g => !esAhorroPropio({ id: itemIdDeGasto(g), name: `${g.category || ''} ${g.desc || ''}` }));
+      const suma = (lista) => lista.reduce((s, g) => s + (Number(g.amount) || 0), 0);
+      const gastado = suma(gastos);
+      const variable = suma(gastos.filter(g => !isExpenseFijo(g.category, g.desc) && (!g.date || g.date <= hoyISO)));
+      const porDia = variable / transcurridos;
+      // Las cuentas fijas que faltan salen de la misma regla del recordatorio, mirando hasta el último día del mes (cobros del día 19, compras cada 45 días)
+      const fijosPendientes = cuentasFijasPendientes(new Date(anio, mes, diasMes, 23, 59, 59)).reduce((s, it) => s + (Number(it.base) || 0), 0);
+
+      const proyeccion = Math.round(gastado + porDia * restantes + fijosPendientes);
+      const meta = getMetaMensual();
+      const ingresos = (userProfile.diegoSalary || 0) + (userProfile.soledadSalary || 0);
+      return { proyeccion, gastado, porDia, restantes, fijosPendientes, meta, ingresos, nivel: proyeccion > ingresos ? 'rojo' : proyeccion > meta ? 'ambar' : 'verde' };
+    }
+
+    function renderProyeccionMes(hoy = new Date()) {
+      const caja = document.getElementById('proyeccionMes');
+      if (!caja) return;
+      const p = proyeccionFinDeMes(hoy);
+      caja.hidden = !p;
+      if (!p) return;
+      caja.dataset.nivel = p.nivel;
+      const poner = (id, html) => { document.getElementById(id).innerHTML = html; };
+      poner('proyeccionMonto', formatCLP(p.proyeccion));
+      poner('proyeccionMeta', `Meta del mes <strong>${formatCLP(p.meta)}</strong> · ${p.proyeccion > p.meta ? `la pasas por ${formatCLP(p.proyeccion - p.meta)}` : `${formatCLP(p.meta - p.proyeccion)} bajo la meta`}`);
+      poner('proyeccionIngresos', `Ingresos del hogar <strong>${formatCLP(p.ingresos)}</strong> · ${p.proyeccion > p.ingresos ? `los pasas por ${formatCLP(p.proyeccion - p.ingresos)}` : `quedan ${formatCLP(p.ingresos - p.proyeccion)}`}`);
+      poner('proyeccionNota', `Gastado ${formatCLP(p.gastado)} + ritmo variable de ${formatCLP(p.porDia)} al día × ${p.restantes} ${p.restantes === 1 ? 'día' : 'días'} que faltan + ${formatCLP(p.fijosPendientes)} de cuentas fijas por pagar.`);
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
       placeQuickCard();
@@ -513,6 +556,7 @@
       initCharts();
       syncProfileToInputs();
       renderExpenses();
+      renderTraspasos();
       inicializarBDMeses(); 
       updateHeaderSalaries();
       renderAuditTable();
@@ -533,7 +577,7 @@
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=81').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=82').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }

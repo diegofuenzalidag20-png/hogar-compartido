@@ -16,7 +16,7 @@
     // ---------- Versión de la app ----------
     // Un teléfono con la app abierta desde antes de una actualización sigue con el código viejo.
     // Si hay una versión nueva publicada, no se registra ni se sube nada hasta actualizar.
-    const VERSION_APP = 81;
+    const VERSION_APP = 82;
     let versionBloqueada = false;
     async function revisarVersionApp() {
       try {
@@ -213,7 +213,8 @@
         const payload = parseSeguro((await res.json()).fields?.appStateJson?.stringValue, null);
         if (!payload || !Array.isArray(payload.expenses)) throw new Error('El respaldo está incompleto');
         await guardarRespaldo(`antes-de-restaurar-${Date.now()}`, JSON.parse(JSON.stringify(buildCompleteFamilyPayload())));
-        applyRemoteDataToApp(payload);
+        // Un respaldo anterior a los traspasos no los tenía: restaurarlo los deja en cero
+        applyRemoteDataToApp({ traspasos: [], ...payload });
         await pushToFirestore(true);
         cerrarRespaldos();
         showToast(`✅ Datos restaurados al ${fecha}`);
@@ -305,6 +306,12 @@
         localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
       }
 
+      // 3b. SINCRONIZAR TRASPASOS ENTRE CUENTAS PROPIAS (un teléfono o respaldo anterior sin la lista no la borra)
+      if (Array.isArray(data.traspasos)) {
+        traspasos = data.traspasos;
+        localStorage.setItem('family_traspasos', JSON.stringify(traspasos));
+      }
+
       // 4. SINCRONIZAR PERFIL DE USUARIO Y SUELDOS
       if (data.userProfile && typeof data.userProfile === 'object') {
         userProfile = Object.assign(userProfile || {}, data.userProfile);
@@ -334,6 +341,7 @@
       // 8. RE-RENDERIZADO COMPLETO E INMEDIATO DE LA INTERFAZ
       if (typeof syncProfileToInputs === 'function') syncProfileToInputs();
       if (typeof renderExpenses === 'function') renderExpenses();
+      if (typeof renderTraspasos === 'function') renderTraspasos();
       if (typeof renderAuditTable === 'function') renderAuditTable();
       if (typeof renderChecklist === 'function') renderChecklist();
       if (typeof updateHeaderSalaries === 'function') updateHeaderSalaries();
@@ -355,7 +363,7 @@
 
     // Sincronización a tres vías: la base es el último estado acordado con la nube.
     // Comparar contra la base detecta cualquier cambio local, aunque no haya pasado por triggerAutoSyncToCloud.
-    const SYNC_SECTIONS = { auditItems: 'id', expenses: 'id', customAuditItems: 'id', dbMeses: 'nombre', userProfile: 'fields', activeMonth: null, ultimoCierreBackup: null };
+    const SYNC_SECTIONS = { auditItems: 'id', expenses: 'id', traspasos: 'id', customAuditItems: 'id', dbMeses: 'nombre', userProfile: 'fields', activeMonth: null, ultimoCierreBackup: null };
     const SYNC_BASE_KEY = 'finanzas_sync_base';
     const SYNC_VERSION_KEY = 'finanzas_sync_update_time';
     let cloudSyncPromise = null;
@@ -379,7 +387,9 @@
       const merged = {};
       for (const section in SYNC_SECTIONS) {
         const idKey = SYNC_SECTIONS[section];
-        const [b, l, r] = [base[section], local[section], remote[section]];
+        const [b, l] = [base[section], local[section]];
+        // Si el otro teléfono corre una versión anterior no conoce la sección: que falte no significa que se borró
+        const r = idKey && remote[section] == null ? b : remote[section];
         if (!idKey) { merged[section] = pick(b, l, r); continue; }
         const index = (v) => new Map(idKey === 'fields' ? Object.entries(v || {}) : (v || []).map(it => [it[idKey] ?? JSON.stringify(it), it]));
         const [bm, lm, rm] = [index(b), index(l), index(r)];
@@ -408,7 +418,9 @@
       const inActiveMonth = (e) => new Date(`${e.date}T12:00:00`).toLocaleDateString('es-CL', { month: 'long', year: 'numeric' }).replace(' de ', ' ').toLowerCase() === String(remote.activeMonth).toLowerCase();
       const remoteExpenses = remote.expenses || [];
       const isRescued = (e) => inActiveMonth(e) && !remoteExpenses.some((r) => sameExpense(e, r));
-      return { ...local, expenses: (local.expenses || []).filter((e) => !isRescued(e)) };
+      // Un traspaso que la nube no tiene tampoco se da por sincronizado
+      const remoteTraspasos = remote.traspasos || [];
+      return { ...local, expenses: (local.expenses || []).filter((e) => !isRescued(e)), traspasos: (local.traspasos || []).filter((t) => remoteTraspasos.some((r) => r.id === t.id)) };
     }
 
     async function versionNube() {
@@ -759,6 +771,8 @@
     ];
 
     let expenses = [leerJSON('hogar_gastos', null), leerJSON('family_expenses', null)].find(Array.isArray) || initialExpenses;
+    // Traspasos entre cuentas propias del mes: {id, date, from, to, amount, desc?, autor?}. No son gasto: solo mueven saldos
+    let traspasos = [leerJSON('family_traspasos', null)].find(Array.isArray) || [];
 
     function escapeHtml(str) {
       if (str === null || str === undefined) return '';

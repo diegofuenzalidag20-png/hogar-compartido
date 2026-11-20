@@ -871,6 +871,7 @@ function getMonthCode(monthLabel) {
       mes.superavit = mes.totalIng - (mes.gastosHogar + fijosDiego);
       mes.items = currentAuditItems;
       mes.gastosDiarios = expenses;
+      mes.traspasos = traspasos;
       return mes;
     }
 
@@ -972,6 +973,7 @@ tr.innerHTML = `
         superavit: superavit,
         items: JSON.parse(JSON.stringify(currentAuditItems)),
         gastosDiarios: JSON.parse(JSON.stringify(expenses)),
+        traspasos: JSON.parse(JSON.stringify(traspasos)),
         estado: isCerrado ? 'Cerrado' : 'Guardado'
       };
 
@@ -1034,7 +1036,8 @@ tr.innerHTML = `
         superavit: superavit,
         estado: 'En Curso',
         items: JSON.parse(JSON.stringify(currentAuditItems)),
-        gastosDiarios: JSON.parse(JSON.stringify(expenses))
+        gastosDiarios: JSON.parse(JSON.stringify(expenses)),
+        traspasos: JSON.parse(JSON.stringify(traspasos))
       };
 
       const idx = list.findIndex(m => matchMonth(m, mesNombre));
@@ -1131,6 +1134,7 @@ tr.innerHTML = `
         nextMonth: nextMonth,
         currentAuditItems: JSON.parse(JSON.stringify(currentAuditItems)),
         expenses: JSON.parse(JSON.stringify(expenses)),
+        traspasos: JSON.parse(JSON.stringify(traspasos)),
         userProfile: JSON.parse(JSON.stringify(userProfile || {})),
         timestamp: Date.now()
       };
@@ -1145,13 +1149,13 @@ tr.innerHTML = `
         });
       }
 
-      // Saldos restantes no gastados de cada cofre al momento del cierre
-      const saldoRemanenteMPDiego = Math.max(0, (userProfile.remanentes?.mpDiego || 0) + (userProfile.cofresDiego?.mpAhorro ?? 0) - (spentByAcc['mpDiego'] || 0));
-      const saldoRemanenteMPSoledad = Math.max(0, (userProfile.remanentes?.mpSoledad || 0) + (userProfile.cofresSoledad?.mpAhorro ?? 0) - (spentByAcc['mpSoledad'] || 0));
-      const saldoRemanenteBancoSole = Math.max(0, (userProfile.remanentes?.bancoSole || 0) + (userProfile.cofresSoledad?.bancoReserva ?? 0) - (spentByAcc['reservaSole'] || 0));
-      const saldoRemanenteTenpoDiego = Math.max(0, (userProfile.remanentes?.tenpoDiego || 0) + (userProfile.cofresDiego?.tenpoHuasco ?? 0) - (spentByAcc['tenpoDiego'] || 0));
+      // Saldos restantes no gastados de cada cofre al momento del cierre (los traspasos entre cuentas propias suman o restan; no son gasto)
+      const saldoRemanenteMPDiego = Math.max(0, (userProfile.remanentes?.mpDiego || 0) + (userProfile.cofresDiego?.mpAhorro ?? 0) + netoTraspasos('mpDiego') - (spentByAcc['mpDiego'] || 0));
+      const saldoRemanenteMPSoledad = Math.max(0, (userProfile.remanentes?.mpSoledad || 0) + (userProfile.cofresSoledad?.mpAhorro ?? 0) + netoTraspasos('mpSoledad') - (spentByAcc['mpSoledad'] || 0));
+      const saldoRemanenteBancoSole = Math.max(0, (userProfile.remanentes?.bancoSole || 0) + (userProfile.cofresSoledad?.bancoReserva ?? 0) + netoTraspasos('reservaSole') - (spentByAcc['reservaSole'] || 0));
+      const saldoRemanenteTenpoDiego = Math.max(0, (userProfile.remanentes?.tenpoDiego || 0) + (userProfile.cofresDiego?.tenpoHuasco ?? 0) + netoTraspasos('tenpoDiego') - (spentByAcc['tenpoDiego'] || 0));
       const saldoRemanenteMachDiego = Math.max(0, getMachSemanal().disponible);
-      const saldoRemanenteTenpoSole = Math.max(0, (userProfile.remanentes?.tenpoSoledad || 0) + (userProfile.cofresSoledad?.tenpoBolsillo ?? 0) - (spentByAcc['tenpoSoledad'] || 0));
+      const saldoRemanenteTenpoSole = Math.max(0, (userProfile.remanentes?.tenpoSoledad || 0) + (userProfile.cofresSoledad?.tenpoBolsillo ?? 0) + netoTraspasos('tenpoSoledad') - (spentByAcc['tenpoSoledad'] || 0));
 
       // Tarjeta Smart Visa: calcular deuda remanente que pasa al siguiente mes
       const deudaAnteriorSmart = userProfile.smartVisaConfig?.deudaPrevia || 0;
@@ -1214,11 +1218,14 @@ tr.innerHTML = `
       localStorage.setItem(`audit_${currentActiveMonth}`, JSON.stringify(currentAuditItems));
       localStorage.setItem(`audit_${getMonthCode(currentActiveMonth)}`, JSON.stringify(currentAuditItems));
 
-      // 6. Reiniciar gastos diarios a lista vacía para el nuevo mes
+      // 6. Reiniciar gastos diarios (y traspasos entre cuentas propias) a lista vacía para el nuevo mes
       expenses = [];
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
       localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
+      traspasos = [];
+      localStorage.setItem('family_traspasos', JSON.stringify(traspasos));
       renderExpenses();
+      if (typeof renderTraspasos === 'function') renderTraspasos();
 
       // 7. CREAR O ACTIVAR EL NUEVO MES EN LA BASE DE DATOS (En Curso)
       asegurarMesActivoEnBD(nextMonth);
@@ -1264,6 +1271,10 @@ tr.innerHTML = `
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
       localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
 
+      // Un cierre anterior a los traspasos no los guardó: ese mes no tenía
+      traspasos = Array.isArray(backup.traspasos) ? backup.traspasos : [];
+      localStorage.setItem('family_traspasos', JSON.stringify(traspasos));
+
       if (backup.userProfile) {
         userProfile = Object.assign(userProfile || {}, backup.userProfile);
         localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
@@ -1290,6 +1301,7 @@ tr.innerHTML = `
       syncProfileToInputs();
       renderAuditTable();
       renderExpenses();
+      if (typeof renderTraspasos === 'function') renderTraspasos();
       renderChecklist();
       renderTablaHistorialMesesBD();
       renderDetailedHistoricalTable();
@@ -1401,6 +1413,33 @@ tr.innerHTML = `
           `;
         }
 
+        // Plata movida entre cuentas propias: se guarda con el mes, pero no es gasto y no suma a ningún total
+        let traspasosHtml = '';
+        if (mes.traspasos && mes.traspasos.length > 0) {
+          const totalTraspasos = mes.traspasos.reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+          traspasosHtml = `
+            <div style="margin-top:1rem;">
+              <div style="font-weight:700; font-size:0.9rem; display:flex; justify-content:space-between; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <span>🔁 Traspasos entre cuentas propias (${mes.traspasos.length}):</span>
+                <span style="color:var(--text-muted); font-size:0.8rem;">${formatCLP(totalTraspasos)} · no son gasto</span>
+              </div>
+              <div style="max-height:180px; overflow-y:auto; border:1px solid var(--border-glass); border-radius:8px; padding:0.5rem; margin-top:0.35rem;">
+                <table style="width:100%; font-size:0.75rem;">
+                  <tbody>
+                    ${mes.traspasos.map(t => `
+                      <tr>
+                        <td style="padding:0.2rem; color:var(--text-muted); font-size:0.7rem;">${escapeHtml(t.date || '')}</td>
+                        <td style="padding:0.2rem;">${escapeHtml(t.from || '')} → ${escapeHtml(t.to || '')}</td>
+                        <td style="text-align:right; font-weight:700; padding:0.2rem;">${formatCLP(t.amount || 0)}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+
         content.innerHTML = `
           <div style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.3); border-radius:8px; padding:0.6rem; font-size:0.78rem; color:#93C5FD; margin-bottom:0.75rem;">
             💡 <strong>Criterio Unificado de Pago:</strong> ${escapeHtml(mes.criterio || 'Registro según salida real de dinero de la cuenta bancaria')}
@@ -1413,6 +1452,7 @@ tr.innerHTML = `
           </div>
           ${itemsHtml}
           ${gastosHtml}
+          ${traspasosHtml}
         `;
       }
       if (modal) modal.style.display = 'flex';

@@ -11,8 +11,10 @@ const fn = html.match(/function mergeThreeWay[\s\S]*?\n {4}}\r?\n/)[0];
 const mergeThreeWay = new Function(`${sections}\n${fn}\nreturn mergeThreeWay;`)();
 
 const gasto = (id, amount = 100) => ({ id, amount });
-const estado = (over) => ({ auditItems: [], expenses: [], customAuditItems: [], dbMeses: [], userProfile: {}, activeMonth: 'Noviembre 2026', ultimoCierreBackup: null, ...over });
+const estado = (over) => ({ auditItems: [], expenses: [], traspasos: [], customAuditItems: [], dbMeses: [], userProfile: {}, activeMonth: 'Noviembre 2026', ultimoCierreBackup: null, ...over });
 const ids = (s) => s.expenses.map((e) => e.id).sort();
+const tras = (id, amount = 100) => ({ id, amount });
+const idsT = (s) => s.traspasos.map((t) => t.id).sort();
 
 // Cada teléfono agrega un gasto: se conservan ambos
 assert.deepEqual(ids(mergeThreeWay(estado({ expenses: [gasto('a')] }), estado({ expenses: [gasto('a'), gasto('b')] }), estado({ expenses: [gasto('a'), gasto('c')] }))), ['a', 'b', 'c']);
@@ -39,6 +41,16 @@ const cierre = mergeThreeWay(estado({ expenses: [gasto('a')] }), estado({ expens
 assert.equal(cierre.activeMonth, 'Diciembre 2026');
 assert.deepEqual(ids(cierre), ['b']);
 
+// Traspasos entre cuentas propias: cada teléfono agrega uno y se conservan ambos; un borrado no reaparece ni pierde lo que agregó el otro
+assert.deepEqual(idsT(mergeThreeWay(estado({ traspasos: [tras('a')] }), estado({ traspasos: [tras('a'), tras('b')] }), estado({ traspasos: [tras('a'), tras('c')] }))), ['a', 'b', 'c']);
+assert.deepEqual(idsT(mergeThreeWay(estado({ traspasos: [tras('a'), tras('b')] }), estado({ traspasos: [tras('b')] }), estado({ traspasos: [tras('a'), tras('b'), tras('c')] }))), ['b', 'c']);
+assert.deepEqual(idsT(mergeThreeWay(estado({ traspasos: [tras('a'), tras('b')] }), estado({ traspasos: [tras('a'), tras('b'), tras('c')] }), estado({ traspasos: [tras('b')] }))), ['b', 'c']);
+// Un teléfono con una versión anterior no manda la lista: que falte no es un borrado
+assert.deepEqual(idsT(mergeThreeWay(estado({ traspasos: [tras('a')] }), estado({ traspasos: [tras('a'), tras('b')] }), estado({ traspasos: undefined }))), ['a', 'b']);
+// Mes cerrado en el otro teléfono: sus traspasos viejos no vuelven, pero uno nuevo de este teléfono sí se conserva
+const cierreT = mergeThreeWay(estado({ traspasos: [tras('a')] }), estado({ traspasos: [tras('a'), tras('b')] }), estado({ activeMonth: 'Diciembre 2026', traspasos: [] }));
+assert.deepEqual(idsT(cierreT), ['b']);
+
 // Primer arranque: se rescata lo que solo está en este teléfono, sin duplicar ni traer meses viejos
 const firstRunBase = new Function(`${html.match(/function firstRunBase[\s\S]*?\n {4}}\r?\n/)[0]}\nreturn firstRunBase;`)();
 const nov = (id, desc, amount = 5) => ({ id, date: '2026-11-08', amount, desc });
@@ -46,5 +58,9 @@ const remoto = estado({ expenses: [nov('a', 'luz', 9)] });
 const local = estado({ expenses: [nov('perdido', 'feria'), nov('otroId', 'luz', 9), { id: 'oct', date: '2026-10-20', amount: 1, desc: 'viejo' }] });
 const rescate = mergeThreeWay(firstRunBase(local, remoto, 1, 2), local, remoto);
 assert.deepEqual(ids(rescate), ['a', 'perdido']);
+// ...y también los traspasos que la nube no tiene
+const remotoT = estado({ traspasos: [tras('compartido')] });
+const localT = estado({ traspasos: [tras('compartido'), tras('solo-aqui')] });
+assert.deepEqual(idsT(mergeThreeWay(firstRunBase(localT, remotoT, 1, 2), localT, remotoT)), ['compartido', 'solo-aqui']);
 
 console.log('OK: combinación de datos entre teléfonos');

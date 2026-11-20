@@ -217,6 +217,7 @@
       if (typeof updateSmartVisaDisplay === 'function') {
         syncProfileToInputs();
       }
+      if (typeof renderProyeccionMes === 'function') renderProyeccionMes();
     }
 
     function addExpense(e) {

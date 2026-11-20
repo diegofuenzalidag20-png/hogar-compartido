@@ -7,8 +7,8 @@
     const masterAuditItems = [
       { id: 'item-1', name: 'Crédito Hipotecario (Aporte Fijo Diego)', cat: 'Vivienda Co-Aporte', resp: 'Diego', cuenta: 'Cuenta Fan', base: 365000, actual: 365000 },
       { id: 'item-1b', name: 'Crédito Hipotecario (Diferencial UF Soledad)', cat: 'Vivienda Co-Aporte', resp: 'Soledad', cuenta: 'Chequera BancoEstado', base: 10000, actual: 10000 },
-      { id: 'item-2', name: 'Arriendo Habitación Huasco', cat: 'Vivienda Huasco', resp: 'Diego', cuenta: 'Cuenta Fan', base: 140000, actual: 140000 },
-      { id: 'item-3', name: 'Pagos Servicios Huasco (Luz y Agua)', cat: 'Vivienda Huasco', resp: 'Diego', cuenta: 'Tenpo', base: 20000, actual: 20000 },
+      { id: 'item-2', name: 'Arriendo Habitación Huasco', cat: 'Vivienda Huasco', resp: 'Diego', cuenta: 'Cuenta Fan', base: 95000, actual: 95000 },
+      { id: 'item-3', name: 'Pagos Servicios Huasco (Luz y Agua)', cat: 'Vivienda Huasco', resp: 'Diego', cuenta: 'Tenpo', base: 11000, actual: 11000 },
       { id: 'item-5', name: 'Comida Michis (Promedio)', cat: 'Mascotas', resp: 'Diego', cuenta: 'Cuenta Fan', base: 42200, actual: 42200 },
       { id: 'item-6', name: 'Arena Sanitaria Michis', cat: 'Mascotas', resp: 'Diego', cuenta: 'Cuenta Fan', base: 20000, actual: 20000 },
       { id: 'item-7', name: 'Netflix', cat: 'Streaming', resp: 'Diego', cuenta: 'Cuenta Fan', base: 10700, actual: 10700 },
@@ -17,8 +17,8 @@
       { id: 'item-10', name: 'Rupatadina', cat: 'Salud', resp: 'Diego', cuenta: 'Cuenta Fan', base: 14685, actual: 14685 },
       { id: 'item-11', name: 'Pasajes Bus Huasco (8 tramos)', cat: 'Operaciones', resp: 'Diego', cuenta: 'Tenpo', base: 140000, actual: 140000 },
       { id: 'item-12', name: 'Uber (Traslados y retenciones)', cat: 'Operaciones', resp: 'Diego', cuenta: 'Tenpo', base: 80000, actual: 80000 },
-      { id: 'item-13', name: 'Metro Valparaíso (EFE)', cat: 'Operaciones', resp: 'Diego', cuenta: 'Tenpo', base: 40000, actual: 40000 },
-      { id: 'item-14', name: 'Snacks Turno Huasco', cat: 'Operaciones', resp: 'Diego', cuenta: 'Tenpo', base: 40000, actual: 40000 },
+      { id: 'item-13', name: 'Metro Valparaíso (EFE)', cat: 'Operaciones', resp: 'Diego', cuenta: 'Tenpo', base: 10000, actual: 10000 },
+      { id: 'item-14', name: 'Snacks y comidas de viaje Huasco', cat: 'Operaciones', resp: 'Diego', cuenta: 'Tenpo', base: 60000, actual: 60000 },
       { id: 'item-15', name: 'Bolsillo Mach ($35k x 4)', cat: 'Bolsillo', resp: 'Diego', cuenta: 'Mach', base: 140000, actual: 140000 },
       { id: 'item-16', name: 'Fondo Emergencia Mercado Pago', cat: 'Ahorro', resp: 'Diego', cuenta: 'Mercado Pago', base: 130000, actual: 130000 },
       { id: 'item-17', name: 'Luz Chilquinta Limache', cat: 'Hogar Limache', resp: 'Soledad', cuenta: 'Chequera BancoEstado', base: 23762, actual: 23762 },
@@ -168,6 +168,8 @@
         diffSub.textContent = 'En rango óptimo presupuestado';
         diffCard.className = 'kpi-card blue';
       }
+      // La meta y los fijos pendientes salen del presupuesto: la proyección de fin de mes se recalcula con él
+      if (typeof renderProyeccionMes === 'function') renderProyeccionMes();
     }
 
     function updateAuditItem(id, value) {

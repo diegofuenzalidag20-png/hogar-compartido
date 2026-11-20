@@ -77,6 +77,7 @@
       // Si entra a tab-cuentas, sincronizar valores de sueldos y cofres inmediatamente
       if (tabId === 'tab-cuentas') {
         if (typeof syncProfileToInputs === 'function') syncProfileToInputs();
+        if (typeof renderTraspasos === 'function') renderTraspasos();
       }
       // Si entra a tab-mes-actual, renderizar y actualizar todos los gráficos del mes
       if (tabId === 'tab-mes-actual') {

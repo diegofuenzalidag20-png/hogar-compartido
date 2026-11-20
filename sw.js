@@ -1,4 +1,4 @@
-const CACHE_NAME = 'finanzas-pareja-v81';
+const CACHE_NAME = 'finanzas-pareja-v82';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -20,6 +20,7 @@ const ASSETS_TO_CACHE = [
   './js/13-categorias.js',
   './js/14-tarjetas.js',
   './js/15-analisis-mes.js',
+  './js/16-traspasos.js',
   './favicon.ico',
   './favicon-32x32.png',
   './favicon-16x16.png',
