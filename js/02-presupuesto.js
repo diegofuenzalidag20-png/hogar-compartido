@@ -96,13 +96,13 @@
         }
 
         const respBadge = item.resp === 'Diego'
-          ? '<span style="font-weight:700; color:var(--accent-diego);">Diego</span> <small style="color:var(--text-dim);">(' + item.cuenta + ')</small>'
-          : '<span style="font-weight:700; color:var(--accent-soledad);">Soledad</span> <small style="color:var(--text-dim);">(' + item.cuenta + ')</small>';
+          ? '<span style="font-weight:700; color:var(--accent-diego);">Diego</span> <small style="color:var(--text-dim);">(' + escapeHtml(item.cuenta) + ')</small>'
+          : '<span style="font-weight:700; color:var(--accent-soledad);">Soledad</span> <small style="color:var(--text-dim);">(' + escapeHtml(item.cuenta) + ')</small>';
 
         const diffClass = diff > 0 ? 'style="color:#F43F5E; font-weight:700;"' : (diff < 0 ? 'style="color:#10B981; font-weight:700;"' : 'style="color:var(--text-muted);"');
 
         const deleteBtn = item.isCustom
-          ? ` <button onclick="deleteAuditItem('${item.id}')" style="background:transparent; border:none; color:var(--accent-rose); cursor:pointer; font-size:0.85rem;" title="Eliminar ítem">🗑️</button>`
+          ? ` <button type="button" class="btn-borrar-item" style="background:transparent; border:none; color:var(--accent-rose); cursor:pointer; font-size:0.85rem;" title="Eliminar ítem">🗑️</button>`
           : '';
 
         const tr = document.createElement('tr');
@@ -114,13 +114,16 @@
           <td style="text-align:center;">${respBadge}</td>
           <td style="text-align:right; font-weight:600; color:var(--text-muted);">${formatCLP(item.base)}</td>
           <td style="text-align:right;">
-            <input type="number" class="input-real" value="${item.actual}" oninput="updateAuditItem('${item.id}', this.value)">
+            <input type="number" class="input-real" value="${Number(item.actual) || 0}">
           </td>
           <td style="text-align:right;" ${diffClass}>
             ${diff > 0 ? '+' : ''}${formatCLP(diff)} <small>(${pct > 0 ? '+' : ''}${pct.toFixed(1)}%)</small>
           </td>
           <td style="text-align:center;">${badgeHtml}</td>
         `;
+        // Listeners directos: el id viene de los datos y no debe armarse como código
+        tr.querySelector('.input-real').oninput = (e) => updateAuditItem(item.id, e.target.value);
+        tr.querySelector('.btn-borrar-item')?.addEventListener('click', () => deleteAuditItem(item.id));
         if (tbody) tbody.appendChild(tr);
       });
 

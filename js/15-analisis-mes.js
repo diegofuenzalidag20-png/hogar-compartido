@@ -474,7 +474,7 @@
                 <div style="min-width:0; flex:1; overflow:hidden;">
                   <div style="font-weight:700; font-size:0.85rem; color:var(--text-main); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${escapeHtml(it.desc || it.category)}</div>
                   <div style="font-size:0.72rem; color:var(--text-muted); display:flex; align-items:center; gap:0.4rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                    <span>${it.date || ''}</span>
+                    <span>${escapeHtml(it.date || '')}</span>
                     <span>•</span>
                     <span>${escapeHtml(it.category || '')}</span>
                   </div>
@@ -579,7 +579,7 @@
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=83').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=84').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }

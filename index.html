@@ -23,7 +23,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <!-- Firebase Cloud Sync Engine (REST Directo ultra-rápido sin dependencias pesadas) -->
-  <link rel="stylesheet" href="css/app.css?v=83">
+  <link rel="stylesheet" href="css/app.css?v=84">
   <script>
     // Carga estable (v83): sin restaurar el desplazamiento al recargar (dejaba la página 22-34 px más abajo, con la cabecera cortada)
     // y el contenido espera a que la app lo dibuje; a los 3 s se muestra pase lo que pase.
@@ -1648,22 +1648,22 @@
     Hogar Compartido · Diego & Soledad
   </footer>
 
-  <script src="js/01-base.js?v=83"></script>
-  <script src="js/02-presupuesto.js?v=83"></script>
-  <script src="js/03-perfil-cofres.js?v=83"></script>
-  <script src="js/04-graficos-inicio.js?v=83"></script>
-  <script src="js/05-registro.js?v=83"></script>
-  <script src="js/06-checklist.js?v=83"></script>
-  <script src="js/07-pwa-enlace.js?v=83"></script>
-  <script src="js/08-nube.js?v=83"></script>
-  <script src="js/09-gastos.js?v=83"></script>
-  <script src="js/10-sueldos.js?v=83"></script>
-  <script src="js/11-historial-cierre.js?v=83"></script>
-  <script src="js/12-desplegables.js?v=83"></script>
-  <script src="js/13-categorias.js?v=83"></script>
-  <script src="js/14-tarjetas.js?v=83"></script>
-  <script src="js/15-analisis-mes.js?v=83"></script>
-  <script src="js/16-traspasos.js?v=83"></script>
+  <script src="js/01-base.js?v=84"></script>
+  <script src="js/02-presupuesto.js?v=84"></script>
+  <script src="js/03-perfil-cofres.js?v=84"></script>
+  <script src="js/04-graficos-inicio.js?v=84"></script>
+  <script src="js/05-registro.js?v=84"></script>
+  <script src="js/06-checklist.js?v=84"></script>
+  <script src="js/07-pwa-enlace.js?v=84"></script>
+  <script src="js/08-nube.js?v=84"></script>
+  <script src="js/09-gastos.js?v=84"></script>
+  <script src="js/10-sueldos.js?v=84"></script>
+  <script src="js/11-historial-cierre.js?v=84"></script>
+  <script src="js/12-desplegables.js?v=84"></script>
+  <script src="js/13-categorias.js?v=84"></script>
+  <script src="js/14-tarjetas.js?v=84"></script>
+  <script src="js/15-analisis-mes.js?v=84"></script>
+  <script src="js/16-traspasos.js?v=84"></script>
   <!-- Modal para Agregar Nuevo Ítem -->
   <div id="modalAddItem" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(4px); z-index:2000; align-items:center; justify-content:center; padding:1rem;">
     <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:var(--radius-md); max-width:520px; width:100%; padding:1.5rem; box-shadow:var(--shadow-card);">
@@ -1789,7 +1789,7 @@
         </div>
       </div>
 
-      <!-- PANEL 2: NUBE AUTOMÁTICA (FIREBASE O VPS) -->
+      <!-- PANEL 2: NUBE AUTOMÁTICA (FIREBASE) -->
       <div id="syncPaneCloud" class="sync-pane" style="display:none;">
         <div style="background:var(--bg-surface-elevated); border:1px solid var(--border-color); border-radius:12px; padding:1.15rem;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
@@ -1818,33 +1818,14 @@
 
           <!-- Botones de Acción Manual Rápida -->
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem; margin-bottom:1rem;">
-            <button type="button" onclick="pushToActiveCloud()" class="btn-primary" style="justify-content:center; font-size:0.85rem; padding:0.75rem; display:flex; align-items:center; gap:0.4rem;">
+            <button type="button" onclick="pushToFirestore(false)" class="btn-primary" style="justify-content:center; font-size:0.85rem; padding:0.75rem; display:flex; align-items:center; gap:0.4rem;">
               <span>⬆️</span> Subir a la Nube Ahora
             </button>
-            <button type="button" onclick="pullFromActiveCloud()" class="btn-secondary" style="justify-content:center; font-size:0.85rem; padding:0.75rem; display:flex; align-items:center; gap:0.4rem;">
+            <button type="button" onclick="pullFromFirestore()" class="btn-secondary" style="justify-content:center; font-size:0.85rem; padding:0.75rem; display:flex; align-items:center; gap:0.4rem;">
               <span>⬇️</span> Descargar de la Nube
             </button>
           </div>
 
-          <!-- Opciones Avanzadas (VPS opcional) -->
-          <details style="border-top:1px solid var(--border-color); padding-top:0.75rem; font-size:0.78rem; color:var(--text-muted);">
-            <summary style="cursor:pointer; font-weight:600; color:var(--text-muted); padding:0.25rem 0;">
-              ⚙️ Opciones avanzadas de conexión (VPS Privado opcional)
-            </summary>
-            <div style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.5rem; background:rgba(0,0,0,0.2); padding:0.75rem; border-radius:8px;">
-              <div>
-                <label style="display:block; font-size:0.72rem; margin-bottom:0.2rem;">URL VPS (opcional):</label>
-                <input type="text" id="vpsEndpointInput" placeholder="http://tu-vps:8443" style="width:100%; font-size:0.78rem; padding:0.4rem;">
-              </div>
-              <div>
-                <label style="display:block; font-size:0.72rem; margin-bottom:0.2rem;">Token Secreto VPS:</label>
-                <input type="password" id="vpsTokenInput" placeholder="diego-sole-2026" style="width:100%; font-size:0.78rem; padding:0.4rem;">
-              </div>
-              <button type="button" onclick="saveCloudSettings()" class="btn-secondary" style="font-size:0.75rem; padding:0.35rem 0.6rem; align-self:flex-start;">
-                💾 Guardar VPS
-              </button>
-            </div>
-          </details>
         </div>
       </div>
 

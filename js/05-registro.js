@@ -420,8 +420,7 @@
       if (lugar) newExp.lugar = lugar;
       expenses.unshift(newExp);
       anotarEnDiario(newExp);
-      localStorage.setItem('family_expenses', JSON.stringify(expenses));
-      localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
+      const guardadoAqui = localStorage.setItem('family_expenses', JSON.stringify(expenses));
       renderExpenses();
 
       // 3. Renderizar y persistir
@@ -441,7 +440,8 @@
       renderExpenses();
       limpiarCajaRapida(true);
       if (mobileLayout.matches) closeQuickSheet();
-      showToast(`✅ ${desc} · ${formatCLP(amount)}`, { label: 'Deshacer', onClick: () => undoQuickBill(newExp.id, auditId, auditBefore) });
+      // Con la memoria llena el gasto vive solo en esta pantalla hasta que suba a la nube
+      showToast(`${guardadoAqui ? '✅' : '⚠️ Sin espacio en el teléfono:'} ${desc} · ${formatCLP(amount)}`, { label: 'Deshacer', onClick: () => undoQuickBill(newExp.id, auditId, auditBefore) });
     }
 
     function undoQuickBill(expenseId, auditId, auditBefore) {
@@ -451,7 +451,6 @@
       if (item && auditBefore) Object.assign(item, auditBefore);
       else currentAuditItems = currentAuditItems.filter(it => it.id !== auditId);
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
-      localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
       renderExpenses();
       renderAuditTable();
       renderChecklist();

@@ -8,6 +8,14 @@
     const FIRESTORE_API_KEY = "AIzaSyBGwknt90g2gjEBBMtdu6VPRLzy_3slPhU";
     const FIRESTORE_DOC_URL = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents/hogar/datos_compartidos?key=${FIRESTORE_API_KEY}`;
     const CLIENT_SESSION_ID = 'sess_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
+    // Una red colgada dejaba la sincronización esperando para siempre y nada más subía: cada llamada a la nube tiene plazo
+    let TIEMPO_RED_NUBE = 15000;
+    function plazoRed() {
+      if (AbortSignal.timeout) return AbortSignal.timeout(TIEMPO_RED_NUBE);
+      const c = new AbortController();
+      setTimeout(() => c.abort(), TIEMPO_RED_NUBE);
+      return c.signal;
+    }
 
     // ---------- Inicio de sesión con Google (Firebase Auth) ----------
     // Firestore sigue por REST: la sesión solo agrega el token. Sin sesión todo funciona mientras las reglas lo permitan.
@@ -16,11 +24,11 @@
     // ---------- Versión de la app ----------
     // Un teléfono con la app abierta desde antes de una actualización sigue con el código viejo.
     // Si hay una versión nueva publicada, no se registra ni se sube nada hasta actualizar.
-    const VERSION_APP = 83;
+    const VERSION_APP = 84;
     let versionBloqueada = false;
     async function revisarVersionApp() {
       try {
-        const r = await fetch(`sw.js?t=${Date.now()}`, { cache: 'no-store' });
+        const r = await fetch(`sw.js?t=${Date.now()}`, { cache: 'no-store', signal: plazoRed() });
         const publicada = Number(((await r.text()).match(/finanzas-pareja-v(\d+)/) || [])[1]);
         if (publicada > VERSION_APP) bloquearVersionAntigua(publicada);
       } catch (e) { /* sin red: se revisa en la próxima vuelta */ }
@@ -81,7 +89,6 @@
       const ids = new Set(expenses.map(g => g.id));
       lista.filter(g => !ids.has(g.id)).forEach(g => expenses.unshift(JSON.parse(JSON.stringify(g))));
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
-      localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
       renderExpenses();
       renderAuditTable();
       triggerAutoSyncToCloud(true);
@@ -155,12 +162,13 @@
       const res = await fetch(`${RESPALDOS_URL}/${id}?key=${FIRESTORE_API_KEY}`, {
         method: 'PATCH',
         headers: await encabezadosNube({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ fields: { appStateJson: { stringValue: JSON.stringify(payload) }, creado: { integerValue: String(Date.now()) }, appVersion: { integerValue: String(VERSION_APP) } } })
+        body: JSON.stringify({ fields: { appStateJson: { stringValue: JSON.stringify(payload) }, creado: { integerValue: String(Date.now()) }, appVersion: { integerValue: String(VERSION_APP) } } }),
+        signal: plazoRed()
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     }
     async function listarRespaldos() {
-      const res = await fetch(`${RESPALDOS_URL}?key=${FIRESTORE_API_KEY}&pageSize=300&mask.fieldPaths=creado`, { cache: 'no-store', headers: await encabezadosNube() });
+      const res = await fetch(`${RESPALDOS_URL}?key=${FIRESTORE_API_KEY}&pageSize=300&mask.fieldPaths=creado`, { cache: 'no-store', headers: await encabezadosNube(), signal: plazoRed() });
       if (res.status === 401 || res.status === 403) throw new ErrorSinPermiso();
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return ((await res.json()).documents || []).map(d => d.name.split('/').pop()).sort().reverse();
@@ -173,7 +181,7 @@
         await guardarRespaldo(hoy, JSON.parse(JSON.stringify(buildCompleteFamilyPayload())));
         localStorage.setItem('respaldo_dia', hoy);
         const sobrantes = (await listarRespaldos()).slice(RESPALDOS_A_GUARDAR);
-        for (const id of sobrantes) await fetch(`${RESPALDOS_URL}/${id}?key=${FIRESTORE_API_KEY}`, { method: 'DELETE', headers: await encabezadosNube() });
+        for (const id of sobrantes) await fetch(`${RESPALDOS_URL}/${id}?key=${FIRESTORE_API_KEY}`, { method: 'DELETE', headers: await encabezadosNube(), signal: plazoRed() });
       } catch (e) {
         console.warn('Respaldo diario pendiente:', e.message);
       } finally {
@@ -206,18 +214,22 @@
     }
     function cerrarRespaldos() { document.getElementById('modalRespaldos').style.display = 'none'; }
     async function restaurarRespaldo(id, fecha) {
+      if (versionBloqueada) { avisarVersionAntigua(); return; }
+      if (recargarSiOtraCopiaSincronizo()) return;
       if (!(await confirmar(`¿Volver los datos al ${fecha}? Lo registrado después se pierde, salvo lo que esté en otro respaldo. Antes se guarda una copia del estado actual.`))) return;
       try {
-        const res = await fetch(`${RESPALDOS_URL}/${id}?key=${FIRESTORE_API_KEY}`, { cache: 'no-store', headers: await encabezadosNube() });
+        const res = await fetch(`${RESPALDOS_URL}/${id}?key=${FIRESTORE_API_KEY}`, { cache: 'no-store', headers: await encabezadosNube(), signal: plazoRed() });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const payload = parseSeguro((await res.json()).fields?.appStateJson?.stringValue, null);
+        const payload = sanearEstado(parseSeguro((await res.json()).fields?.appStateJson?.stringValue, null));
         if (!payload || !Array.isArray(payload.expenses)) throw new Error('El respaldo está incompleto');
         await guardarRespaldo(`antes-de-restaurar-${Date.now()}`, JSON.parse(JSON.stringify(buildCompleteFamilyPayload())));
-        // Un respaldo anterior a los traspasos no los tenía: restaurarlo los deja en cero
-        applyRemoteDataToApp({ traspasos: [], ...payload });
-        await pushToFirestore(true);
+        // Un respaldo anterior a los traspasos no los tenía: restaurarlo los deja en cero.
+        // El perfil y el respaldo del cierre se reemplazan: mezclarlos dejaba cifras de después del respaldo
+        applyRemoteDataToApp({ traspasos: [], ultimoCierreBackup: null, ...payload }, { reemplazarPerfil: true });
+        const subio = await pushToFirestore(true);
         cerrarRespaldos();
-        showToast(`✅ Datos restaurados al ${fecha}`);
+        if (subio) showToast(`✅ Datos restaurados al ${fecha}`);
+        else avisar(`Restaurado solo en este teléfono, no se pudo subir a la nube. Se volverá a intentar solo cuando haya conexión; hasta entonces el otro teléfono no lo ve.`);
       } catch (e) {
         alert('No se pudo restaurar: ' + e.message);
       }
@@ -227,7 +239,12 @@
     let lastUploadedTimestamp = 0;
     let cloudPollInterval = null;
 
+    let estadoInsignia = null;
+    let pendienteDeSubir = false;
     function updateCloudStatusBadge(online, text) {
+      estadoInsignia = [online, text];
+      // "En vivo" solo cuando lo de este teléfono ya está en la nube
+      if (online && pendienteDeSubir) { online = false; text = '⏳ Pendiente de subir'; }
       const badge = document.getElementById('cloudStatusBadge');
       if (badge) {
         badge.className = online ? 'badge badge-emerald' : 'badge badge-amber';
@@ -239,6 +256,33 @@
           ? `<span onclick="openSyncModal()" title="Sincronizado en tiempo real con Firebase — Toca para abrir Sincronización" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem; color:#34D399; font-size:0.75rem; font-weight:700; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); padding:0.2rem 0.55rem; border-radius:20px;"><span style="width:7px; height:7px; border-radius:50%; background:#10B981; box-shadow:0 0 8px #10B981; display:inline-block;"></span> Nube en Vivo</span>`
           : `<span onclick="openSyncModal()" title="Modo local — Toca para conectar" style="cursor:pointer; color:#FBBF24; font-size:0.75rem; font-weight:700;">${text}</span>`;
       }
+    }
+
+    // Compara lo sincronizable con lo último acordado con la nube. Se agrupa tras cada escritura en el teléfono
+    // (ver el envoltorio de setItem en 01-base.js) y se repite al terminar cada sincronización.
+    let revisionPendiente = null;
+    function marcarCambioLocal() {
+      clearTimeout(revisionPendiente);
+      revisionPendiente = setTimeout(revisarPendienteDeSubir, 400);
+    }
+    function revisarPendienteDeSubir() {
+      const base = localStorage.getItem(SYNC_BASE_KEY);
+      const antes = pendienteDeSubir;
+      pendienteDeSubir = !!base && JSON.stringify(pickSyncState(buildCompleteFamilyPayload())) !== base;
+      if (antes !== pendienteDeSubir && estadoInsignia) updateCloudStatusBadge(...estadoInsignia);
+    }
+
+    // Tres intentos seguidos sin poder guardar: la insignia sola pasa desapercibida
+    let fallosNubeSeguidos = 0;
+    function contarFalloNube() {
+      if (navigator.onLine === false) return;
+      if (++fallosNubeSeguidos === 3) avisar('⚠️ Los últimos intentos de guardar en la nube fallaron. Lo registrado sigue en este teléfono y se subirá solo cuando la conexión vuelva; si esto se repite, revisa la conexión.');
+    }
+    function syncExitoso() {
+      fallosNubeSeguidos = 0;
+      avisoSesionMostrado = false;
+      revisarPendienteDeSubir();
+      updateCloudStatusBadge(true, '🟢 Nube en Vivo');
     }
 
     function parseFirestoreField(field) {
@@ -271,7 +315,7 @@
       return res;
     }
 
-    function applyRemoteDataToApp(data) {
+    function applyRemoteDataToApp(data, { reemplazarPerfil = false } = {}) {
       if (!data) return;
 
       // 1. SINCRONIZAR MES / PERIODO ACTIVO (DIEGO & SOLEDAD EN EL MISMO MES SIEMPRE)
@@ -302,19 +346,21 @@
       // 3. SINCRONIZAR GASTOS DIARIOS
       if (Array.isArray(data.expenses)) {
         expenses = data.expenses;
+        seccionesIlegibles.delete('expenses');
         localStorage.setItem('family_expenses', JSON.stringify(expenses));
-        localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
       }
 
       // 3b. SINCRONIZAR TRASPASOS ENTRE CUENTAS PROPIAS (un teléfono o respaldo anterior sin la lista no la borra)
       if (Array.isArray(data.traspasos)) {
         traspasos = data.traspasos;
+        seccionesIlegibles.delete('traspasos');
         localStorage.setItem('family_traspasos', JSON.stringify(traspasos));
       }
 
       // 4. SINCRONIZAR PERFIL DE USUARIO Y SUELDOS
       if (data.userProfile && typeof data.userProfile === 'object') {
-        userProfile = Object.assign(userProfile || {}, data.userProfile);
+        // Al restaurar un respaldo lo que falta toma el valor inicial, no el de ahora
+        userProfile = Object.assign(reemplazarPerfil ? JSON.parse(JSON.stringify(PERFIL_INICIAL)) : (userProfile || {}), data.userProfile);
         localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
         if (userProfile.diegoSalary) localStorage.setItem('diego_salary', userProfile.diegoSalary);
         if (userProfile.soledadSalary) localStorage.setItem('soledad_salary', userProfile.soledadSalary);
@@ -387,8 +433,10 @@
       const merged = {};
       for (const section in SYNC_SECTIONS) {
         const idKey = SYNC_SECTIONS[section];
-        const [b, l] = [base[section], local[section]];
-        // Si el otro teléfono corre una versión anterior no conoce la sección: que falte no significa que se borró
+        const b = base[section];
+        // Si el otro teléfono corre una versión anterior no conoce la sección: que falte no significa que se borró.
+        // Lo mismo si aquí está ilegible (ver buildCompleteFamilyPayload): se toma la de la nube
+        const l = idKey && local[section] == null ? b : local[section];
         const r = idKey && remote[section] == null ? b : remote[section];
         if (!idKey) { merged[section] = pick(b, l, r); continue; }
         const index = (v) => new Map(idKey === 'fields' ? Object.entries(v || {}) : (v || []).map(it => [it[idKey] ?? JSON.stringify(it), it]));
@@ -424,7 +472,7 @@
     }
 
     async function versionNube() {
-      const res = await fetch(`${FIRESTORE_DOC_URL}&mask.fieldPaths=timestamp`, { cache: 'no-store', headers: await encabezadosNube() });
+      const res = await fetch(`${FIRESTORE_DOC_URL}&mask.fieldPaths=timestamp`, { cache: 'no-store', headers: await encabezadosNube(), signal: plazoRed() });
       if (res.status === 404) return null;
       if (res.status === 401 || res.status === 403) throw new ErrorSinPermiso();
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -432,7 +480,7 @@
     }
 
     async function readCloudDoc() {
-      const res = await fetch(FIRESTORE_DOC_URL, { cache: 'no-store', headers: await encabezadosNube() });
+      const res = await fetch(FIRESTORE_DOC_URL, { cache: 'no-store', headers: await encabezadosNube(), signal: plazoRed() });
       if (res.status === 404) return { updateTime: null, payload: null };
       if (res.status === 401 || res.status === 403) throw new ErrorSinPermiso();
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -445,19 +493,27 @@
         payload = parseFirestoreDocFields(doc.fields);
       }
       if (payload && !Array.isArray(payload.expenses)) throw new Error('Los datos de la nube están incompletos');
-      return { updateTime: doc.updateTime, payload };
+      return { updateTime: doc.updateTime, payload: sanearEstado(payload) };
     }
 
     // Devuelve null si otro teléfono guardó después de nuestra lectura.
+    let avisoDocumentoGrande = false;
     async function writeCloudDoc(payload, updateTime) {
       if (versionBloqueada) throw new Error('Versión antigua de la app: actualiza antes de guardar');
       const precondition = updateTime ? `currentDocument.updateTime=${encodeURIComponent(updateTime)}` : 'currentDocument.exists=false';
+      const appStateJson = JSON.stringify(payload);
+      // Firestore rechaza documentos de más de 1 MiB: se avisa con tiempo para separar los meses antiguos
+      if (appStateJson.length > 600000 && !avisoDocumentoGrande) {
+        avisoDocumentoGrande = true;
+        avisar('⚠️ El historial está creciendo mucho y pronto podría no caber en la nube. Pide separar los meses antiguos.');
+      }
       const res = await fetch(`${FIRESTORE_DOC_URL}&${precondition}`, {
         method: 'PATCH',
         headers: await encabezadosNube({ 'Content-Type': 'application/json' }),
+        signal: plazoRed(),
         body: JSON.stringify({
           fields: {
-            appStateJson: { stringValue: JSON.stringify(payload) },
+            appStateJson: { stringValue: appStateJson },
             timestamp: { integerValue: payload.timestamp.toString() },
             sender: { stringValue: payload.sender || 'Diego o Soledad' },
             month: { stringValue: payload.month || 'Nov-26' },
@@ -491,7 +547,8 @@
     });
 
     function rememberSyncedState(state, updateTime, timestamp) {
-      localStorage.setItem(SYNC_BASE_KEY, JSON.stringify(state));
+      // Sin la base guardada no se marca la versión: la base vieja con la versión nueva hacía subir en cada vuelta
+      if (!localStorage.setItem(SYNC_BASE_KEY, JSON.stringify(state))) return;
       localStorage.setItem(SYNC_VERSION_KEY, updateTime);
       // Lo que quedó guardado de verdad (con la memoria llena el guardado puede fallar y no hay que recargar en bucle)
       versionSincronizadaAqui = localStorage.getItem(SYNC_VERSION_KEY);
@@ -504,8 +561,10 @@
       // Si otro teléfono guardó entremedio, Firestore lo rechaza y se sigue por el camino con combinación.
       const versionConocida = localStorage.getItem(SYNC_VERSION_KEY);
       const baseConocida = leerJSON(SYNC_BASE_KEY, null);
-      if (versionConocida && baseConocida) {
-        const payloadRapido = JSON.parse(JSON.stringify(buildCompleteFamilyPayload()));
+      const faltaLocal = (estado) => Object.keys(SYNC_SECTIONS).some(s => SYNC_SECTIONS[s] && estado[s] == null);
+      const payloadRapido = versionConocida && baseConocida && JSON.parse(JSON.stringify(buildCompleteFamilyPayload()));
+      // Con una sección ilegible en el teléfono hay que leer la nube para recuperarla
+      if (payloadRapido && !faltaLocal(pickSyncState(payloadRapido))) {
         if (JSON.stringify(pickSyncState(payloadRapido)) === JSON.stringify(baseConocida)) {
           // Sin cambios locales: se pide solo la versión (<1 KB); el documento completo se baja si el otro teléfono guardó
           if (await versionNube() === versionConocida) return 'idle';
@@ -539,7 +598,7 @@
         }
 
         let merged = false;
-        if (remote && remoteChanged) {
+        if (remote && (remoteChanged || faltaLocal(local))) {
           const state = mergeThreeWay(base, local, remote);
           merged = JSON.stringify(state) !== JSON.stringify(local);
           if (merged) applyRemoteDataToApp({ ...state, currentActiveMonth: state.activeMonth });
@@ -579,7 +638,7 @@
     async function pushToFirestore(isSilent = false) {
       try {
         const result = await syncWithCloud();
-        updateCloudStatusBadge(true, '🟢 Nube en Vivo');
+        syncExitoso();
         respaldarSiCorresponde();
         if (!isSilent) showToast('☁️ ¡Guardado en la nube de Firebase con éxito!');
         else if (result === 'pulled' || result === 'merged') showToast('☁️ ¡Sincronizado con tu pareja!');
@@ -590,6 +649,7 @@
         if (err instanceof ErrorSinPermiso) { avisarSinSesion(); return false; }
         if (versionBloqueada) { updateCloudStatusBadge(false, '⬆️ Actualiza la app'); return false; }
         updateCloudStatusBadge(false, '⚠️ Sin guardar en nube');
+        contarFalloNube();
         if (!isSilent) alert('Error al guardar en Firebase: ' + err.message);
         return false;
       }
@@ -599,7 +659,7 @@
       try {
         if (!isSilent) showToast('⏳ Descargando datos desde Firebase...');
         const result = await syncWithCloud();
-        updateCloudStatusBadge(true, '🟢 Nube en Vivo');
+        syncExitoso();
         respaldarSiCorresponde();
         recordarCuentasPendientes();
         if (!isSilent) {
@@ -615,6 +675,7 @@
         if (err instanceof ErrorSinPermiso) { avisarSinSesion(); return false; }
         if (versionBloqueada) { updateCloudStatusBadge(false, '⬆️ Actualiza la app'); return false; }
         updateCloudStatusBadge(false, '⚠️ Sin guardar en nube');
+        contarFalloNube();
         if (!isSilent) alert('Error al descargar de Firebase: ' + err.message);
         return false;
       }
@@ -662,88 +723,6 @@
       });
     }
 
-    // --- ACCIONES DE NUBE DESDE EL MODAL ---
-    function loadSavedCloudSettings() {
-      try {
-        const vpsUrl = localStorage.getItem('vps_endpoint_url') || '';
-        const vpsToken = localStorage.getItem('vps_token') || '';
-        const urlInput = document.getElementById('vpsEndpointInput');
-        const tokenInput = document.getElementById('vpsTokenInput');
-        if (urlInput) urlInput.value = vpsUrl;
-        if (tokenInput) tokenInput.value = vpsToken;
-      } catch (e) {
-        console.warn('loadSavedCloudSettings warning:', e);
-      }
-    }
-
-    function saveCloudSettings() {
-      try {
-        const vpsUrl = document.getElementById('vpsEndpointInput')?.value.trim() || '';
-        const vpsToken = document.getElementById('vpsTokenInput')?.value.trim() || '';
-        localStorage.setItem('vps_endpoint_url', vpsUrl);
-        localStorage.setItem('vps_token', vpsToken);
-        showToast('💾 Configuración VPS guardada correctamente');
-      } catch (e) {
-        console.error('Error guardando VPS:', e);
-      }
-    }
-
-    async function pushToActiveCloud() {
-      const vpsUrl = document.getElementById('vpsEndpointInput')?.value.trim();
-      if (vpsUrl) {
-        const vpsToken = document.getElementById('vpsTokenInput')?.value.trim();
-        showToast('⏳ Conectando con tu VPS...');
-        try {
-          const payload = buildCompleteFamilyPayload();
-          const cleanUrl = vpsUrl.replace(/\/+$/, '');
-          const res = await fetch(`${cleanUrl}/api/sync`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${vpsToken || ''}`
-            },
-            body: JSON.stringify(payload)
-          });
-          const json = await res.json();
-          if (res.ok && json.success) {
-            showToast('☁️ ¡Datos guardados en tu VPS con éxito!');
-          } else {
-            alert('Error del VPS: ' + (json.error || 'Respuesta inesperada'));
-          }
-        } catch(err) {
-          alert('No se pudo conectar con el VPS: ' + err.message);
-        }
-      } else {
-        await pushToFirestore(false);
-      }
-    }
-
-    async function pullFromActiveCloud() {
-      const vpsUrl = document.getElementById('vpsEndpointInput')?.value.trim();
-      if (vpsUrl) {
-        const vpsToken = document.getElementById('vpsTokenInput')?.value.trim();
-        showToast('⏳ Descargando desde tu VPS...');
-        try {
-          const cleanUrl = vpsUrl.replace(/\/+$/, '');
-          const res = await fetch(`${cleanUrl}/api/sync`, {
-            headers: { 'Authorization': `Bearer ${vpsToken || ''}` }
-          });
-          const data = await res.json();
-          if (data && !data.error) {
-            applyRemoteDataToApp(data);
-            showToast('☁️ ¡Datos descargados desde el VPS!');
-            closeSyncModal();
-          } else {
-            alert('Error del VPS: ' + (data.error || 'Sin datos'));
-          }
-        } catch(err) {
-          alert('Error al descargar del VPS: ' + err.message);
-        }
-      } else {
-        await pullFromFirestore();
-      }
-    }
-
     // Chart.js Setup
     let chartCofres, chartAportes, chartHistorico;
 
@@ -761,18 +740,22 @@
       }
     }
 
-    // Dynamic Expense Management
-    const initialExpenses = [
-      { date: '2026-10-24', payer: 'Diego', category: 'Operaciones Huasco', desc: 'Recarga Pasajes Bus Huasco', account: 'Tenpo', amount: 28000 },
-      { date: '2026-10-23', payer: 'Soledad', category: 'Alimentación', desc: 'Feria Limache verduras y frutas', account: 'BancoEstado', amount: 14200 },
-      { date: '2026-10-22', payer: 'Diego', category: 'Mascotas', desc: 'Comida húmeda Michis', account: 'Cuenta Fan', amount: 8900 },
-      { date: '2026-10-21', payer: 'Soledad', category: 'Servicios Hogar', desc: 'Pago Luz Chilquinta', account: 'BancoEstado', amount: 23762 },
-      { date: '2026-10-20', payer: 'Diego', category: 'Supermercado', desc: 'Lider Limache - Compra semanal', account: 'Cuenta Fan', amount: 34500 }
-    ];
-
-    let expenses = [leerJSON('hogar_gastos', null), leerJSON('family_expenses', null)].find(Array.isArray) || initialExpenses;
+    // Una lista ilegible en el teléfono no es una lista vacía: no se sube hasta recibir la de la nube (ver buildCompleteFamilyPayload)
+    const seccionesIlegibles = new Set();
+    function leerListaLocal(clave, seccion) {
+      const lista = leerJSON(clave, null);
+      if (Array.isArray(lista)) return lista;
+      if (localStorage.getItem(clave) !== null) seccionesIlegibles.add(seccion);
+      return null;
+    }
+    // hogar_gastos era una copia de family_expenses: solo se lee para teléfonos que no tengan la otra
+    let expenses = leerListaLocal('family_expenses', 'expenses');
+    if (expenses) localStorage.removeItem('hogar_gastos');
+    else if (Array.isArray(expenses = leerJSON('hogar_gastos', null))) seccionesIlegibles.delete('expenses');
+    else expenses = [];
+    expenses = conIdsGasto(expenses);
     // Traspasos entre cuentas propias del mes: {id, date, from, to, amount, desc?, autor?}. No son gasto: solo mueven saldos
-    let traspasos = [leerJSON('family_traspasos', null)].find(Array.isArray) || [];
+    let traspasos = leerListaLocal('family_traspasos', 'traspasos') || [];
 
     function escapeHtml(str) {
       if (str === null || str === undefined) return '';

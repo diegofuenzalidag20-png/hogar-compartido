@@ -63,4 +63,11 @@ const remotoT = estado({ traspasos: [tras('compartido')] });
 const localT = estado({ traspasos: [tras('compartido'), tras('solo-aqui')] });
 assert.deepEqual(idsT(mergeThreeWay(firstRunBase(localT, remotoT, 1, 2), localT, remotoT)), ['compartido', 'solo-aqui']);
 
+// Una sección ilegible en este teléfono (null) no borra nada: se toma la de la nube, con sus cambios
+const conMeses = (meses) => estado({ dbMeses: meses.map((nombre) => ({ nombre })), expenses: [gasto('a')] });
+const sinLeer = { ...conMeses([]), dbMeses: null, expenses: null };
+const r = mergeThreeWay(conMeses(['Oct', 'Nov']), sinLeer, { ...conMeses(['Oct', 'Nov', 'Dic']), expenses: [gasto('a'), gasto('b')] });
+assert.deepEqual(r.dbMeses.map((m) => m.nombre), ['Oct', 'Nov', 'Dic']);
+assert.deepEqual(ids(r), ['a', 'b']);
+
 console.log('OK: combinación de datos entre teléfonos');

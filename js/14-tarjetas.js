@@ -778,8 +778,8 @@ let currentCardAnalysisFilter = 'all';
     function comparacionHist(r, k) {
       if (!r.anterior) return '';
       const pct = Math.round(((r.ultimo[k] - r.anterior[k]) / r.anterior[k]) * 100);
-      if (pct === 0) return `<span class="hist-igual">Igual que ${r.anterior.code}</span>`;
-      return `<span class="${pct > 0 ? 'hist-sube' : 'hist-baja'}">${pct > 0 ? '▲' : '▼'} ${Math.abs(pct)}% ${pct > 0 ? 'más' : 'menos'} que ${r.anterior.code}</span>`;
+      if (pct === 0) return `<span class="hist-igual">Igual que ${escapeHtml(r.anterior.code)}</span>`;
+      return `<span class="${pct > 0 ? 'hist-sube' : 'hist-baja'}">${pct > 0 ? '▲' : '▼'} ${Math.abs(pct)}% ${pct > 0 ? 'más' : 'menos'} que ${escapeHtml(r.anterior.code)}</span>`;
     }
 
     function renderHistoricoPanel() {
@@ -800,11 +800,11 @@ let currentCardAnalysisFilter = 'all';
       const destacado = document.getElementById('histDestacado');
       const r = cuenta ? resumenCuentaHist(meses, cuenta.k) : null;
       destacado.innerHTML = !r ? '<p class="hist-nota">Luz, Gas y Agua juntas, para comparar su temporada alta y baja.</p>' : `
-        <div class="hist-principal"><small>${r.ultimo.code}</small><strong>${formatCLP(r.ultimo[cuenta.k])}</strong>${comparacionHist(r, cuenta.k)}</div>
+        <div class="hist-principal"><small>${escapeHtml(r.ultimo.code)}</small><strong>${formatCLP(r.ultimo[cuenta.k])}</strong>${comparacionHist(r, cuenta.k)}</div>
         <div class="hist-datos">
           <div><small>Promedio</small><strong>${formatCLP(r.promedio)}</strong></div>
-          <div><small>Máximo · <span style="white-space:nowrap">${r.maximo.code}</span></small><strong class="hist-sube">${formatCLP(r.maximo[cuenta.k])}</strong></div>
-          <div><small>Mínimo · <span style="white-space:nowrap">${r.minimo.code}</span></small><strong class="hist-baja">${formatCLP(r.minimo[cuenta.k])}</strong></div>
+          <div><small>Máximo · <span style="white-space:nowrap">${escapeHtml(r.maximo.code)}</span></small><strong class="hist-sube">${formatCLP(r.maximo[cuenta.k])}</strong></div>
+          <div><small>Mínimo · <span style="white-space:nowrap">${escapeHtml(r.minimo.code)}</span></small><strong class="hist-baja">${formatCLP(r.minimo[cuenta.k])}</strong></div>
         </div>`;
 
       document.getElementById('histResumen').innerHTML = HIST_CUENTAS.map(c => {
@@ -813,7 +813,7 @@ let currentCardAnalysisFilter = 'all';
         return `<button type="button" class="hist-fila${c.k === histEstado.cuenta ? ' activa' : ''}" onclick="setHistorico({ cuenta: '${c.k}' }); document.getElementById('histServicios').scrollIntoView({ block: 'center' });">
           <span class="hist-fila-nombre">${c.icono} ${c.nombre}</span>
           <strong>${formatCLP(x.promedio)}</strong>
-          <small>Último ${formatCLP(x.ultimo[c.k])} (${x.ultimo.code})</small>
+          <small>Último ${formatCLP(x.ultimo[c.k])} (${escapeHtml(x.ultimo.code)})</small>
           <small class="hist-fila-comp">${comparacionHist(x, c.k)}</small>
         </button>`;
       }).join('');

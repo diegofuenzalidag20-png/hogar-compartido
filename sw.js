@@ -1,4 +1,4 @@
-const CACHE_NAME = 'finanzas-pareja-v83';
+const CACHE_NAME = 'finanzas-pareja-v84';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -30,12 +30,19 @@ const ASSETS_TO_CACHE = [
   'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap',
   'https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js',
 ];
+const PLAZO_RED_MS = 3500;
 
+// Una instalación incompleta debe fallar para que el navegador la reintente: sin la app completa en caché no abre sin red.
+// 'reload' evita copiar a la caché archivos viejos de la caché HTTP (GitHub Pages la guarda 10 minutos tras publicar).
+// Fuentes y Chart.js vienen de otros servidores: se guardan si se puede, sin impedir la instalación.
 self.addEventListener('install', (event) => {
+  const propios = ASSETS_TO_CACHE.filter((u) => !u.startsWith('http'));
+  const externos = ASSETS_TO_CACHE.filter((u) => u.startsWith('http'));
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE.map((u) => new Request(u, { cache: 'reload' }))).catch(() => {});
-    })
+    caches.open(CACHE_NAME).then((cache) => Promise.all([
+      cache.addAll(propios.map((u) => new Request(u, { cache: 'reload' }))),
+      ...externos.map((u) => cache.add(u).catch(() => {}))
+    ]))
   );
   self.skipWaiting();
 });
@@ -62,18 +69,23 @@ self.addEventListener('fetch', (event) => {
                  (new URL(req.url).origin === self.location.origin && /\.(js|css)$/.test(new URL(req.url).pathname));
 
   if (isHtml) {
-    // Network-First para páginas HTML: asegura que Diego y Soledad siempre reciban los cambios más recientes de GitHub Pages
-    event.respondWith(
-      fetch(req)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const copy = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-          }
-          return networkResponse;
-        })
-        .catch(() => caches.match(req, { ignoreSearch: true }).then((cached) => cached || caches.match('./index.html')))
-    );
+    // Red primero para HTML, JS y CSS (así llegan las actualizaciones), pero con una red lenta o colgada
+    // se usa la copia guardada a los 3,5 s; la respuesta de la red, si llega, igual queda para la próxima vez.
+    const red = fetch(req).then((networkResponse) => {
+      if (networkResponse && networkResponse.status === 200) {
+        const copy = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+      }
+      return networkResponse;
+    });
+    const guardada = () => caches.match(req, { ignoreSearch: true }).then((cached) => cached || (req.mode === 'navigate' ? caches.match('./index.html') : undefined));
+    event.respondWith(new Promise((resolve, reject) => {
+      const plazo = setTimeout(() => guardada().then((cached) => { if (cached) resolve(cached); }), PLAZO_RED_MS);
+      red.then((r) => { clearTimeout(plazo); resolve(r); }, (e) => {
+        clearTimeout(plazo);
+        guardada().then((cached) => (cached ? resolve(cached) : reject(e)));
+      });
+    }));
     return;
   }
 

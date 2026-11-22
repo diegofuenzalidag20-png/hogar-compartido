@@ -122,7 +122,7 @@
           if (quickTbody) {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td style="font-size:0.85rem; font-family:monospace; color:var(--text-muted);">${item.date || '-'}</td>
+              <td style="font-size:0.85rem; font-family:monospace; color:var(--text-muted);">${escapeHtml(item.date || '-')}</td>
               <td>${payerHtml}</td>
               <td><span style="font-size:0.82rem; font-weight:600; color:var(--text-main);">${escapeHtml(item.category || 'Otros')}</span></td>
               <td><strong style="font-size:0.88rem; color:var(--text-main);">${escapeHtml(item.desc || '-')}</strong></td>
@@ -145,7 +145,7 @@
               <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div style="display:flex; align-items:center; gap:0.45rem;">
                   ${payerMobileHtml}
-                  <span style="font-size:0.75rem; color:var(--text-muted); font-family:monospace;">${item.date || ''}</span>
+                  <span style="font-size:0.75rem; color:var(--text-muted); font-family:monospace;">${escapeHtml(item.date || '')}</span>
                 </div>
                 <div style="font-size:1.05rem; font-weight:800; color:var(--text-main); font-variant-numeric:tabular-nums;">
                   ${formatCLP(item.amount)}
@@ -193,7 +193,7 @@
         expenses.forEach((item, index) => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${item.date}</td>
+            <td>${escapeHtml(item.date)}</td>
             <td><span class="pill-partner ${item.payer === 'Diego' ? 'pill-diego' : 'pill-soledad'}" style="display:inline-flex;">${escapeHtml(item.payer)}</span></td>
             <td>${escapeHtml(item.category)}</td>
             <td>${escapeHtml(item.desc)}</td>
@@ -232,7 +232,6 @@
       };
 
       expenses.unshift(newExp);
-      localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
       renderExpenses();
       if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();
@@ -380,7 +379,6 @@
       }
 
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
-      localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
 
       renderExpenses();
       if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
@@ -425,7 +423,6 @@
         else if (target.auditBefore) Object.assign(boleta, target.auditBefore);
         persistirBoletasActivas();
       }
-        localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
         localStorage.setItem('family_expenses', JSON.stringify(expenses));
         renderExpenses();
         if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();

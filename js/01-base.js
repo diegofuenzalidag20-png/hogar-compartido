@@ -7,13 +7,22 @@
     function leerJSON(clave, respaldo) { return parseSeguro(localStorage.getItem(clave), respaldo); }
 
     const storageSetItemOriginal = Storage.prototype.setItem;
+    let avisoMemoriaLlena = false;
+    // Devuelve false si no se pudo guardar, para que quien guarda algo crítico lo sepa
     Storage.prototype.setItem = function (clave, valor) {
       try {
-        return storageSetItemOriginal.call(this, clave, valor);
+        storageSetItemOriginal.call(this, clave, valor);
       } catch (e) {
         console.error('Almacenamiento lleno:', e);
-        if (typeof showToast === 'function') showToast('⚠️ La memoria del teléfono está llena; este cambio podría no guardarse aquí.');
+        // Una ventana y no un aviso pasajero: el de "gasto registrado" lo tapaba al instante
+        if (!avisoMemoriaLlena) {
+          avisoMemoriaLlena = true;
+          setTimeout(() => avisar('⚠️ La memoria del teléfono está llena: los cambios podrían no quedar guardados en este teléfono. Se siguen subiendo a la nube mientras haya conexión. Libera espacio y vuelve a abrir la app.'));
+        }
+        return false;
       }
+      if (typeof marcarCambioLocal === 'function') marcarCambioLocal();
+      return true;
     };
 
     const temaClaro = () => document.body.getAttribute('data-theme') === 'light';

@@ -907,14 +907,15 @@ tr.innerHTML = `
           <td style="text-align:right; color:#F43F5E;">${formatCLP(item.gastosHogar)}</td>
           <td style="text-align:right; color:#10B981; font-weight:700;">${formatCLP(item.superavit)}</td>
           <td style="text-align:center;">
-            <span class="badge ${isCerrado ? 'badge-emerald' : 'badge-blue'}" style="font-size:0.7rem;">${item.estado}</span>
+            <span class="badge ${isCerrado ? 'badge-emerald' : 'badge-blue'}" style="font-size:0.7rem;">${escapeHtml(item.estado)}</span>
           </td>
           <td style="text-align:center;">
-            <button type="button" class="btn-secondary" onclick="verDetalleMes('${item.id || item.code || item.nombre}')" style="padding:0.25rem 0.6rem; font-size:0.75rem;">
+            <button type="button" class="btn-secondary btn-ver-mes" style="padding:0.25rem 0.6rem; font-size:0.75rem;">
               👁️ Ver
             </button>
           </td>
         `;
+        tr.querySelector('.btn-ver-mes').addEventListener('click', () => verDetalleMes(item.id || item.code || item.nombre));
         tbody.appendChild(tr);
 
         if (listaMeses && posicion < histMesesLimite) {
@@ -1119,123 +1120,30 @@ tr.innerHTML = `
 
     let ultimoCierreMes = 0;
 
-    function confirmarCierreMes() {
-      if (Date.now() - ultimoCierreMes < 400) return;
-      ultimoCierreMes = Date.now();
-      const oldMonth = currentActiveMonth;
-      const nextMonth = getNextMonthLabel(currentActiveMonth);
-
-      // 1. Guardar el mes que se cierra con estado "Cerrado" y todas sus boletas/gastos reales
-      guardarMesEnBD(oldMonth, true);
-
-      // 2. CREAR SNAPSHOT DE SEGURIDAD PARA PODER REABRIR O DESHACER
-      const backupSnapshot = {
-        closedMonth: oldMonth,
-        nextMonth: nextMonth,
-        currentAuditItems: JSON.parse(JSON.stringify(currentAuditItems)),
-        expenses: JSON.parse(JSON.stringify(expenses)),
-        traspasos: JSON.parse(JSON.stringify(traspasos)),
-        userProfile: JSON.parse(JSON.stringify(userProfile || {})),
-        timestamp: Date.now()
-      };
-      localStorage.setItem('ultimo_mes_cerrado_backup', JSON.stringify(backupSnapshot));
-
-      // 3. CALCULAR REMANENTES SOBRANTES DEL MES CERRADO PARA PASAR AL NUEVO MES
-      const spentByAcc = {};
-      if (Array.isArray(expenses)) {
-        expenses.forEach(it => {
-          const k = normalizeAccountKey(it.account);
-          spentByAcc[k] = (spentByAcc[k] || 0) + (Number(it.amount) || 0);
-        });
+    // Cerrar y reabrir cambian muchas claves a la vez: si algo falla a mitad, la memoria y lo guardado vuelven a como estaban
+    function enTransaccionLocal(cambiar) {
+      const memoria = JSON.stringify({ currentActiveMonth, currentAuditItems, expenses, traspasos, userProfile });
+      const guardado = Object.fromEntries(Object.keys(localStorage).map(k => [k, localStorage.getItem(k)]));
+      try {
+        cambiar();
+        return true;
+      } catch (e) {
+        console.error('Cambio deshecho por un error:', e);
+        ({ currentActiveMonth, currentAuditItems, expenses, traspasos, userProfile } = JSON.parse(memoria));
+        Object.keys(localStorage).forEach(k => { if (!(k in guardado)) localStorage.removeItem(k); });
+        Object.entries(guardado).forEach(([k, v]) => { if (localStorage.getItem(k) !== v) localStorage.setItem(k, v); });
+        return false;
       }
+    }
 
-      // Saldos restantes no gastados de cada cofre al momento del cierre (los traspasos entre cuentas propias suman o restan; no son gasto)
-      const saldoRemanenteMPDiego = Math.max(0, (userProfile.remanentes?.mpDiego || 0) + (userProfile.cofresDiego?.mpAhorro ?? 0) + netoTraspasos('mpDiego') - (spentByAcc['mpDiego'] || 0));
-      const saldoRemanenteMPSoledad = Math.max(0, (userProfile.remanentes?.mpSoledad || 0) + (userProfile.cofresSoledad?.mpAhorro ?? 0) + netoTraspasos('mpSoledad') - (spentByAcc['mpSoledad'] || 0));
-      const saldoRemanenteBancoSole = Math.max(0, (userProfile.remanentes?.bancoSole || 0) + (userProfile.cofresSoledad?.bancoReserva ?? 0) + netoTraspasos('reservaSole') - (spentByAcc['reservaSole'] || 0));
-      const saldoRemanenteTenpoDiego = Math.max(0, (userProfile.remanentes?.tenpoDiego || 0) + (userProfile.cofresDiego?.tenpoHuasco ?? 0) + netoTraspasos('tenpoDiego') - (spentByAcc['tenpoDiego'] || 0));
-      const saldoRemanenteMachDiego = Math.max(0, getMachSemanal().disponible);
-      const saldoRemanenteTenpoSole = Math.max(0, (userProfile.remanentes?.tenpoSoledad || 0) + (userProfile.cofresSoledad?.tenpoBolsillo ?? 0) + netoTraspasos('tenpoSoledad') - (spentByAcc['tenpoSoledad'] || 0));
-
-      // Tarjeta Smart Visa: calcular deuda remanente que pasa al siguiente mes
-      const deudaAnteriorSmart = userProfile.smartVisaConfig?.deudaPrevia || 0;
-      const cuotaSmart = getSmartCuotaDelMes();
-      const comprasSmartMes = spentByAcc['smartVisaSole'] || 0;
-      const pagoComprasSmart = userProfile.smartVisaConfig?.pagoCompras || 0;
-      const deudaRestanteSmart = Math.max(0, deudaAnteriorSmart + comprasSmartMes - cuotaSmart - pagoComprasSmart);
-
-      // Tarjeta de crédito BCI: la deuda anterior más las compras del mes, menos lo pagado, pasa al siguiente mes
-      const deudaRestanteBci = Math.max(0, (userProfile.tcBciConfig?.deudaPrevia || 0) + (spentByAcc['tcBciDiego'] || 0) - (userProfile.tcBciConfig?.pagoMes || 0));
-
-      // Asignar los saldos sobrantes como Remanente Mes Pasado del NUEVO mes
-      userProfile.remanentes = {
-        mpDiego: saldoRemanenteMPDiego,
-        mpSoledad: saldoRemanenteMPSoledad,
-        bancoSole: saldoRemanenteBancoSole,
-        tenpoDiego: saldoRemanenteTenpoDiego,
-        machDiego: saldoRemanenteMachDiego,
-        tenpoSoledad: saldoRemanenteTenpoSole,
-        fanDiego: 0,
-        chequeraSole: 0
-      };
-
-      // El pago de compras nuevas de la Smart Visa vale solo para el mes que se cierra: el siguiente parte en $0
-      userProfile.smartVisaConfig = {
-        cupoTotal: userProfile.smartVisaConfig?.cupoTotal || PERFIL_INICIAL.smartVisaConfig.cupoTotal,
-        deudaPrevia: deudaRestanteSmart,
-        cuotaMes: userProfile.cofresSoledad?.smartVisa ?? 0,
-        pagoCompras: 0
-      };
-
-      // El pago de la tarjeta BCI vale solo para el estado de cuenta que se cierra: el siguiente parte en $0
-      userProfile.tcBciConfig = {
-        cupoTotal: userProfile.tcBciConfig?.cupoTotal ?? PERFIL_INICIAL.tcBciConfig.cupoTotal,
-        deudaPrevia: deudaRestanteBci,
-        pagoMes: 0
-      };
-
-      // El ajuste y las excepciones valen solo para el mes que se cierra
-      userProfile.machSemanal = { monto: getMachSemanal().monto };
-
-      // Guardar el perfil con los remanentes actualizados
-      saveUserProfile();
-
-      // 4. Avanzar al nuevo mes
-      currentActiveMonth = nextMonth;
-      localStorage.setItem('app_active_month', currentActiveMonth);
-      actualizarSelectPeriodo();
-
-      // Los gastos sueltos pertenecen solo al mes que se cierra
-      currentAuditItems = currentAuditItems.filter(it => !it.fromQuickBill);
-
-      // 5. Reiniciar boletas variables a 0 para el nuevo mes (manteniendo fijos e hipotecario)
-      currentAuditItems.forEach(it => {
-        const n = it.name.toLowerCase();
-        if (n.includes('luz') || n.includes('agua') || n.includes('gas') || n.includes('gasto común') || n.includes('gasto comun') || n.includes('supermercado')) {
-          it.actual = 0;
-        }
-      });
-      localStorage.setItem(`audit_${currentActiveMonth}`, JSON.stringify(currentAuditItems));
-      localStorage.setItem(`audit_${getMonthCode(currentActiveMonth)}`, JSON.stringify(currentAuditItems));
-
-      // 6. Reiniciar gastos diarios (y traspasos entre cuentas propias) a lista vacía para el nuevo mes
-      expenses = [];
-      localStorage.setItem('family_expenses', JSON.stringify(expenses));
-      localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
-      traspasos = [];
-      localStorage.setItem('family_traspasos', JSON.stringify(traspasos));
-      renderExpenses();
-      if (typeof renderTraspasos === 'function') renderTraspasos();
-
-      // 7. CREAR O ACTIVAR EL NUEVO MES EN LA BASE DE DATOS (En Curso)
-      asegurarMesActivoEnBD(nextMonth);
-
+    function redibujarTrasCambioDeMes() {
       const elTitle = document.getElementById('activeMonthTitle');
       if (elTitle) elTitle.textContent = currentActiveMonth;
-
-      cerrarModalCerrarMes();
+      actualizarSelectPeriodo();
       syncProfileToInputs();
       renderAuditTable();
+      renderExpenses();
+      if (typeof renderTraspasos === 'function') renderTraspasos();
       renderChecklist();
       renderTablaHistorialMesesBD();
       renderDetailedHistoricalTable();
@@ -1243,74 +1151,215 @@ tr.innerHTML = `
       if (typeof renderCardAnalysis === 'function') renderCardAnalysis();
       if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
       verificarBotonDeshacerCierre();
-      triggerAutoSyncToCloud();
+    }
 
+    async function confirmarCierreMes() {
+      if (Date.now() - ultimoCierreMes < 400) return;
+      ultimoCierreMes = Date.now();
+      if (versionBloqueada) { avisarVersionAntigua(); return; }
+      if (recargarSiOtraCopiaSincronizo()) return;
+      const oldMonth = currentActiveMonth;
+      // Lo registrado en el otro teléfono justo antes del cierre debe quedar en el mes que se cierra
+      if (!(await pullFromFirestore(true))) {
+        avisar('No se pudo conectar con la nube. Para no dejar fuera gastos del otro teléfono, cierra el mes cuando vuelva la conexión.');
+        return;
+      }
+      if (currentActiveMonth !== oldMonth) { avisar(`El otro teléfono ya cerró ${oldMonth}. Ahora el mes en curso es ${currentActiveMonth}.`); return; }
+      const nextMonth = getNextMonthLabel(currentActiveMonth);
+
+      const cerrado = enTransaccionLocal(() => {
+        // 1. Guardar el mes que se cierra con estado "Cerrado" y todas sus boletas/gastos reales
+        guardarMesEnBD(oldMonth, true);
+
+        // 2. CREAR SNAPSHOT DE SEGURIDAD PARA PODER REABRIR O DESHACER
+        const backupSnapshot = {
+          closedMonth: oldMonth,
+          nextMonth: nextMonth,
+          currentAuditItems: JSON.parse(JSON.stringify(currentAuditItems)),
+          expenses: JSON.parse(JSON.stringify(expenses)),
+          traspasos: JSON.parse(JSON.stringify(traspasos)),
+          userProfile: JSON.parse(JSON.stringify(userProfile || {})),
+          timestamp: Date.now()
+        };
+        localStorage.setItem('ultimo_mes_cerrado_backup', JSON.stringify(backupSnapshot));
+
+        // 3. CALCULAR REMANENTES SOBRANTES DEL MES CERRADO PARA PASAR AL NUEVO MES
+        const spentByAcc = {};
+        if (Array.isArray(expenses)) {
+          expenses.forEach(it => {
+            const k = normalizeAccountKey(it.account);
+            spentByAcc[k] = (spentByAcc[k] || 0) + (Number(it.amount) || 0);
+          });
+        }
+
+        // Saldos restantes no gastados de cada cofre al momento del cierre (los traspasos entre cuentas propias suman o restan; no son gasto)
+        const saldoRemanenteMPDiego = Math.max(0, (userProfile.remanentes?.mpDiego || 0) + (userProfile.cofresDiego?.mpAhorro ?? 0) + netoTraspasos('mpDiego') - (spentByAcc['mpDiego'] || 0));
+        const saldoRemanenteMPSoledad = Math.max(0, (userProfile.remanentes?.mpSoledad || 0) + (userProfile.cofresSoledad?.mpAhorro ?? 0) + netoTraspasos('mpSoledad') - (spentByAcc['mpSoledad'] || 0));
+        const saldoRemanenteBancoSole = Math.max(0, (userProfile.remanentes?.bancoSole || 0) + (userProfile.cofresSoledad?.bancoReserva ?? 0) + netoTraspasos('reservaSole') - (spentByAcc['reservaSole'] || 0));
+        const saldoRemanenteTenpoDiego = Math.max(0, (userProfile.remanentes?.tenpoDiego || 0) + (userProfile.cofresDiego?.tenpoHuasco ?? 0) + netoTraspasos('tenpoDiego') - (spentByAcc['tenpoDiego'] || 0));
+        const saldoRemanenteMachDiego = Math.max(0, getMachSemanal().disponible);
+        const saldoRemanenteTenpoSole = Math.max(0, (userProfile.remanentes?.tenpoSoledad || 0) + (userProfile.cofresSoledad?.tenpoBolsillo ?? 0) + netoTraspasos('tenpoSoledad') - (spentByAcc['tenpoSoledad'] || 0));
+
+        // Tarjeta Smart Visa: calcular deuda remanente que pasa al siguiente mes
+        const deudaAnteriorSmart = userProfile.smartVisaConfig?.deudaPrevia || 0;
+        const cuotaSmart = getSmartCuotaDelMes();
+        const comprasSmartMes = spentByAcc['smartVisaSole'] || 0;
+        const pagoComprasSmart = userProfile.smartVisaConfig?.pagoCompras || 0;
+        const deudaRestanteSmart = Math.max(0, deudaAnteriorSmart + comprasSmartMes - cuotaSmart - pagoComprasSmart);
+
+        // Tarjeta de crédito BCI: la deuda anterior más las compras del mes, menos lo pagado, pasa al siguiente mes
+        const deudaRestanteBci = Math.max(0, (userProfile.tcBciConfig?.deudaPrevia || 0) + (spentByAcc['tcBciDiego'] || 0) - (userProfile.tcBciConfig?.pagoMes || 0));
+
+        // Asignar los saldos sobrantes como Remanente Mes Pasado del NUEVO mes
+        userProfile.remanentes = {
+          mpDiego: saldoRemanenteMPDiego,
+          mpSoledad: saldoRemanenteMPSoledad,
+          bancoSole: saldoRemanenteBancoSole,
+          tenpoDiego: saldoRemanenteTenpoDiego,
+          machDiego: saldoRemanenteMachDiego,
+          tenpoSoledad: saldoRemanenteTenpoSole,
+          fanDiego: 0,
+          chequeraSole: 0
+        };
+
+        // El pago de compras nuevas de la Smart Visa vale solo para el mes que se cierra: el siguiente parte en $0
+        userProfile.smartVisaConfig = {
+          cupoTotal: userProfile.smartVisaConfig?.cupoTotal || PERFIL_INICIAL.smartVisaConfig.cupoTotal,
+          deudaPrevia: deudaRestanteSmart,
+          cuotaMes: userProfile.cofresSoledad?.smartVisa ?? 0,
+          pagoCompras: 0
+        };
+
+        // El pago de la tarjeta BCI vale solo para el estado de cuenta que se cierra: el siguiente parte en $0
+        userProfile.tcBciConfig = {
+          cupoTotal: userProfile.tcBciConfig?.cupoTotal ?? PERFIL_INICIAL.tcBciConfig.cupoTotal,
+          deudaPrevia: deudaRestanteBci,
+          pagoMes: 0
+        };
+
+        // El ajuste y las excepciones valen solo para el mes que se cierra
+        userProfile.machSemanal = { monto: getMachSemanal().monto };
+
+        // Guardar el perfil con los remanentes actualizados
+        saveUserProfile();
+
+        // 4. Avanzar al nuevo mes
+        currentActiveMonth = nextMonth;
+        localStorage.setItem('app_active_month', currentActiveMonth);
+
+        // Los gastos sueltos pertenecen solo al mes que se cierra
+        currentAuditItems = currentAuditItems.filter(it => !it.fromQuickBill);
+
+        // 5. Reiniciar boletas variables a 0 para el nuevo mes (manteniendo fijos e hipotecario)
+        currentAuditItems.forEach(it => {
+          const n = it.name.toLowerCase();
+          if (n.includes('luz') || n.includes('agua') || n.includes('gas') || n.includes('gasto común') || n.includes('gasto comun') || n.includes('supermercado')) {
+            it.actual = 0;
+          }
+        });
+        localStorage.setItem(`audit_${currentActiveMonth}`, JSON.stringify(currentAuditItems));
+        localStorage.setItem(`audit_${getMonthCode(currentActiveMonth)}`, JSON.stringify(currentAuditItems));
+
+        // 6. Reiniciar gastos diarios (y traspasos entre cuentas propias) a lista vacía para el nuevo mes
+        expenses = [];
+        localStorage.setItem('family_expenses', JSON.stringify(expenses));
+        traspasos = [];
+        localStorage.setItem('family_traspasos', JSON.stringify(traspasos));
+
+        // 7. CREAR O ACTIVAR EL NUEVO MES EN LA BASE DE DATOS (En Curso)
+        asegurarMesActivoEnBD(nextMonth);
+      });
+
+      if (!cerrado) avisar('No se pudo cerrar el mes por un error inesperado. No se cambió nada; inténtalo de nuevo.');
+      cerrarModalCerrarMes();
+      redibujarTrasCambioDeMes();
+      if (!cerrado) return;
+      triggerAutoSyncToCloud();
       showToast(`🎉 ¡Mes "${oldMonth}" cerrado con éxito! Bienvenido a ${currentActiveMonth}. Remanentes transferidos automáticamente.`);
     }
 
     async function deshacerUltimoCierreMes() {
-      const raw = localStorage.getItem('ultimo_mes_cerrado_backup');
-      if (!raw) {
+      if (versionBloqueada) { avisarVersionAntigua(); return; }
+      if (recargarSiOtraCopiaSincronizo()) return;
+      if (!localStorage.getItem('ultimo_mes_cerrado_backup')) {
         alert('No hay un cierre reciente disponible para deshacer.');
         return;
       }
+      // Con lo último de la nube: el otro teléfono pudo registrar gastos del mes nuevo o reabrir antes
+      if (!(await pullFromFirestore(true))) {
+        avisar('No se pudo conectar con la nube. Para no perder lo registrado en el otro teléfono, reabre el mes cuando vuelva la conexión.');
+        return;
+      }
+      const raw = localStorage.getItem('ultimo_mes_cerrado_backup');
+      if (!raw) { alert('El mes ya fue reabierto desde el otro teléfono.'); return; }
       const backup = parseSeguro(raw, null);
-      if (!backup) { alert('El respaldo del último cierre está dañado y no se puede reabrir.'); return; }
-      const reabrir = await confirmar(`↩️ ¿Deseas reabrir el mes "${backup.closedMonth}" y deshacer el cierre?\n\nSe restaurarán todas las boletas, gastos diarios y el periodo activo volverá a ser "${backup.closedMonth}".`, 'Reabrir mes');
+      if (!backup || !Array.isArray(backup.expenses) || !Array.isArray(backup.currentAuditItems)) { alert('El respaldo del último cierre está dañado y no se puede reabrir.'); return; }
+      const [n, t] = [expenses.length, traspasos.length];
+      const conservar = n + t ? `\n\n${n === 1 ? 'El gasto registrado' : `Los ${n} gastos registrados`}${t ? ` y ${t === 1 ? 'el traspaso' : `los ${t} traspasos`}` : ''} después del cierre se conservarán en ${backup.closedMonth}.` : '';
+      const reabrir = await confirmar(`↩️ ¿Deseas reabrir el mes "${backup.closedMonth}" y deshacer el cierre?\n\nSe restaurarán todas las boletas, gastos diarios y el periodo activo volverá a ser "${backup.closedMonth}".${conservar}`, 'Reabrir mes');
       if (!reabrir) return;
+      if (recargarSiOtraCopiaSincronizo()) return;
 
-      currentActiveMonth = backup.closedMonth;
-      localStorage.setItem('app_active_month', currentActiveMonth);
-      actualizarSelectPeriodo();
-
-      currentAuditItems = backup.currentAuditItems;
-      localStorage.setItem(`audit_${currentActiveMonth}`, JSON.stringify(currentAuditItems));
-      localStorage.setItem(`audit_${getMonthCode(currentActiveMonth)}`, JSON.stringify(currentAuditItems));
-
-      expenses = backup.expenses;
-      localStorage.setItem('family_expenses', JSON.stringify(expenses));
-      localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
-
-      // Un cierre anterior a los traspasos no los guardó: ese mes no tenía
-      traspasos = Array.isArray(backup.traspasos) ? backup.traspasos : [];
-      localStorage.setItem('family_traspasos', JSON.stringify(traspasos));
-
-      if (backup.userProfile) {
-        userProfile = Object.assign(userProfile || {}, backup.userProfile);
-        localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
+      // Copia en la nube de lo que hay ahora, por si reabrir no era lo que se quería
+      const ahora = new Date();
+      const hora = `${String(ahora.getHours()).padStart(2, '0')}${String(ahora.getMinutes()).padStart(2, '0')}`;
+      try {
+        await guardarRespaldo(`antes-de-reabrir-${getLocalDateISO()}-${hora}`, JSON.parse(JSON.stringify(buildCompleteFamilyPayload())));
+      } catch (e) {
+        avisar('No se pudo guardar una copia en la nube antes de reabrir. Revisa la conexión e inténtalo de nuevo; no se cambió nada.');
+        return;
       }
+      // Mientras se esperaba, una sincronización pudo traer otro cierre o la reapertura desde el otro teléfono
+      if (localStorage.getItem('ultimo_mes_cerrado_backup') !== raw) { alert('El otro teléfono cambió el cierre mientras tanto. Revisa el mes en curso antes de reabrir.'); return; }
+      const historial = parseSeguro(localStorage.getItem('db_historial_meses'), null);
 
-      // Actualizar historial en la BD
-      const rawHistorial = localStorage.getItem('db_historial_meses');
-      if (rawHistorial) {
-        let list = JSON.parse(rawHistorial);
-        list = list.filter(m => !matchMonth(m, backup.nextMonth));
-        const idxClosed = list.findIndex(m => matchMonth(m, backup.closedMonth));
-        if (idxClosed !== -1) {
-          list[idxClosed].estado = 'En Curso';
-          list[idxClosed].criterio = 'Mes Reabierto tras deshacer cierre';
+      const reabierto = enTransaccionLocal(() => {
+        // Lo registrado después del cierre (en el mes nuevo) se conserva en el mes reabierto: borrarlo se propagaba como borrado al otro teléfono
+        const idsRestaurados = new Set(backup.expenses.map(g => g.id));
+        const gastosNuevos = expenses.filter(g => !idsRestaurados.has(g.id));
+        const idsTraspasos = new Set((backup.traspasos || []).map(t => t.id));
+        const traspasosNuevos = traspasos.filter(t => !idsTraspasos.has(t.id));
+        // Las cuentas sueltas creadas por esos gastos siguen con ellos
+        const idsAudit = new Set(backup.currentAuditItems.map(it => it.id));
+        const sueltasNuevas = currentAuditItems.filter(it => it.fromQuickBill && !idsAudit.has(it.id) && gastosNuevos.some(g => g.auditId === it.id));
+
+        currentActiveMonth = backup.closedMonth;
+        localStorage.setItem('app_active_month', currentActiveMonth);
+
+        currentAuditItems = [...backup.currentAuditItems, ...sueltasNuevas];
+        localStorage.setItem(`audit_${currentActiveMonth}`, JSON.stringify(currentAuditItems));
+        localStorage.setItem(`audit_${getMonthCode(currentActiveMonth)}`, JSON.stringify(currentAuditItems));
+
+        expenses = [...gastosNuevos, ...backup.expenses];
+        localStorage.setItem('family_expenses', JSON.stringify(expenses));
+
+        // Un cierre anterior a los traspasos no los guardó: ese mes no tenía
+        traspasos = [...traspasosNuevos, ...(Array.isArray(backup.traspasos) ? backup.traspasos : [])];
+        localStorage.setItem('family_traspasos', JSON.stringify(traspasos));
+
+        if (backup.userProfile) {
+          userProfile = Object.assign(userProfile || {}, backup.userProfile);
+          localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
         }
-        localStorage.setItem('db_historial_meses', JSON.stringify(list));
-      }
 
-      localStorage.removeItem('ultimo_mes_cerrado_backup');
+        // Actualizar historial en la BD (si está ilegible no se toca)
+        if (Array.isArray(historial)) {
+          const list = historial.filter(m => !matchMonth(m, backup.nextMonth));
+          const idxClosed = list.findIndex(m => matchMonth(m, backup.closedMonth));
+          if (idxClosed !== -1) {
+            list[idxClosed].estado = 'En Curso';
+            list[idxClosed].criterio = 'Mes Reabierto tras deshacer cierre';
+          }
+          localStorage.setItem('db_historial_meses', JSON.stringify(list));
+        }
 
-      const elTitle = document.getElementById('activeMonthTitle');
-      if (elTitle) elTitle.textContent = currentActiveMonth;
+        localStorage.removeItem('ultimo_mes_cerrado_backup');
+      });
 
-      syncProfileToInputs();
-      renderAuditTable();
-      renderExpenses();
-      if (typeof renderTraspasos === 'function') renderTraspasos();
-      renderChecklist();
-      renderTablaHistorialMesesBD();
-      renderDetailedHistoricalTable();
-      if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
-      if (typeof renderCardAnalysis === 'function') renderCardAnalysis();
-      if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
-      verificarBotonDeshacerCierre();
+      if (!reabierto) avisar('No se pudo reabrir el mes por un error inesperado. No se cambió nada; inténtalo de nuevo.');
+      redibujarTrasCambioDeMes();
+      if (!reabierto) return;
       triggerAutoSyncToCloud();
-
       showToast(`↩️ ¡Mes "${backup.closedMonth}" reabierto exitosamente! Estado restaurado.`);
     }
 
@@ -1322,7 +1371,7 @@ tr.innerHTML = `
         try {
           const b = JSON.parse(raw);
           btn.style.display = 'inline-flex';
-          btn.innerHTML = `<span>↩️</span> Reabrir ${b.closedMonth || 'Mes Anterior'}`;
+          btn.innerHTML = `<span>↩️</span> Reabrir ${escapeHtml(b.closedMonth || 'Mes Anterior')}`;
           btn.title = `Haz clic para reabrir y restaurar todas las boletas de ${b.closedMonth || 'Mes Anterior'}`;
         } catch(e) {
           btn.style.display = 'inline-flex';

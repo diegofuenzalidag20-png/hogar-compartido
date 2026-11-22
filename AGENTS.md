@@ -33,11 +33,11 @@
 | `js/04-graficos-inicio.js` | Gráficos del inicio y co-aporte del hipotecario |
 | `js/05-registro.js` | Registro rápido de gastos, íconos de trazo, selector Limache/Huasco |
 | `js/06-checklist.js` | `CHECKLIST_FIJOS`, `REGLAS_VARIABLES`, Real sumado, ajuste de presupuestos, checklist |
-| `js/07-pwa-enlace.js` | Instalar app, payload completo, enlace WhatsApp, respaldo JSON |
-| `js/08-nube.js` | Firestore REST, sesión con Google, respaldos diarios, sincronización a tres vías |
+| `js/07-pwa-enlace.js` | Instalar app, payload completo, enlace WhatsApp, respaldo JSON, `sanearEstado` (valida todo lo que llega de fuera) |
+| `js/08-nube.js` | Firestore REST (plazo `plazoRed`), sesión con Google, respaldos diarios, sincronización a tres vías, insignia "Pendiente de subir" |
 | `js/09-gastos.js` | Lista, edición y borrado de gastos, `showToast`, CSV |
 | `js/10-sueldos.js` | Ventana de sueldos y horas extras |
-| `js/11-historial-cierre.js` | Base de datos de meses, historial, cierre y reapertura |
+| `js/11-historial-cierre.js` | Base de datos de meses, historial, cierre y reapertura (atómicos con `enTransaccionLocal`) |
 | `js/12-desplegables.js` | Desplegables con estilo de vidrio |
 | `js/13-categorias.js` | `CATEGORIAS_GASTO`, fijo vs variable |
 | `js/14-tarjetas.js` | Saldos por cuenta (`netoTraspasos`), liquidez, meta, Smart Visa, Mach semanal, análisis por tarjeta |

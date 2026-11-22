@@ -232,11 +232,6 @@
 
     // --- GESTIÓN DE MODAL SYNC & TABS ---
     function openSyncModal(targetTab) {
-      try {
-        loadSavedCloudSettings();
-      } catch (e) {
-        console.warn('Error al preparar modal de sincronización:', e);
-      }
       const modal = document.getElementById('modalSync');
       if (modal) {
         modal.style.display = 'flex';

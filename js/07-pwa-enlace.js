@@ -24,6 +24,8 @@
       const monthCode = typeof getMonthCode === 'function' ? getMonthCode(activeMonthName) : (document.getElementById('audit-month-select')?.value || 'Nov-26');
       const mesVisto = document.getElementById('audit-month-select')?.value;
       const boletasMesActivo = mesVisto && mesVisto !== monthCode ? localStorage.getItem(`audit_${monthCode}`) : null;
+      // Una lista ilegible en el teléfono se omite (undefined): como lista vacía la combinación la tomaba por "borré todo"
+      const lista = (clave) => { const v = leerJSON(clave, null); return Array.isArray(v) ? v : localStorage.getItem(clave) === null ? [] : undefined; };
       return {
         v: 3,
         timestamp: Date.now(),
@@ -32,13 +34,100 @@
         activeMonth: activeMonthName,
         currentActiveMonth: activeMonthName,
         auditItems: parseSeguro(boletasMesActivo, currentAuditItems || []),
-        expenses: expenses || [],
-        traspasos: traspasos || [],
+        expenses: seccionesIlegibles.has('expenses') ? undefined : expenses || [],
+        traspasos: seccionesIlegibles.has('traspasos') ? undefined : traspasos || [],
         userProfile: userProfile || {},
-        customAuditItems: leerJSON('custom_audit_items', []),
-        dbMeses: leerJSON('db_historial_meses', []),
+        customAuditItems: lista('custom_audit_items'),
+        dbMeses: lista('db_historial_meses'),
         ultimoCierreBackup: leerJSON('ultimo_mes_cerrado_backup', null)
       };
+    }
+
+    // ---------- Datos que llegan de fuera (nube, enlace, archivo, respaldo) ----------
+    // Corrige lo que se puede (texto muy largo, monto escrito como texto, gasto sin id) y descarta lo que no se
+    // puede mostrar ni sumar. Si descarta algo, avisa una vez por sesión.
+    const RE_FECHA = /^\d{4}-\d{2}-\d{2}$/;
+    const RE_ID_SEGURO = /^[\w-]{1,80}$/;
+    let avisoDatosDescartados = false;
+    // Id estable (igual en los dos teléfonos) para gastos antiguos que no tenían: dos ids distintos los duplicaban al combinar
+    function conIdsGasto(lista, prefijo = 'exp-leg') {
+      if (!lista.some(g => g.id == null || g.id === '')) return lista;
+      const usados = new Set(lista.map(g => g.id).filter(Boolean));
+      return lista.map(g => {
+        if (g.id != null && g.id !== '') return g;
+        const texto = JSON.stringify([g.date, g.amount, g.desc, g.payer, g.account, g.category, g.from, g.to]);
+        let h = 0;
+        for (let i = 0; i < texto.length; i++) h = (h * 31 + texto.charCodeAt(i)) | 0;
+        let id = `${prefijo}-${(h >>> 0).toString(36)}`;
+        for (let n = 2; usados.has(id); n++) id = `${prefijo}-${(h >>> 0).toString(36)}-${n}`;
+        usados.add(id);
+        return { ...g, id };
+      });
+    }
+    function sanearEstado(data) {
+      if (!data || typeof data !== 'object' || Array.isArray(data)) return data;
+      let descartados = 0;
+      const esObjeto = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+      const texto = (v) => v == null ? v : String(v).slice(0, 200);
+      const finito = (v) => (v === '' || v == null || !Number.isFinite(Number(v))) ? NaN : Number(v);
+      const lista = (v, limpiar) => {
+        if (!Array.isArray(v)) return v;
+        const out = [];
+        for (const x of v) { const y = esObjeto(x) ? limpiar({ ...x }) : null; if (y) out.push(y); else descartados++; }
+        return out;
+      };
+      const movimiento = (campos) => (m) => {
+        m.amount = finito(m.amount);
+        if (typeof m.date !== 'string' || !RE_FECHA.test(m.date) || Number.isNaN(m.amount)) return null;
+        for (const k of ['id', ...campos]) if (m[k] != null) m[k] = texto(m[k]);
+        return m;
+      };
+      const gasto = movimiento(['desc', 'category', 'account', 'payer', 'lugar', 'auditId']);
+      const traspaso = movimiento(['from', 'to', 'desc', 'autor']);
+      const item = (it) => {
+        if (typeof it.id !== 'string' || !RE_ID_SEGURO.test(it.id)) return null;
+        it.name = texto(it.name ?? '');
+        for (const k of ['resp', 'cuenta', 'cat']) if (it[k] != null) it[k] = texto(it[k]);
+        for (const k of ['base', 'actual']) it[k] = Number.isNaN(finito(it[k])) ? 0 : finito(it[k]);
+        return it;
+      };
+      const NUMEROS_MES = ['diegoSal', 'soleSal', 'totalIng', 'gastosHogar', 'fijosDiego', 'superavit'];
+      const mes = (m) => {
+        if (typeof m.nombre !== 'string' || !m.nombre.trim()) return null;
+        for (const k of ['nombre', 'id', 'code', 'estado', 'criterio', 'fecha']) if (m[k] != null) m[k] = texto(m[k]);
+        for (const k of NUMEROS_MES) if (k in m) m[k] = Number.isNaN(finito(m[k])) ? 0 : finito(m[k]);
+        if ('items' in m) m.items = Array.isArray(m.items) ? lista(m.items, item) : [];
+        if ('gastosDiarios' in m) m.gastosDiarios = Array.isArray(m.gastosDiarios) ? lista(m.gastosDiarios, gasto) : [];
+        if ('traspasos' in m) m.traspasos = Array.isArray(m.traspasos) ? lista(m.traspasos, traspaso) : [];
+        if ('rawItems' in m && !esObjeto(m.rawItems)) m.rawItems = {};
+        return m;
+      };
+      // Los números del perfil (sueldos, cofres, remanentes) deben ser finitos: un NaN contagia todos los saldos
+      const numerosFinitos = (o) => { for (const k in o) { if (typeof o[k] === 'number' && !Number.isFinite(o[k])) o[k] = 0; else if (esObjeto(o[k])) o[k] = numerosFinitos({ ...o[k] }); } return o; };
+      const d = { ...data };
+      for (const k of ['month', 'activeMonth', 'currentActiveMonth']) if (k in d) d[k] = typeof d[k] === 'string' ? texto(d[k]) : undefined;
+      if (Array.isArray(d.expenses)) d.expenses = conIdsGasto(lista(d.expenses, gasto));
+      if (Array.isArray(d.traspasos)) d.traspasos = conIdsGasto(lista(d.traspasos, traspaso), 'tr-leg');
+      d.auditItems = lista(d.auditItems, item);
+      d.customAuditItems = lista(d.customAuditItems, item);
+      d.dbMeses = lista(d.dbMeses, mes);
+      if ('userProfile' in d) d.userProfile = esObjeto(d.userProfile) ? numerosFinitos({ ...d.userProfile }) : undefined;
+      if (esObjeto(d.ultimoCierreBackup)) {
+        const b = d.ultimoCierreBackup = { ...d.ultimoCierreBackup };
+        if (typeof b.closedMonth !== 'string' || !Array.isArray(b.expenses) || !Array.isArray(b.currentAuditItems)) { d.ultimoCierreBackup = null; descartados++; }
+        else {
+          b.expenses = conIdsGasto(lista(b.expenses, gasto));
+          b.currentAuditItems = lista(b.currentAuditItems, item);
+          if (Array.isArray(b.traspasos)) b.traspasos = lista(b.traspasos, traspaso);
+          if (esObjeto(b.userProfile)) b.userProfile = numerosFinitos({ ...b.userProfile });
+          for (const k of ['closedMonth', 'nextMonth']) if (b[k] != null) b[k] = texto(b[k]);
+        }
+      } else if ('ultimoCierreBackup' in d && d.ultimoCierreBackup != null) { d.ultimoCierreBackup = null; descartados++; }
+      if (descartados && !avisoDatosDescartados) {
+        avisoDatosDescartados = true;
+        setTimeout(() => avisar(`⚠️ Se descartaron ${descartados} ${descartados === 1 ? 'registro' : 'registros'} con datos inválidos (fecha, monto o identificador ilegible). El resto se cargó normalmente.`));
+      }
+      return d;
     }
 
     // --- COMPRESIÓN Y DESCOMPRESIÓN GZIP / BASE64 ---
@@ -109,6 +198,12 @@
     }
 
     // --- DETECCIÓN Y RESTAURACIÓN DEL ENLACE MÁGICO AL CARGAR ---
+    // Enlaces y archivos antiguos traían las boletas como "items" y el historial como "dbHistorial"
+    function datosImportados(data) {
+      if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+      return sanearEstado({ ...data, auditItems: data.auditItems || data.items, dbMeses: data.dbMeses || data.dbHistorial });
+    }
+
     async function checkIncomingSync() {
       const hash = window.location.hash;
       if (!hash || !hash.startsWith('#sync=')) return;
@@ -116,12 +211,13 @@
       try {
         const raw = decodeURIComponent(hash.replace('#sync=', ''));
         const jsonStr = await decompressPayload(raw);
-        const data = JSON.parse(jsonStr);
+        const data = datosImportados(JSON.parse(jsonStr));
 
         if (!data) return;
+        if (versionBloqueada) { avisarVersionAntigua(); return; }
 
         const expensesCount = Array.isArray(data.expenses) ? data.expenses.length : 0;
-        const auditCount = Array.isArray(data.auditItems || data.items) ? (data.auditItems || data.items).length : 0;
+        const auditCount = Array.isArray(data.auditItems) ? data.auditItems.length : 0;
         const hasProfile = !!data.userProfile;
         const month = data.month || data.activeMonth || document.getElementById('audit-month-select')?.value || '2026-10';
 
@@ -130,6 +226,7 @@
           `🧾 Boletas y gastos diarios: ${expensesCount}\n` +
           `📋 Cuentas fijas auditadas: ${auditCount}\n` +
           (hasProfile ? `💰 Sueldos de Diego y Soledad + Asignación de Cofres\n\n` : `\n`) +
+          (Array.isArray(data.expenses) ? `⚠️ Esto reemplazará tus ${expenses.length} gastos actuales.\n\n` : '') +
           `¿Deseas cargar y sincronizar tu aplicación ahora?`;
 
         const confirmSync = await confirmar(confirmMsg, 'Cargar datos');
@@ -138,54 +235,7 @@
           return;
         }
 
-        // 1. Aplicar Audit Items
-        const items = data.auditItems || data.items;
-        if (Array.isArray(items)) {
-          currentAuditItems = items;
-          localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
-          if (typeof renderAuditTable === 'function') renderAuditTable();
-        }
-
-        // 1b. Traspasos entre cuentas propias (un enlace anterior no los trae: no se tocan). Antes de los gastos: su dibujo ya usa los saldos
-        if (Array.isArray(data.traspasos)) {
-          traspasos = data.traspasos;
-          localStorage.setItem('family_traspasos', JSON.stringify(traspasos));
-          if (typeof renderTraspasos === 'function') renderTraspasos();
-        }
-
-        // 2. Aplicar Expenses (Gastos Diarios)
-        if (Array.isArray(data.expenses)) {
-          expenses = data.expenses;
-          localStorage.setItem('family_expenses', JSON.stringify(expenses));
-          localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
-          if (typeof renderExpensesTable === 'function') renderExpensesTable();
-        }
-
-        // 3. Aplicar Perfil de Sueldos y Cofres
-        if (data.userProfile && typeof data.userProfile === 'object') {
-          userProfile = Object.assign(userProfile || {}, data.userProfile);
-          localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
-          if (userProfile.diegoSalary) localStorage.setItem('diego_salary', userProfile.diegoSalary);
-          if (userProfile.soledadSalary) localStorage.setItem('soledad_salary', userProfile.soledadSalary);
-          if (typeof updateHeaderSalaries === 'function') updateHeaderSalaries();
-          if (typeof populateSalaryModalInputs === 'function') populateSalaryModalInputs();
-        }
-
-        // 4. Custom audit items
-        if (Array.isArray(data.customAuditItems)) {
-          localStorage.setItem('custom_audit_items', JSON.stringify(data.customAuditItems));
-        }
-
-        // 5. Historial de Meses
-        if (Array.isArray(data.dbMeses)) {
-          localStorage.setItem('db_historial_meses', JSON.stringify(data.dbMeses));
-        }
-
-        // Refrescar gráficos y análisis
-        if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
-        if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
-        if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
-
+        applyRemoteDataToApp(data);
         history.replaceState(null, null, window.location.pathname);
         showToast(`✅ ¡Sincronización completa! Se actualizaron ${expensesCount} boletas y los sueldos.`);
       } catch (err) {
@@ -214,58 +264,10 @@
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
-          const data = JSON.parse(event.target.result);
+          const data = datosImportados(JSON.parse(event.target.result));
           if (!data) throw new Error('Archivo vacío');
-
-          const month = data.month || data.activeMonth || document.getElementById('audit-month-select')?.value || '2026-10';
-
-          // 1. Audit items
-          const items = data.auditItems || data.items;
-          if (Array.isArray(items)) {
-            currentAuditItems = items;
-            localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
-            if (typeof renderAuditTable === 'function') renderAuditTable();
-          }
-
-          // 1b. Traspasos entre cuentas propias (un respaldo anterior no los trae: no se tocan). Antes de los gastos: su dibujo ya usa los saldos
-          if (Array.isArray(data.traspasos)) {
-            traspasos = data.traspasos;
-            localStorage.setItem('family_traspasos', JSON.stringify(traspasos));
-            if (typeof renderTraspasos === 'function') renderTraspasos();
-          }
-
-          // 2. Expenses
-          if (Array.isArray(data.expenses)) {
-            expenses = data.expenses;
-            localStorage.setItem('family_expenses', JSON.stringify(expenses));
-            localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
-            if (typeof renderExpensesTable === 'function') renderExpensesTable();
-          }
-
-          // 3. User profile
-          if (data.userProfile && typeof data.userProfile === 'object') {
-            userProfile = Object.assign(userProfile || {}, data.userProfile);
-            localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
-            if (userProfile.diegoSalary) localStorage.setItem('diego_salary', userProfile.diegoSalary);
-            if (userProfile.soledadSalary) localStorage.setItem('soledad_salary', userProfile.soledadSalary);
-            if (typeof updateHeaderSalaries === 'function') updateHeaderSalaries();
-            if (typeof populateSalaryModalInputs === 'function') populateSalaryModalInputs();
-          }
-
-          // 4. Custom audit items
-          if (Array.isArray(data.customAuditItems)) {
-            localStorage.setItem('custom_audit_items', JSON.stringify(data.customAuditItems));
-          }
-
-          // 5. Historial
-          if (Array.isArray(data.dbMeses || data.dbHistorial)) {
-            localStorage.setItem('db_historial_meses', JSON.stringify(data.dbMeses || data.dbHistorial));
-          }
-
-          if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
-          if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
-          if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
-
+          if (versionBloqueada) { avisarVersionAntigua(); return; }
+          applyRemoteDataToApp(data);
           closeSyncModal();
           showToast('✅ ¡Respaldo total restaurado con éxito!');
         } catch(err) {

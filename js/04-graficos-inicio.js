@@ -215,7 +215,6 @@
       const month = document.getElementById('audit-month-select')?.value || '2026-10';
       localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
-      localStorage.setItem('hogar_gastos', JSON.stringify(expenses));
 
       // 4. Re-renderizar tablas y gráficos reactivos
       renderAuditTable();
