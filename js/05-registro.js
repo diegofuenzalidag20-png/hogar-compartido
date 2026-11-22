@@ -319,7 +319,62 @@
       if (typeof sel._syncGlassDisplay === 'function') sel._syncGlassDisplay();
     }
 
+    // ---------- "Yo soy" (v86): de quién es este teléfono. Vive solo aquí (no se sincroniza) ----------
+    // Con dueño, el registro parte con él como pagador, sus cuentas y su último medio de pago; sin dueño, todo sigue igual.
+    const CLAVE_YO_SOY = 'yo_soy_telefono', CLAVE_ULTIMO_MEDIO = 'ultimo_medio_de_pago';
+    const yoSoy = () => { const v = localStorage.getItem(CLAVE_YO_SOY); return v === 'Diego' || v === 'Soledad' ? v : null; };
+    let yoSoyPreguntado = false;
+    async function elegirYoSoy() {
+      yoSoyPreguntado = true;
+      const v = await dialogo({ texto: '¿De quién es este teléfono? El registro partirá con esa persona como quien pagó (se puede cambiar en cada gasto). Lo puedes cambiar en el menú.', opciones: [{ texto: 'Diego', valor: 'Diego' }, { texto: 'Soledad', valor: 'Soledad' }, { texto: 'Lo elijo cada vez', valor: 'cada-vez' }] });
+      if (!v) return;
+      localStorage.setItem(CLAVE_YO_SOY, v);
+      actualizarMenuYoSoy();
+      prellenarPagador(true);
+    }
+    // La primera vez que se abre el registro (si se cierra sin elegir, se vuelve a preguntar al abrir la app otra vez)
+    function preguntarYoSoySiFalta() {
+      if (!yoSoyPreguntado && localStorage.getItem(CLAVE_YO_SOY) === null) elegirYoSoy();
+    }
+    function actualizarMenuYoSoy() {
+      const b = document.getElementById('menuYoSoy');
+      if (b) b.textContent = `👥 Este teléfono es de: ${yoSoy() || 'elijo cada vez'}`;
+    }
+    function prellenarPagador(forzar = false) {
+      const quien = yoSoy(), sel = document.getElementById('quickPayer');
+      if (!quien || !sel || (sel.value && !forzar)) return;
+      sel.value = quien;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      const medio = leerJSON(CLAVE_ULTIMO_MEDIO, {})[quien], cuentas = document.getElementById('quickAccount');
+      if (medio && cuentas && [...cuentas.options].some(o => o.value === medio)) cuentas.value = medio;
+      syncAllGlassSelects();
+    }
+    function recordarMedioDePago(pagador, cuenta) {
+      if (!yoSoy() || (pagador !== 'Diego' && pagador !== 'Soledad')) return;
+      localStorage.setItem(CLAVE_ULTIMO_MEDIO, JSON.stringify({ ...leerJSON(CLAVE_ULTIMO_MEDIO, {}), [pagador]: cuenta }));
+    }
+
+    // Validación del registro: el campo queda marcado, con el mensaje debajo, y el foco va al primero con error
+    function marcarCampoInvalido(id, texto) {
+      const el = document.getElementById(id);
+      const grupo = el.closest('.form-group') || el.parentNode;
+      let msg = grupo.querySelector('.campo-error');
+      if (!msg) { msg = document.createElement('div'); msg.className = 'campo-error'; msg.id = `${id}-error`; grupo.appendChild(msg); }
+      msg.textContent = texto;
+      el.setAttribute('aria-invalid', 'true');
+      el.setAttribute('aria-describedby', msg.id);
+      return el;
+    }
+    function limpiarCampoInvalido(el) {
+      if (!el?.hasAttribute?.('aria-invalid')) return;
+      el.removeAttribute('aria-invalid');
+      el.removeAttribute('aria-describedby');
+      (el.closest('.form-group') || el.parentNode).querySelector('.campo-error')?.remove();
+    }
+
+    document.addEventListener('input', e => limpiarCampoInvalido(e.target));
     document.addEventListener('change', e => {
+      limpiarCampoInvalido(e.target);
       if (e.target && e.target.id === 'quickPayer') filtrarCuentasPorPagador();
       if (e.target && (e.target.id === 'quickPayer' || e.target.id === 'quickCategory')) actualizarSelectorLugar(e);
       if (e.target && e.target.id === 'editExpPayer') {
@@ -346,24 +401,18 @@
       const desc = document.getElementById('quickDesc').value.trim();
       const lugar = payer === 'Diego' ? (document.querySelector('input[name="quickLugar"]:checked')?.value || 'Limache') : null;
 
-      if (!payer) {
-        alert('Por favor selecciona quién pagó.');
-        return;
-      }
-      if (!cat) {
-        alert('Por favor selecciona una categoría.');
-        return;
-      }
-      if (!amount || isNaN(amount) || amount <= 0) {
-        alert('Por favor ingresa un monto válido.');
-        return;
-      }
-      if (!account) {
-        alert('Por favor selecciona el medio de pago.');
-        return;
-      }
-      if (!desc) {
-        alert('Por favor escribe el detalle o comercio.');
+      const errores = [
+        !payer && ['quickPayer', 'Por favor selecciona quién pagó.'],
+        !cat && ['quickCategory', 'Por favor selecciona una categoría.'],
+        !(amount > 0) && ['quickAmount', 'Por favor ingresa un monto válido.'],
+        !account && ['quickAccount', 'Por favor selecciona el medio de pago.'],
+        !desc && ['quickDesc', 'Por favor escribe el detalle o comercio.']
+      ].filter(Boolean);
+      document.querySelectorAll('#quickBillForm [aria-invalid]').forEach(limpiarCampoInvalido);
+      if (errores.length) {
+        const primero = errores.map(([id, texto]) => marcarCampoInvalido(id, texto))[0];
+        // Los selectores están ocultos tras su botón de vidrio: el foco va al botón
+        (primero.closest('.glass-select-wrapper')?.querySelector('.glass-select-trigger') || primero).focus();
         return;
       }
 
@@ -418,26 +467,19 @@
         auditBefore: auditBefore
       };
       if (lugar) newExp.lugar = lugar;
+      recordarMedioDePago(payer, account);
       expenses.unshift(newExp);
       anotarEnDiario(newExp);
       const guardadoAqui = localStorage.setItem('family_expenses', JSON.stringify(expenses));
-      renderExpenses();
 
-      // 3. Renderizar y persistir
-      renderAuditTable();
-      renderChecklist();
+      // 3. Persistir (el Real de las cuentas sale de los gastos: se calcula antes de guardar y subir) y dibujar una vez
+      sincronizarRealDesdeGastos();
       saveAuditMonth();
       triggerAutoSyncToCloud(true);
-      if (typeof updateDiegoColchonDisplay === 'function') updateDiegoColchonDisplay();
-      if (typeof updateSoleMargenDisplay === 'function') updateSoleMargenDisplay();
-      if (typeof updateSmartVisaDisplay === 'function') updateSmartVisaDisplay();
-      if (typeof renderCardAnalysis === 'function') renderCardAnalysis();
-      if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();
-
       // Si su fecha lo deja fuera de los primeros de la lista, igual se muestra destacado un rato
       gastoRecienRegistrado = newExp.id;
-      setTimeout(() => { if (gastoRecienRegistrado === newExp.id) { gastoRecienRegistrado = null; renderExpenses(); } }, 20000);
-      renderExpenses();
+      setTimeout(() => { if (gastoRecienRegistrado === newExp.id) { gastoRecienRegistrado = null; programarRender('gastos'); } }, 20000);
+      programarRender('perfil', 'presupuesto', 'gastos', 'analisis');
       limpiarCajaRapida(true);
       if (mobileLayout.matches) closeQuickSheet();
       // Con la memoria llena el gasto vive solo en esta pantalla hasta que suba a la nube
@@ -451,12 +493,9 @@
       if (item && auditBefore) Object.assign(item, auditBefore);
       else currentAuditItems = currentAuditItems.filter(it => it.id !== auditId);
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
-      renderExpenses();
-      renderAuditTable();
-      renderChecklist();
+      sincronizarRealDesdeGastos();
       saveAuditMonth();
-      if (typeof renderCardAnalysis === 'function') renderCardAnalysis();
-      if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();
+      programarRender('perfil', 'presupuesto', 'gastos', 'analisis');
       showToast('Gasto deshecho');
     }
 
@@ -493,6 +532,7 @@
         if (typeof elAcc._syncGlassDisplay === 'function') elAcc._syncGlassDisplay();
       }
 
+      prellenarPagador();
       syncAllGlassSelects();
       if (elAmt) elAmt.focus();
       if (typeof showToast === 'function') {

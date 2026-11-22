@@ -50,6 +50,36 @@
       menu.className = 'glass-select-menu';
       document.body.appendChild(menu);
 
+      // Lector de pantalla y teclado (v86): el botón se lee con su etiqueta y el valor elegido; el menú es una lista de opciones
+      const id = selectEl.id || nuevoId('desplegable');
+      const etiqueta = selectEl.id && document.querySelector(`label[for="${selectEl.id}"]`);
+      labelSpan.id = `${id}-valor`;
+      menu.id = `${id}-menu`;
+      menu.setAttribute('role', 'listbox');
+      trigger.setAttribute('aria-controls', menu.id);
+      if (etiqueta) {
+        etiqueta.id = etiqueta.id || `${id}-etiqueta`;
+        trigger.setAttribute('aria-labelledby', `${etiqueta.id} ${labelSpan.id}`);
+        menu.setAttribute('aria-labelledby', etiqueta.id);
+        // La etiqueta apunta al select oculto: al tocarla, el foco va al botón visible
+        etiqueta.addEventListener('click', (e) => { e.preventDefault(); trigger.focus(); });
+      }
+      const itemsVisibles = () => [...menu.querySelectorAll('.glass-select-item')];
+      trigger.addEventListener('keydown', (e) => {
+        if (!['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) return;
+        e.preventDefault();
+        if (!menu.classList.contains('open')) toggleMenu(e);
+        (menu.querySelector('.glass-select-item.selected') || itemsVisibles()[0])?.focus();
+      });
+      menu.addEventListener('keydown', (e) => {
+        const items = itemsVisibles(), i = items.indexOf(document.activeElement);
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); items[Math.max(0, Math.min(items.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)))]?.focus(); }
+        else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); items[e.key === 'Home' ? 0 : items.length - 1]?.focus(); }
+        else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); document.activeElement?.click(); trigger.focus(); }
+        else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeMenu(); trigger.focus(); }
+        else if (e.key === 'Tab') closeMenu();
+      });
+
       menu.addEventListener('click', (e) => {
         // Evitar que clicks en cabeceras o scrollbar cierren el menú
         e.stopPropagation();
@@ -63,8 +93,11 @@
             // y el título del grupo siguiente lo empuja hacia arriba en vez de quedar uno encima del otro
             const grupo = document.createElement('div');
             grupo.className = 'glass-select-grupo';
+            grupo.setAttribute('role', 'group');
+            grupo.setAttribute('aria-label', child.label);
             const groupHeader = document.createElement('div');
             groupHeader.className = 'glass-select-group-header';
+            groupHeader.setAttribute('aria-hidden', 'true');
             groupHeader.textContent = child.label;
             grupo.appendChild(groupHeader);
 
@@ -86,6 +119,9 @@
         }
         const item = document.createElement('div');
         item.className = 'glass-select-item';
+        item.setAttribute('role', 'option');
+        item.tabIndex = -1;
+        item.setAttribute('aria-selected', String(opt.selected));
         if (opt.selected) item.classList.add('selected');
         item.textContent = opt.textContent;
         item.dataset.value = opt.value;
@@ -106,6 +142,7 @@
         labelSpan.textContent = selectedOpt ? selectedOpt.textContent : 'Seleccionar...';
         menu.querySelectorAll('.glass-select-item').forEach(it => {
           it.classList.toggle('selected', it.dataset.value === selectEl.value);
+          it.setAttribute('aria-selected', String(it.dataset.value === selectEl.value));
         });
       }
 

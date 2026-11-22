@@ -27,17 +27,17 @@
 
 | Módulo | Contenido |
 |---|---|
-| `js/01-base.js` | Utilidades (`textoRegla`: texto sin tildes para toda regla de clasificación), ventanas propias (`dialogo`, `confirmar`), pestañas, menú, tema |
+| `js/01-base.js` | Utilidades (`textoRegla`: texto sin tildes para toda regla de clasificación), ventanas propias (`dialogo`, `confirmar`), `programarRender` (todo dibujo agrupado en un cuadro, sin repetir: no llamar render en cascada), capas con Atrás de Android y foco (`abrirCapa`/`cerrarCapa`), pestañas, menú, tema, hoja sobre el teclado |
 | `js/02-presupuesto.js` | Cuentas del presupuesto (`masterAuditItems`), tabla de auditoría, KPIs (`gastoRealDelMes`: única fuente del superávit), paneles de liquidez |
 | `js/03-perfil-cofres.js` | `PERFIL_INICIAL`/`userProfile`, sueldos, cofres, Smart Visa |
 | `js/04-graficos-inicio.js` | Gráficos del inicio y co-aporte del hipotecario |
-| `js/05-registro.js` | Registro rápido de gastos, íconos de trazo, selector Limache/Huasco |
+| `js/05-registro.js` | Registro rápido de gastos, validación en línea, "yo soy" (dueño del teléfono, no se sincroniza), íconos de trazo, selector Limache/Huasco |
 | `js/06-checklist.js` | `CHECKLIST_FIJOS`, `REGLAS_VARIABLES`, Real sumado, ajuste de presupuestos, checklist |
 | `js/07-pwa-enlace.js` | Instalar app, payload completo, enlace WhatsApp, respaldo JSON, `sanearEstado` (valida todo lo que llega de fuera) |
-| `js/08-nube.js` | Firestore REST (plazo `plazoRed`), sesión con Google, respaldos diarios, sincronización a tres vías, insignia "Pendiente de subir" |
-| `js/09-gastos.js` | Lista, edición y borrado de gastos, `showToast`, CSV |
+| `js/08-nube.js` | Firestore REST (plazo `plazoRed`), sesión con Google, respaldos diarios, sincronización a tres vías, sondeo adaptativo (5 s / 20 s, sin armar el estado si no hubo cambios), insignia "Pendiente de subir" |
+| `js/09-gastos.js` | Lista (la tabla de escritorio solo en escritorio), edición y borrado con deshacer, `showToast`, CSV |
 | `js/10-sueldos.js` | Ventana de sueldos y horas extras |
-| `js/11-historial-cierre.js` | Base de datos de meses, historial, cierre y reapertura (atómicos con `enTransaccionLocal`) |
+| `js/11-historial-cierre.js` | Base de datos de meses, historial, cierre y reapertura (atómicos con `enTransaccionLocal`), `podarClavesAudit` (una clave `audit_<código>` por mes) |
 | `js/12-desplegables.js` | Desplegables con estilo de vidrio |
 | `js/13-categorias.js` | `CATEGORIAS_GASTO`, fijo vs variable |
 | `js/14-tarjetas.js` | Saldos por cuenta (`netoTraspasos`), liquidez, meta, Smart Visa, Mach semanal, análisis por tarjeta |

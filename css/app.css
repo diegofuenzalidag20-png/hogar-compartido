@@ -23,6 +23,12 @@
       --accent-emerald-glow: rgba(16, 185, 129, 0.35);
       --accent-rose: #F43F5E;
       --accent-cyan: #06B6D4;
+      /* Montos de color (v86): en el tema claro los tonos de arriba quedaban con contraste 2-2,6:1 */
+      --monto-diego: #60A5FA;
+      --monto-sole: #C084FC;
+      --monto-ok: #10B981;
+      --monto-aviso: #F59E0B;
+      --monto-mal: #F43F5E;
       
       --radius-sm: 10px;
       --radius-md: 18px;
@@ -46,6 +52,12 @@
       --text-main: #0F172A;
       --text-muted: #64748B;
       --text-dim: #94A3B8;
+      /* AA (4,5:1 o más) sobre blanco y sobre el fondo #F1F5F9 */
+      --monto-diego: #1D4ED8;
+      --monto-sole: #7E22CE;
+      --monto-ok: #047857;
+      --monto-aviso: #B45309;
+      --monto-mal: #BE123C;
       --shadow-glass: 0 4px 20px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
       --shadow-glass-hover: 0 10px 25px -3px rgba(0, 0, 0, 0.09), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
       --shadow-card: var(--shadow-glass);
@@ -474,7 +486,7 @@
       display: flex;
       flex-direction: column;
       transition: background-color 0.3s ease, color 0.3s ease;
-      overflow-x: hidden;
+      overflow-x: clip;
       position: relative;
     }
 
@@ -1538,8 +1550,9 @@
    ============================================================ */
 
 /* Lock down horizontal viewports globally */
+/* clip y no hidden (v86): con hidden en html y body, body era el contenedor de desplazamiento y la cabecera sticky nunca quedaba fija */
 html, body {
-  overflow-x: hidden !important;
+  overflow-x: clip !important;
   max-width: 100vw !important;
   width: 100% !important;
   position: relative;
@@ -1642,9 +1655,10 @@ main, .tab-pane {
     background: #F1F5F9 !important;
   }
 
-  /* Sin vidrio en la cabecera ni en el aviso (v83). La cabecera no queda fija (html y body tienen overflow-x oculto, ver "Lock down horizontal viewports") y nada pasa por debajo,
-     así que el blur no se veía; solo mantenía una superficie de composición sobre el ícono, el título y el estado de la nube que se repintaba cada vez que cambiaba la nube o la altura.
-     [data-theme="light"] header gana en especificidad al resto: sin esta línea el tema claro seguía con blur(28px) saturate(190%). */
+  /* Sin vidrio en la cabecera ni en el aviso (v83): mantenía una superficie de composición sobre el ícono, el título y el estado de la nube
+     que se repintaba cada vez que cambiaba la nube o la altura. [data-theme="light"] header gana en especificidad al resto: sin esta línea
+     el tema claro seguía con blur(28px) saturate(190%). Desde v86 la cabecera queda fija arriba: sin vidrio, el fondo es opaco para que
+     el contenido no se vea por debajo. */
   header,
   [data-theme="light"] header,
   .tabs-bar,
@@ -1652,6 +1666,8 @@ main, .tab-pane {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
+  header { background: #0A0E18 !important; }
+  [data-theme="light"] header { background: #FFFFFF !important; }
 
   :root {
     --header-font-size: 1.05rem;
@@ -1944,6 +1960,21 @@ main, .tab-pane {
 
 /* Navegación móvil: barra inferior, cabecera compacta y hoja de registro */
 .bottom-nav, .app-menu, .overlay-backdrop, .header-menu-btn, .sheet-close { display: none; }
+/* Editar y eliminar de cada gasto: blancos de 44x44 separados, para no borrar al querer editar (v86) */
+/* Validación del registro (v86): campo marcado y mensaje debajo, en vez de ventanas seguidas */
+.campo-error { margin-top: 0.3rem; color: #FB7185; font-size: 0.8rem; font-weight: 600; }
+[data-theme="light"] .campo-error { color: #B91C1C; }
+#quickBillForm [aria-invalid="true"], .glass-select-wrapper:has(select[aria-invalid="true"]) .glass-select-trigger { border-color: #F43F5E !important; box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.25); }
+.dialogo-botones { flex-wrap: wrap; }
+.glass-select-item:focus-visible, .check-item[role="button"]:focus-visible { outline: 2px solid var(--accent-diego); outline-offset: 2px; }
+.gasto-acciones { display: flex; gap: 0.6rem; justify-content: center; flex-shrink: 0; }
+.btn-gasto { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 0.95rem; cursor: pointer; padding: 0; }
+.btn-gasto-editar { background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.35); color: #93C5FD; }
+.btn-gasto-borrar { background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); color: #FCA5A5; }
+[data-theme="light"] .btn-gasto-editar { color: #1D4ED8; }
+[data-theme="light"] .btn-gasto-borrar { color: #B91C1C; }
+/* La X de las ventanas: visible también en escritorio y de 44x44 (v86); la de la hoja de registro solo en el teléfono */
+.modal-overlay .sheet-close, #modalAddItem .sheet-close { display: flex; flex: none; align-items: center; justify-content: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--bg-surface-hover); color: var(--text-main); font-size: 1.15rem; cursor: pointer; }
 /* Botón a la izquierda: los dos son diestros y el pulgar derecho caía sobre "Deshacer" al registrar */
 /* Solo atrapa toques mientras se ve: oculto (transparente) seguía encima del formulario y lo bloqueaba */
 #toast.has-action.show { pointer-events: auto; }
@@ -1997,6 +2028,10 @@ main, .tab-pane {
 
   #quickBillCard { position: fixed; left: 0; right: 0; bottom: 0; z-index: 2050; max-height: 90dvh; margin: 0 !important; padding: 1rem 0.85rem calc(1rem + env(safe-area-inset-bottom)) !important; overflow-y: auto; border: 0 !important; border-top: 1px solid var(--border-glass) !important; border-radius: 20px 20px 0 0 !important; background: #111827 !important; transform: translateY(105%); transition: transform 0.22s ease; visibility: hidden; }
   #quickBillCard.open { transform: none; visibility: visible; }
+  /* Sobre el teclado (ver --teclado en js/01-base.js) y con REGISTRAR siempre a la vista al fondo de la hoja (v86) */
+  #quickBillCard { bottom: var(--teclado, 0px); max-height: calc(90dvh - var(--teclado, 0px)); overflow-y: auto !important; }
+  #quickBillCard.open #quickBillForm > div:nth-of-type(2) { position: sticky; bottom: calc(-1rem - env(safe-area-inset-bottom)); z-index: 1; padding: 0.5rem 0 calc(1rem + env(safe-area-inset-bottom)); background: #111827; }
+  [data-theme="light"] #quickBillCard.open #quickBillForm > div:nth-of-type(2) { background: #FFFFFF; }
   #quickBillCard .card-desc, #quickBillCard .card-title .badge, #quickBillCard .quick-chips-label { display: none !important; }
   #quickBillCard .card-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem; }
   .sheet-close { display: flex; flex: none; align-items: center; justify-content: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--bg-surface-hover); color: var(--text-main); font-size: 1.15rem; }

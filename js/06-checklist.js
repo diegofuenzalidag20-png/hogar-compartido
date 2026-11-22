@@ -201,7 +201,7 @@
         div.className = `check-item ${isDone ? 'done' : 'pending'}`;
         if (!isDone) div.onclick = () => quickSelectChip(item.name, item.base, item.resp, item.cat, item.cuenta, item.name);
 
-        const respColor = item.resp === 'Diego' ? 'var(--accent-diego)' : 'var(--accent-soledad)';
+        const respColor = item.resp === 'Diego' ? 'var(--monto-diego)' : 'var(--monto-sole)';
         const statusIcon = isDone ? '✅' : '⏳';
         const diaCobro = CHECKLIST_FIJOS[item.id]?.diaCobro;
         const aunNoSeCobra = !isDone && diaCobro && new Date().getDate() < diaCobro;
@@ -213,16 +213,23 @@
           : aunNoSeCobra ? `Aún no toca · aprox. ${formatCLP(item.base)} cerca del día ${diaCobro}`
           : `${ciclo?.ultima ? `Última compra ${ciclo.ultima} · ` : ''}Aprox. ${formatCLP(item.base)} · toca para registrar`;
 
+        // Lo que falta se toca para registrarlo: también con teclado y lector de pantalla
+        if (!isDone) {
+          div.setAttribute('role', 'button');
+          div.tabIndex = 0;
+          div.setAttribute('aria-label', `${item.name}, ${statusText}`);
+          div.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); div.click(); } };
+        }
         div.innerHTML = `
           <div>
             <div style="font-weight:600; font-size:0.83rem;">${escapeHtml(item.name)}</div>
-            <div style="font-size:0.72rem; color:${respColor}; font-weight:600;">${escapeHtml(item.resp)} • ${escapeHtml(item.cuenta)}</div>
+            <div style="font-size:0.8rem; color:${respColor}; font-weight:600;">${escapeHtml(item.resp)} • ${escapeHtml(item.cuenta)}</div>
           </div>
           <div style="text-align:right;">
-            <div style="font-size:0.82rem; font-weight:700; color:${isDone ? 'var(--accent-emerald)' : 'var(--accent-amber)'};">
+            <div style="font-size:0.82rem; font-weight:700; color:${isDone ? 'var(--monto-ok)' : 'var(--monto-aviso)'};">
               ${statusIcon} ${statusText}
             </div>
-            <div style="font-size:0.68rem; color:${isDone && pagos.length > 1 ? 'var(--accent-amber)' : 'var(--text-dim)'};">${detalle}</div>
+            <div style="font-size:0.8rem; color:${isDone && pagos.length > 1 ? 'var(--monto-aviso)' : 'var(--text-dim)'};">${detalle}</div>
           </div>
         `;
         container.appendChild(div);

@@ -32,6 +32,26 @@ function getMonthCode(monthLabel) {
       return `${shortM}-${y}`;
     }
 
+    // Una sola clave por mes (v86): audit_<código> ("audit_Nov-26"). La de nombre largo ("audit_Noviembre 2026") era una copia
+    // que nadie leía: se pasa al código si falta y se borra. Las de meses cerrados hace más de 3 meses también se borran:
+    // su presupuesto quedó en la base de datos de meses (items).
+    function podarClavesAudit() {
+      const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const indice = (code) => { const m = /^(\w{3})-(\d{2})$/.exec(code); return m && MESES.includes(m[1]) ? Number(m[2]) * 12 + MESES.indexOf(m[1]) : null; };
+      const activo = indice(getMonthCode(currentActiveMonth));
+      const enBD = new Set(parseSeguro(localStorage.getItem('db_historial_meses'), []).filter(m => m && m.estado !== 'En Curso' && Array.isArray(m.items) && m.items.length).map(m => m.code || getMonthCode(m.nombre)));
+      Object.keys(localStorage).filter(k => k.startsWith('audit_')).forEach(k => {
+        const mes = k.slice(6);
+        if (/^[^\d\s-]+ \d{4}$/.test(mes)) {
+          const clave = `audit_${getMonthCode(mes)}`;
+          if (localStorage.getItem(clave) === null) localStorage.setItem(clave, localStorage.getItem(k));
+          localStorage.removeItem(k);
+        } else if (activo !== null && indice(mes) !== null && activo - indice(mes) > 3 && enBD.has(mes)) {
+          localStorage.removeItem(k);
+        }
+      });
+    }
+
     function matchMonth(m, targetName) {
       if (!m || !targetName) return false;
       const target = targetName.toLowerCase().trim();
@@ -234,9 +254,9 @@ function getMonthCode(monthLabel) {
         .map((h, i) => `<th style="${i ? 'text-align:right;' : ''}${h === 'Total Mes' ? ' font-weight:700;' : ''} white-space:nowrap;">${h}</th>`).join('');
       const celda = (v, estilo = '') => `<td style="text-align:right; ${v > 0 ? estilo : 'color:var(--text-dim);'}">${v > 0 ? formatCLP(v) : '-'}</td>`;
       const fila = (m, etiqueta) => {
-        const luzColor = m.luz === maxLuz ? 'color:#F43F5E;' : (m.luz === minLuz ? 'color:#10B981;' : '');
-        const gasColor = m.gas === maxGas ? 'color:#F43F5E;' : (m.gas === minGas ? 'color:#10B981;' : '');
-        const gcColor = m.gc === maxGC ? 'color:#F43F5E;' : (m.gc === minGC ? 'color:#10B981;' : '');
+        const luzColor = m.luz === maxLuz ? 'color:#F43F5E;' : (m.luz === minLuz ? 'color:var(--monto-ok);' : '');
+        const gasColor = m.gas === maxGas ? 'color:#F43F5E;' : (m.gas === minGas ? 'color:var(--monto-ok);' : '');
+        const gcColor = m.gc === maxGC ? 'color:#F43F5E;' : (m.gc === minGC ? 'color:var(--monto-ok);' : '');
         return `
           <tr>
             <td style="white-space:nowrap;"><strong>${escapeHtml(etiqueta)}</strong></td>
@@ -900,7 +920,7 @@ tr.innerHTML = `
           <td style="text-align:right; color:var(--accent-soledad);">${formatCLP(item.soleSal)}</td>
           <td style="text-align:right; font-weight:700;">${formatCLP(item.totalIng)}</td>
           <td style="text-align:right; color:#F43F5E;">${formatCLP(item.gastosHogar)}</td>
-          <td style="text-align:right; color:#10B981; font-weight:700;">${formatCLP(item.superavit)}</td>
+          <td style="text-align:right; color:var(--monto-ok); font-weight:700;">${formatCLP(item.superavit)}</td>
           <td style="text-align:center;">
             <span class="badge ${isCerrado ? 'badge-emerald' : 'badge-blue'}" style="font-size:0.7rem;">${escapeHtml(item.estado)}</span>
           </td>
@@ -1253,7 +1273,6 @@ tr.innerHTML = `
             it.actual = 0;
           }
         });
-        localStorage.setItem(`audit_${currentActiveMonth}`, JSON.stringify(currentAuditItems));
         localStorage.setItem(`audit_${getMonthCode(currentActiveMonth)}`, JSON.stringify(currentAuditItems));
 
         // 6. Reiniciar gastos diarios (y traspasos entre cuentas propias) a lista vacía para el nuevo mes
@@ -1323,7 +1342,6 @@ tr.innerHTML = `
         localStorage.setItem('app_active_month', currentActiveMonth);
 
         currentAuditItems = [...backup.currentAuditItems, ...sueltasNuevas];
-        localStorage.setItem(`audit_${currentActiveMonth}`, JSON.stringify(currentAuditItems));
         localStorage.setItem(`audit_${getMonthCode(currentActiveMonth)}`, JSON.stringify(currentAuditItems));
 
         expenses = [...gastosNuevos, ...backup.expenses];
@@ -1414,7 +1432,7 @@ tr.innerHTML = `
                     <tr>
                       <td style="padding:0.25rem 0.3rem;">${escapeHtml(it.name)}</td>
                       <td style="text-align:center; padding:0.25rem 0.3rem;"><span class="badge ${it.resp === 'Diego' ? 'badge-blue' : 'badge-purple'}" style="font-size:0.65rem;">${escapeHtml(it.resp)}</span></td>
-                      <td style="text-align:right; font-weight:700; padding:0.25rem 0.3rem; color:${it.amount > 0 ? '#10B981' : 'var(--text-muted)'};">${formatCLP(it.amount)}</td>
+                      <td style="text-align:right; font-weight:700; padding:0.25rem 0.3rem; color:${it.amount > 0 ? 'var(--monto-ok)' : 'var(--text-muted)'};">${formatCLP(it.amount)}</td>
                     </tr>
                   `).join('')}
                 </tbody>
@@ -1430,7 +1448,7 @@ tr.innerHTML = `
             <div style="margin-top:1rem;">
               <div style="font-weight:700; font-size:0.9rem; display:flex; justify-content:space-between; align-items:center;">
                 <span>🧾 Gastos Diarios Registrados (${mes.gastosDiarios.length}):</span>
-                <span style="color:#10B981; font-size:0.85rem;">Total: ${formatCLP(totalGastosDiarios)}</span>
+                <span style="color:var(--monto-ok); font-size:0.85rem;">Total: ${formatCLP(totalGastosDiarios)}</span>
               </div>
               <div style="max-height:180px; overflow-y:auto; border:1px solid var(--border-glass); border-radius:8px; padding:0.5rem; margin-top:0.35rem;">
                 <table style="width:100%; font-size:0.75rem;">
@@ -1448,7 +1466,7 @@ tr.innerHTML = `
                         <td style="padding:0.2rem; color:var(--text-muted); font-size:0.7rem;">${escapeHtml(g.date || '')}</td>
                         <td style="padding:0.2rem;"><span class="badge ${g.payer === 'Diego' ? 'badge-blue' : 'badge-purple'}" style="font-size:0.65rem;">${escapeHtml(g.payer || '')}</span></td>
                         <td style="padding:0.2rem;">${escapeHtml(g.desc || g.category || '')}</td>
-                        <td style="text-align:right; font-weight:700; padding:0.2rem; color:#10B981;">${formatCLP(g.amount || 0)}</td>
+                        <td style="text-align:right; font-weight:700; padding:0.2rem; color:var(--monto-ok);">${formatCLP(g.amount || 0)}</td>
                       </tr>
                     `).join('')}
                   </tbody>
@@ -1493,7 +1511,7 @@ tr.innerHTML = `
             <div><span style="color:var(--text-muted); font-size:0.75rem;">Sueldo Diego:</span> <strong style="color:var(--accent-diego); font-size:0.95rem; display:block;">${formatCLP(mes.diegoSal)}</strong></div>
             <div><span style="color:var(--text-muted); font-size:0.75rem;">Sueldo Soledad:</span> <strong style="color:var(--accent-soledad); font-size:0.95rem; display:block;">${formatCLP(mes.soleSal)}</strong></div>
             <div><span style="color:var(--text-muted); font-size:0.75rem;">Gastos Hogar:</span> <strong style="color:#F43F5E; font-size:0.95rem; display:block;">${formatCLP(mes.gastosHogar)}</strong></div>
-            <div><span style="color:var(--text-muted); font-size:0.75rem;">Superávit Libre:</span> <strong style="color:#10B981; font-size:0.95rem; display:block;">${formatCLP(mes.superavit)}</strong></div>
+            <div><span style="color:var(--text-muted); font-size:0.75rem;">Superávit Libre:</span> <strong style="color:var(--monto-ok); font-size:0.95rem; display:block;">${formatCLP(mes.superavit)}</strong></div>
           </div>
           ${itemsHtml}
           ${gastosHtml}

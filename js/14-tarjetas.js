@@ -49,7 +49,6 @@ let currentCardAnalysisFilter = 'all';
     }
 
     // --- Saldos de cofres: una sola fuente para todas las pantallas ---
-    let cardAnalysisQueued = false;
 
     // Acepta $0; solo una casilla vacía conserva el valor anterior
     function readMoney(id, fallback) {
@@ -432,14 +431,6 @@ let currentCardAnalysisFilter = 'all';
       const grid = document.getElementById('gridCardDoughnuts');
       if (!grid) return;
 
-      // Limpiar gráficos anteriores para evitar fugas de memoria o solapamiento
-      Object.keys(cardDoughnutCharts).forEach(k => {
-        if (cardDoughnutCharts[k]) {
-          cardDoughnutCharts[k].destroy();
-          delete cardDoughnutCharts[k];
-        }
-      });
-
       // Filtrar según botón activo
       const visibleConfigs = CARDS_ANALYSIS_CONFIG.filter(cfg => {
         if (currentCardAnalysisFilter === 'diego' && cfg.owner !== 'Diego') return false;
@@ -447,6 +438,8 @@ let currentCardAnalysisFilter = 'all';
         return true;
       });
 
+      // Los lienzos de las donas se conservan: cada gráfico se actualiza en vez de destruirse y crearse de nuevo
+      const lienzos = new Map([...grid.querySelectorAll('canvas')].map(c => [c.id, c]));
       grid.innerHTML = '';
 
       visibleConfigs.forEach(cfg => {
@@ -506,7 +499,7 @@ let currentCardAnalysisFilter = 'all';
           const sal = cfg.getTotalSalary();
           const transOut = cfg.getTotalTransfersOut();
           transferHtml = `
-            <div class="card-analysis-badge-transfer" style="background:rgba(59,130,246,0.15); color:#60A5FA; border:1px solid rgba(59,130,246,0.3);">
+            <div class="card-analysis-badge-transfer" style="background:rgba(59,130,246,0.15); color:var(--monto-diego); border:1px solid rgba(59,130,246,0.3);">
               <span>🏦 Sueldo: ${formatCLP(sal)}</span>
               <span>•</span>
               <span>🔁 Transferido a cofres: -${formatCLP(transOut)}</span>
@@ -558,7 +551,7 @@ let currentCardAnalysisFilter = 'all';
                 </div>
                 <div class="card-metric-pill">
                   <div class="card-metric-label">Cupo Disponible</div>
-                  <div class="card-metric-val" style="color:${cardIsOverspent ? '#F43F5E' : '#10B981'};">${formatCLP(cardCreditDisponible)}</div>
+                  <div class="card-metric-val" style="color:${cardIsOverspent ? 'var(--monto-mal)' : 'var(--monto-ok)'};">${formatCLP(cardCreditDisponible)}</div>
                 </div>
               ` : isSavingsCard ? `
                 <div class="card-metric-pill">
@@ -567,11 +560,11 @@ let currentCardAnalysisFilter = 'all';
                 </div>
                 <div class="card-metric-pill">
                   <div class="card-metric-label">Aporte Mes</div>
-                  <div class="card-metric-val" style="color:#10B981;">+${formatCLP(cardSavingsAporte)}</div>
+                  <div class="card-metric-val" style="color:var(--monto-ok);">+${formatCLP(cardSavingsAporte)}</div>
                 </div>
                 <div class="card-metric-pill">
                   <div class="card-metric-label">Total Acumulado</div>
-                  <div class="card-metric-val" style="color:#10B981;">${formatCLP(cardSavingsTotalAcumulado)}</div>
+                  <div class="card-metric-val" style="color:var(--monto-ok);">${formatCLP(cardSavingsTotalAcumulado)}</div>
                 </div>
               ` : remanente > 0 ? `
                 <div class="card-metric-pill">
@@ -580,11 +573,11 @@ let currentCardAnalysisFilter = 'all';
                 </div>
                 <div class="card-metric-pill">
                   <div class="card-metric-label">${cfg.isPrimary ? 'Fondo Mes' : 'Transferido'}</div>
-                  <div class="card-metric-val" style="color:#10B981;">+${formatCLP(budget)}</div>
+                  <div class="card-metric-val" style="color:var(--monto-ok);">+${formatCLP(budget)}</div>
                 </div>
                 <div class="card-metric-pill">
                   <div class="card-metric-label">Disponible</div>
-                  <div class="card-metric-val" style="color:${isOverspent ? '#F43F5E' : '#10B981'};">
+                  <div class="card-metric-val" style="color:${isOverspent ? 'var(--monto-mal)' : 'var(--monto-ok)'};">
                     ${isOverspent ? '-' : '+'}${formatCLP(Math.abs(remaining))}
                   </div>
                 </div>
@@ -599,7 +592,7 @@ let currentCardAnalysisFilter = 'all';
                 </div>
                 <div class="card-metric-pill">
                   <div class="card-metric-label">Disponible</div>
-                  <div class="card-metric-val" style="color:${isOverspent ? '#F43F5E' : '#10B981'};">
+                  <div class="card-metric-val" style="color:${isOverspent ? 'var(--monto-mal)' : 'var(--monto-ok)'};">
                     ${isOverspent ? '-' : '+'}${formatCLP(Math.abs(remaining))}
                   </div>
                 </div>
@@ -610,7 +603,7 @@ let currentCardAnalysisFilter = 'all';
             <div style="margin-top:0.75rem;">
               <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-bottom:0.25rem;">
                 <span>Consumo: <strong>${pctUsed}%</strong> de fondos ${remanente > 0 && !isCreditCard && !isSavingsCard ? `(${formatCLP(totalSpent)} / ${formatCLP(totalFondos)})` : ''}</span>
-                <span style="color:${isOverspent ? '#F43F5E' : '#10B981'}; font-weight:700;">
+                <span style="color:${isOverspent ? 'var(--monto-mal)' : 'var(--monto-ok)'}; font-weight:700;">
                   ${isOverspent ? '⚠️ Sobregiro' : '🟢 Dentro del margen'}
                 </span>
               </div>
@@ -641,13 +634,17 @@ let currentCardAnalysisFilter = 'all';
         cardEl.innerHTML = `
           <button type="button" class="cofre-fila" aria-expanded="${cofreAbierto}" onclick="toggleCofreDetalle('${cfg.key}')">
             <span class="cofre-nombre">${cfg.icon} ${cfg.name}</span>
-            <strong class="cofre-monto" style="color:${remaining < 0 ? '#F43F5E' : '#10B981'};">${remaining < 0 ? '-' : ''}${formatCLP(Math.abs(remaining))}</strong>
+            <strong class="cofre-monto" style="color:${remaining < 0 ? 'var(--monto-mal)' : 'var(--monto-ok)'};">${remaining < 0 ? '-' : ''}${formatCLP(Math.abs(remaining))}</strong>
             <span class="cofre-barra"><span style="width:${pctUsed}%; background:${remaining < 0 ? '#F43F5E' : cfg.color};"></span></span>
             <span class="cofre-sub">${remaining < 0 ? '⚠️ Sobregiro' : isCreditCard ? 'Cupo disponible' : 'Disponible'} · ${pctUsed}% usado</span>
           </button>
           <div class="card-detalle" id="detalle_${cfg.key}" style="display:${cofreAbierto ? 'block' : 'none'};">${detalleHtml}</div>`;
 
         grid.appendChild(cardEl);
+        if (lienzos.has(canvasId)) {
+          cardEl.querySelector(`#${canvasId}`).replaceWith(lienzos.get(canvasId));
+          lienzos.delete(canvasId);
+        }
 
         cardChartDrawers[cfg.key] = () => {
           const ctx = document.getElementById(canvasId)?.getContext('2d');
@@ -698,6 +695,19 @@ let currentCardAnalysisFilter = 'all';
             }
           }
 
+          const etiqueta = (c) => {
+            if (totalSpent === 0) return ' Fondos 100% intactos';
+            const pct = totalSpent > 0 ? ((c.raw / totalSpent) * 100).toFixed(1) : 0;
+            return ` ${c.label}: ${formatCLP(c.raw)} (${pct}%)`;
+          };
+          const previo = cardDoughnutCharts[cfg.key];
+          if (previo && previo.canvas === ctx.canvas) {
+            previo.data.labels = labels;
+            Object.assign(previo.data.datasets[0], { data: dataValues, backgroundColor: bgColors, borderColor: chartBorderColor() });
+            previo.options.plugins.tooltip.callbacks.label = etiqueta;
+            previo.update('none');
+            return;
+          }
           Chart.getChart(ctx.canvas)?.destroy();
           cardDoughnutCharts[cfg.key] = new Chart(ctx, {
             type: 'doughnut',
@@ -715,15 +725,7 @@ let currentCardAnalysisFilter = 'all';
               maintainAspectRatio: false,
               plugins: {
                 legend: { display: false },
-                tooltip: {
-                  callbacks: {
-                    label: (c) => {
-                      if (totalSpent === 0) return ' Fondos 100% intactos';
-                      const pct = totalSpent > 0 ? ((c.raw / totalSpent) * 100).toFixed(1) : 0;
-                      return ` ${c.label}: ${formatCLP(c.raw)} (${pct}%)`;
-                    }
-                  }
-                }
+                tooltip: { callbacks: { label: etiqueta } }
               },
               cutout: '62%'
             }
@@ -731,6 +733,9 @@ let currentCardAnalysisFilter = 'all';
         };
         if (cofreAbierto) setTimeout(cardChartDrawers[cfg.key], 60);
       });
+      // Cuentas que dejaron de verse (filtro Diego/Soledad): sus gráficos no quedan huérfanos
+      lienzos.forEach(c => Chart.getChart(c)?.destroy());
+      Object.keys(cardDoughnutCharts).forEach(k => { if (!cardDoughnutCharts[k].canvas?.isConnected) delete cardDoughnutCharts[k]; });
     }
 
     function toggleCofreDetalle(key) {

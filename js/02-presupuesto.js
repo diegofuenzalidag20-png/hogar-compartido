@@ -72,9 +72,7 @@
 
     function renderAuditTable() {
       sincronizarRealDesdeGastos();
-      if (typeof renderAnalisisMesActual === 'function' && document.getElementById('tab-mes-actual')?.classList.contains('active')) {
-        renderAnalisisMesActual();
-      }
+      programarRender('analisis');
       const tbody = document.getElementById('audit-tbody');
       if (tbody) tbody.innerHTML = '';
 
@@ -106,7 +104,7 @@
           ? '<span style="font-weight:700; color:var(--accent-diego);">Diego</span> <small style="color:var(--text-dim);">(' + escapeHtml(item.cuenta) + ')</small>'
           : '<span style="font-weight:700; color:var(--accent-soledad);">Soledad</span> <small style="color:var(--text-dim);">(' + escapeHtml(item.cuenta) + ')</small>';
 
-        const diffClass = diff > 0 ? 'style="color:#F43F5E; font-weight:700;"' : (diff < 0 ? 'style="color:#10B981; font-weight:700;"' : 'style="color:var(--text-muted);"');
+        const diffClass = diff > 0 ? 'style="color:#F43F5E; font-weight:700;"' : (diff < 0 ? 'style="color:var(--monto-ok); font-weight:700;"' : 'style="color:var(--text-muted);"');
 
         const deleteBtn = item.isCustom
           ? ` <button type="button" class="btn-borrar-item" style="background:transparent; border:none; color:var(--accent-rose); cursor:pointer; font-size:0.85rem;" title="Eliminar ítem">🗑️</button>`
@@ -121,7 +119,7 @@
           <td style="text-align:center;">${respBadge}</td>
           <td style="text-align:right; font-weight:600; color:var(--text-muted);">${formatCLP(item.base)}</td>
           <td style="text-align:right;">
-            <input type="number" class="input-real" value="${Number(item.actual) || 0}"${calculados.has(item.id) ? ' readonly title="Se calcula con los gastos registrados"' : ''}>
+            <input type="number" inputmode="numeric" class="input-real" value="${Number(item.actual) || 0}"${calculados.has(item.id) ? ' readonly title="Se calcula con los gastos registrados"' : ''}>
           </td>
           <td style="text-align:right;" ${diffClass}>
             ${diff > 0 ? '+' : ''}${formatCLP(diff)} <small>(${pct > 0 ? '+' : ''}${pct.toFixed(1)}%)</small>
@@ -161,8 +159,7 @@
         }
       });
 
-      // Renderizar Checklist
-      renderChecklist();
+      programarRender('checklist');
 
       const diffSub = document.getElementById('audit-kpi-diff-sub');
       const diffCard = document.getElementById('audit-card-diff');
@@ -180,7 +177,7 @@
         diffCard.className = 'kpi-card blue';
       }
       // La meta y los fijos pendientes salen del presupuesto: la proyección de fin de mes se recalcula con él
-      if (typeof renderProyeccionMes === 'function') renderProyeccionMes();
+      programarRender('proyeccion');
     }
 
     function updateAuditItem(id, value) {

@@ -23,6 +23,8 @@
           avisoMemoriaLlena = true;
           setTimeout(() => avisar('⚠️ La memoria del teléfono está llena: los cambios podrían no quedar guardados en este teléfono. Se siguen subiendo a la nube mientras haya conexión. Libera espacio y vuelve a abrir la app.'));
         }
+        // Lo que no se pudo guardar sigue en la pantalla y debe subir: el sondeo no puede saltarse la comparación
+        if (typeof marcarCambioLocal === 'function') marcarCambioLocal();
         return false;
       }
       if (typeof marcarCambioLocal === 'function') marcarCambioLocal();
@@ -34,14 +36,17 @@
     function chartBorderColor() { return temaClaro() ? '#FFFFFF' : 'rgba(10, 15, 30, 0.9)'; }
 
     // ---------- Ventanas propias (reemplazan alert/confirm/prompt del sistema) ----------
-    // Devuelve una promesa: true/false al confirmar, el texto escrito (o null) al pedir un dato.
-    function dialogo({ texto, aceptar = 'Entendido', cancelar = null, entrada = null }) {
+    // Devuelve una promesa: true/false al confirmar, el texto escrito (o null) al pedir un dato,
+    // o el valor de la opción elegida (o null) con opciones: [{ texto, valor }].
+    function dialogo({ texto, aceptar = 'Entendido', cancelar = null, entrada = null, opciones = null }) {
       return new Promise(resolve => {
         const fondo = document.createElement('div');
         fondo.className = 'dialogo-fondo';
-        fondo.innerHTML = `<div class="dialogo" role="dialog" aria-modal="true"><p class="dialogo-texto"></p>${entrada !== null ? '<input class="dialogo-entrada" type="text">' : ''}<div class="dialogo-botones">${cancelar ? '<button type="button" class="btn-secondary dialogo-no"></button>' : ''}<button type="button" class="btn-primary dialogo-si"></button></div></div>`;
+        const idTexto = nuevoId('dialogo-texto');
+        fondo.innerHTML = `<div class="dialogo" role="dialog" aria-modal="true" aria-labelledby="${idTexto}"><p class="dialogo-texto" id="${idTexto}"></p>${entrada !== null ? '<input class="dialogo-entrada" type="text" autocomplete="off" enterkeyhint="done">' : ''}<div class="dialogo-botones">${opciones ? opciones.map((o, i) => `<button type="button" class="${i ? 'btn-secondary' : 'btn-primary'} dialogo-op" data-i="${i}"></button>`).join('') : `${cancelar ? '<button type="button" class="btn-secondary dialogo-no"></button>' : ''}<button type="button" class="btn-primary dialogo-si"></button>`}</div></div>`;
         fondo.querySelector('.dialogo-texto').textContent = texto;
-        fondo.querySelector('.dialogo-si').textContent = aceptar;
+        fondo.querySelectorAll('.dialogo-op').forEach(b => { b.textContent = opciones[b.dataset.i].texto; b.onclick = () => responder(opciones[b.dataset.i].valor); });
+        if (!opciones) fondo.querySelector('.dialogo-si').textContent = aceptar;
         if (cancelar) fondo.querySelector('.dialogo-no').textContent = cancelar;
         const campo = fondo.querySelector('.dialogo-entrada');
         if (campo) campo.value = entrada;
@@ -50,14 +55,21 @@
           if (listo) return;
           listo = true;
           fondo.remove();
-          resolve(entrada !== null ? (si ? campo.value : null) : (cancelar ? !!si : true));
+          cerrarCapa(fondo);
+          resolve(opciones ? (typeof si === 'string' ? si : null) : entrada !== null ? (si ? campo.value : null) : (cancelar ? !!si : true));
         };
-        fondo.querySelector('.dialogo-si').onclick = () => responder(true);
+        if (!opciones) fondo.querySelector('.dialogo-si').onclick = () => responder(true);
         if (cancelar) fondo.querySelector('.dialogo-no').onclick = () => responder(false);
-        fondo.addEventListener('keydown', e => { if (e.key === 'Escape') responder(false); if (e.key === 'Enter') responder(true); });
+        // Enter confirma solo desde el campo o el botón de sí: con el foco en Cancelar, Enter cancela (es el botón)
+        fondo.addEventListener('keydown', e => {
+          if (e.key === 'Escape') responder(false);
+          if (e.key === 'Enter' && (e.target === campo || e.target.classList.contains('dialogo-si'))) { e.preventDefault(); responder(true); }
+        });
         document.body.appendChild(fondo);
-        (campo || fondo.querySelector('.dialogo-si')).focus();
+        // Foco en Cancelar: un Enter o toque apurado no confirma algo que borra
+        (campo || fondo.querySelector('.dialogo-no, .dialogo-op') || fondo.querySelector('.dialogo-si')).focus();
         if (campo) campo.select();
+        abrirCapa(fondo, () => responder(false));
         window.dispatchEvent(new CustomEvent('dialogo-abierto', { detail: { texto, responder } }));
       });
     }
@@ -67,6 +79,104 @@
     window.alert = (texto) => { avisar(texto); };
 
     function nuevoId(prefijo) { return `${prefijo}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`; }
+
+    // ---------- Ventanas encima: hoja de registro, menú, modales y diálogos (v86) ----------
+    // Atrás de Android cerraba la app con una ventana abierta y se perdía lo escrito: cada ventana deja una entrada en el
+    // historial y Atrás cierra la de arriba. Al abrir, el foco entra a la ventana; al cerrar, vuelve a donde estaba.
+    const capasAbiertas = [];
+    let atrasPropios = 0;
+    function abrirCapa(el, cerrar) {
+      if (capasAbiertas.some(c => c.el === el)) return;
+      capasAbiertas.push({ el, cerrar, foco: document.activeElement });
+      history.pushState({ ov: 1 }, '');
+      const caja = el.matches('[role="dialog"]') ? el : (el.querySelector('[role="dialog"]') || el);
+      if (!caja.contains(document.activeElement)) {
+        if (!caja.hasAttribute('tabindex')) caja.setAttribute('tabindex', '-1');
+        caja.focus({ preventScroll: true });
+      }
+    }
+    function cerrarCapa(el) {
+      const i = capasAbiertas.findIndex(c => c.el === el);
+      if (i < 0) return;
+      const [capa] = capasAbiertas.splice(i, 1);
+      // Cerrada con su botón: se saca su entrada del historial (si no, Atrás no haría nada la primera vez)
+      if (!capa.porAtras && history.state?.ov) { atrasPropios++; history.back(); }
+      if (capa.foco?.isConnected && !document.querySelector('.dialogo-fondo')) capa.foco.focus({ preventScroll: true });
+    }
+    window.addEventListener('popstate', () => {
+      if (atrasPropios) { atrasPropios--; return; }
+      const capa = capasAbiertas[capasAbiertas.length - 1];
+      if (!capa) return;
+      capa.porAtras = true;
+      capa.cerrar();
+      cerrarCapa(capa.el);
+    });
+    // Una recarga con una ventana abierta deja la entrada: ya no es de ninguna ventana
+    if (history.state?.ov) history.replaceState(null, '');
+    // Las ventanas fijas avisan solas al mostrarse u ocultarse (cada una se abre y cierra con su propia función)
+    function esCapaVisible(el) {
+      return el.id === 'quickBillCard' || el.id === 'appMenu' ? el.classList.contains('open') : getComputedStyle(el).display !== 'none';
+    }
+    function cerrarCapaFija(el) {
+      if (el.id === 'appMenu') return closeAppMenu();
+      const x = el.querySelector('.sheet-close');
+      if (x) x.click(); else el.style.display = 'none';
+    }
+    function vigilarCapasFijas() {
+      document.querySelectorAll('#quickBillCard, #appMenu, .modal-overlay, #modalAddItem').forEach(el => {
+        new MutationObserver(() => {
+          if (esCapaVisible(el)) abrirCapa(el, () => cerrarCapaFija(el)); else cerrarCapa(el);
+        }).observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', vigilarCapasFijas);
+    else vigilarCapasFijas();
+
+    // ---------- Dibujo agrupado (v86) ----------
+    // Registrar un gasto dibujaba ~22 veces las mismas partes: ahora se piden aquí y cada una se dibuja una vez
+    // en el próximo cuadro, en este orden (el perfil recalcula cofres y Mach antes de la tabla del presupuesto).
+    const PARTES_RENDER = {
+      perfil: () => syncProfileToInputs(),
+      presupuesto: () => renderAuditTable(),
+      checklist: () => renderChecklist(),
+      proyeccion: () => renderProyeccionMes(),
+      gastos: () => renderExpenses(),
+      traspasos: () => renderTraspasos(),
+      graficosSueldo: () => updateChartsWithNewSalary(),
+      graficos: () => renderDashboardCharts(),
+      analisis: () => renderAnalisisMesActual(),
+      tarjetas: () => renderCardAnalysis()
+    };
+    // Viven en la pestaña Análisis: oculta no se dibujan (switchTab las dibuja al entrar)
+    const PARTES_DE_ANALISIS = new Set(['graficos', 'analisis', 'tarjetas']);
+    const partesPendientes = new Set();
+    let cuadroPendiente = null, pintando = false;
+    function programarRender(...partes) {
+      partes.forEach(p => partesPendientes.add(p));
+      if (cuadroPendiente || pintando) return;
+      // Con la app en segundo plano requestAnimationFrame no corre: el temporizador lo reemplaza
+      const t = setTimeout(pintarPendiente, 250);
+      const r = requestAnimationFrame(pintarPendiente);
+      cuadroPendiente = { t, r };
+    }
+    function pintarPendiente() {
+      if (cuadroPendiente) { clearTimeout(cuadroPendiente.t); cancelAnimationFrame(cuadroPendiente.r); cuadroPendiente = null; }
+      const analisisVisible = !!document.getElementById('tab-mes-actual')?.classList.contains('active');
+      // Lo que una parte pida al dibujarse (p. ej. el presupuesto pide el checklist) entra en esta misma vuelta;
+      // lo que ya se dibujó en esta vuelta no se repite (los datos no cambiaron entremedio)
+      const pintadas = new Set();
+      pintando = true;
+      for (const parte of Object.keys(PARTES_RENDER)) {
+        if (!partesPendientes.delete(parte)) continue;
+        pintadas.add(parte);
+        if (PARTES_DE_ANALISIS.has(parte) && !analisisVisible) continue;
+        try { PARTES_RENDER[parte](); } catch (e) { console.error('Error al dibujar', parte, e); }
+      }
+      pintando = false;
+      pintadas.forEach(p => partesPendientes.delete(p));
+      // Una parte anterior pedida por una posterior (sin haberse dibujado aún) va al próximo cuadro
+      if (partesPendientes.size) programarRender();
+    }
 
     // Formatter CLP
     const formatCLP = (num) => {
@@ -140,6 +250,7 @@
       document.getElementById('appMenu').classList.remove('open');
       document.getElementById('quickBillCard').classList.add('open');
       setOverlay(true);
+      preguntarYoSoySiFalta();
     }
 
     function closeQuickSheet() {
@@ -156,6 +267,9 @@
     // En el teléfono la tarjeta vive en body: un ancestro con transform o blur rompería position:fixed
     function placeQuickCard() {
       const card = document.getElementById('quickBillCard');
+      // En el teléfono es una ventana (hoja); en escritorio, una tarjeta más de la página
+      if (mobileLayout.matches) { card.setAttribute('role', 'dialog'); card.setAttribute('aria-modal', 'true'); card.setAttribute('aria-labelledby', 'tituloRegistro'); }
+      else ['role', 'aria-modal', 'aria-labelledby'].forEach(a => card.removeAttribute(a));
       if (mobileLayout.matches && card.parentNode !== document.body) {
         card.before(quickCardHome);
         document.body.appendChild(card);
@@ -163,6 +277,17 @@
         quickCardHome.replaceWith(card);
         closeQuickSheet();
       }
+    }
+
+    // Con el teclado abierto Android achica solo la parte visible: la hoja de registro (fija abajo) quedaba tapada junto con
+    // el botón REGISTRAR. La hoja sube sobre el teclado (--teclado) y el campo enfocado se trae a la vista.
+    if (window.visualViewport) {
+      visualViewport.addEventListener('resize', () => {
+        const tapado = Math.max(0, Math.round(innerHeight - visualViewport.height - visualViewport.offsetTop));
+        document.documentElement.style.setProperty('--teclado', tapado + 'px');
+        const campo = document.activeElement;
+        if (tapado && campo?.closest?.('#quickBillCard.open')) campo.scrollIntoView({ block: 'nearest' });
+      });
     }
 
     // Dark/Light Theme System con Persistencia en LocalStorage

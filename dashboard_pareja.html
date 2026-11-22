@@ -19,16 +19,25 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <!-- Firebase Cloud Sync Engine (REST Directo ultra-rápido sin dependencias pesadas) -->
-  <link rel="stylesheet" href="css/app.css?v=85">
+  <link rel="stylesheet" href="css/app.css?v=86">
   <script>
     // Carga estable (v83): sin restaurar el desplazamiento al recargar (dejaba la página 22-34 px más abajo, con la cabecera cortada)
     // y el contenido espera a que la app lo dibuje; a los 3 s se muestra pase lo que pase.
     try { history.scrollRestoration = 'manual'; } catch (e) {}
     setTimeout(function () { document.documentElement.classList.remove('cargando'); }, 3000);
+    // Los scripts van con defer (v86): un toque en un botón antes de que terminen de cargar se guarda y se repite al quedar lista la app
+    var toquesTempranos = [];
+    document.addEventListener('click', function (e) {
+      if (window.appLista) return;
+      var b = e.target.closest && e.target.closest('[onclick]');
+      if (b) { e.stopImmediatePropagation(); e.preventDefault(); toquesTempranos.push(b); }
+    }, true);
+    // Si el arranque fallara, los botones no quedan bloqueados
+    window.addEventListener('load', function () { window.appLista = true; });
   </script>
 </head>
 <body>
@@ -148,7 +157,7 @@
       <div id="quickBillCard" class="card" style="border: 2px solid rgba(59, 130, 246, 0.5); background: linear-gradient(180deg, var(--bg-surface-elevated), var(--bg-surface)); box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.2);">
         <div class="card-title">
           <span style="display:flex; align-items:center; gap:0.5rem;">
-            <span style="font-size:1.3rem;">📥</span> Registrar boleta o gasto
+            <span style="font-size:1.3rem;">📥</span> <span id="tituloRegistro">Registrar boleta o gasto</span>
           </span>
           <span class="badge badge-emerald" style="font-size:0.8rem; padding:0.35rem 0.75rem;">Fácil en 1 Clic</span>
           <button type="button" class="sheet-close" onclick="closeQuickSheet()" aria-label="Cerrar">✕</button>
@@ -186,7 +195,7 @@
           </div>
         </div>
 
-        <form id="quickBillForm" onsubmit="handleQuickBillSubmit(event)" style="display:flex; flex-direction:column; gap:1rem;">
+        <form id="quickBillForm" onsubmit="handleQuickBillSubmit(event)" novalidate style="display:flex; flex-direction:column; gap:1rem;">
           <!-- Row 1: Fecha, ¿Quién Pagó?, Categoría, Monto ($ CLP), Medio de Pago -->
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:0.85rem; align-items:flex-end;">
             <div class="form-group">
@@ -272,7 +281,7 @@
 
             <div class="form-group">
               <label for="quickAmount">Monto ($ CLP)</label>
-              <input type="number" id="quickAmount" placeholder="Ej: 18500" required min="1" step="1" style="font-weight:800; font-size:1.15rem; color:#FACC15; padding:0.6rem;">
+              <input type="number" inputmode="numeric" id="quickAmount" placeholder="Ej: 18500" required min="1" step="1" style="font-weight:800; font-size:1.15rem; color:#FACC15; padding:0.6rem;">
             </div>
 
             <div class="form-group">
@@ -306,7 +315,7 @@
           <div style="display:grid; grid-template-columns: 1fr auto auto; gap:0.75rem; align-items:flex-end;">
             <div class="form-group" style="margin-bottom:0;">
               <label for="quickDesc">Detalle / Comercio</label>
-              <input type="text" id="quickDesc" placeholder="Ej: Lider Limache - Frutas" required style="padding:0.6rem; font-weight:600;">
+              <input type="text" id="quickDesc" placeholder="Ej: Lider Limache - Frutas" required autocomplete="off" enterkeyhint="done" style="padding:0.6rem; font-weight:600;">
             </div>
 
             <div class="form-group" style="margin-bottom:0;">
@@ -338,7 +347,7 @@
           </div>
           <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
             <span class="badge badge-emerald" id="quickExpensesCountBadge" style="font-size:0.8rem; padding:0.35rem 0.75rem; font-weight:700;">0 gastos</span>
-            <span class="badge badge-blue" id="quickExpensesTotalBadge" style="font-size:0.8rem; padding:0.35rem 0.75rem; font-weight:800; color:#60A5FA;">Total: $0</span>
+            <span class="badge badge-blue" id="quickExpensesTotalBadge" style="font-size:0.8rem; padding:0.35rem 0.75rem; font-weight:800; color:var(--monto-diego);">Total: $0</span>
           </div>
         </div>
 
@@ -348,21 +357,21 @@
             <span style="font-size:1.4rem;">🔵</span>
             <div>
               <div style="font-size:0.7rem; text-transform:uppercase; color:var(--accent-diego); font-weight:700;">Gastos Pagados por Diego:</div>
-              <div style="font-size:1.15rem; font-weight:800; color:#60A5FA;" id="quickExpensesDiegoTotal">$0</div>
+              <div style="font-size:1.15rem; font-weight:800; color:var(--monto-diego);" id="quickExpensesDiegoTotal">$0</div>
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:0.6rem;">
             <span style="font-size:1.4rem;">🟣</span>
             <div>
               <div style="font-size:0.7rem; text-transform:uppercase; color:var(--accent-soledad); font-weight:700;">Gastos Pagados por Soledad:</div>
-              <div style="font-size:1.15rem; font-weight:800; color:#C084FC;" id="quickExpensesSoledadTotal">$0</div>
+              <div style="font-size:1.15rem; font-weight:800; color:var(--monto-sole);" id="quickExpensesSoledadTotal">$0</div>
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:0.6rem;">
             <span style="font-size:1.4rem;">💰</span>
             <div>
-              <div style="font-size:0.7rem; text-transform:uppercase; color:#10B981; font-weight:700;">Gasto Total Consolidado:</div>
-              <div style="font-size:1.15rem; font-weight:800; color:#10B981;" id="quickExpensesGrandTotal">$0</div>
+              <div style="font-size:0.7rem; text-transform:uppercase; color:var(--monto-ok); font-weight:700;">Gasto Total Consolidado:</div>
+              <div style="font-size:1.15rem; font-weight:800; color:var(--monto-ok);" id="quickExpensesGrandTotal">$0</div>
             </div>
           </div>
         </div>
@@ -528,7 +537,7 @@
           <div>
             <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">1. Dividendo Total del Mes (UF):</label>
             <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.35rem;">
-              <input type="number" id="hipoTotalInput" value="375000" oninput="updateHipotecarioCoAporte()" style="font-size:1.25rem; font-weight:800; color:#FACC15; padding:0.5rem; width:100%; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-body);">
+              <input type="number" inputmode="numeric" id="hipoTotalInput" value="375000" oninput="updateHipotecarioCoAporte()" style="font-size:1.25rem; font-weight:800; color:#FACC15; padding:0.5rem; width:100%; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-body);">
             </div>
             <div style="font-size:0.7rem; color:var(--text-dim); margin-top:0.25rem;">Cobrado en Chequera BancoEstado</div>
           </div>
@@ -541,7 +550,7 @@
 
           <div>
             <label style="font-size:0.75rem; font-weight:700; color:var(--accent-soledad); text-transform:uppercase;">3. Diferencial Cubierto por Soledad:</label>
-            <div style="font-size:1.35rem; font-weight:800; color:#10B981; margin-top:0.35rem;" id="hipoSoledadDiffDisplay">+$10.000</div>
+            <div style="font-size:1.35rem; font-weight:800; color:var(--monto-ok); margin-top:0.35rem;" id="hipoSoledadDiffDisplay">+$10.000</div>
             <div style="font-size:0.7rem; color:var(--text-dim);">Aporte complementario de Soledad</div>
           </div>
         </div>
@@ -551,7 +560,7 @@
           <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.4rem;">
             <span>🔵 Diego transfiere <strong>$365.000</strong></span>
             <span style="color:var(--text-dim);">➔</span>
-            <span>🟣 Soledad aporta <strong style="color:#10B981;"><span id="hipoDiffInline">+$10.000</span></strong></span>
+            <span>🟣 Soledad aporta <strong style="color:var(--monto-ok);"><span id="hipoDiffInline">+$10.000</span></strong></span>
             <span style="color:var(--text-dim);">➔</span>
             <span>🏦 Pago Total al Banco: <strong style="color:#FACC15;"><span id="hipoTotalInline">$375.000</span></strong></span>
           </div>
@@ -574,11 +583,11 @@
         <div id="guideContent" style="display:none; margin-top:1rem; border-top:1px solid var(--border-color); padding-top:1rem;">
           <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1rem;">
             <div style="background:var(--bg-surface); padding:0.85rem; border-radius:8px; border-left:3px solid #10B981;">
-              <strong style="color:#10B981; font-size:0.85rem;">🟢 En Rango / En Presupuesto</strong>
+              <strong style="color:var(--monto-ok); font-size:0.85rem;">🟢 En Rango / En Presupuesto</strong>
               <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.25rem;">La boleta llegó normal y predecible. No hay nada de qué preocuparse.</p>
             </div>
             <div style="background:var(--bg-surface); padding:0.85rem; border-radius:8px; border-left:3px solid #F59E0B;">
-              <strong style="color:#F59E0B; font-size:0.85rem;">🟡 Alerta (+8%)</strong>
+              <strong style="color:var(--monto-aviso); font-size:0.85rem;">🟡 Alerta (+8%)</strong>
               <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.25rem;">Subió más de $5.000 sobre el promedio. Vale la pena revisar el detalle.</p>
             </div>
             <div style="background:var(--bg-surface); padding:0.85rem; border-radius:8px; border-left:3px solid #F43F5E;">
@@ -1090,7 +1099,7 @@
             </div>
             <div style="display:flex; align-items:center; gap:0.4rem;">
               <span style="font-weight:800; color:var(--accent-diego); font-size:1.1rem;">$</span>
-              <input type="number" id="directDiegoSalaryInput" value="1214038" step="1" min="0" oninput="onDirectSalaryLiveChange('Diego', this.value)" style="width:140px; font-weight:800; font-size:1.1rem; color:var(--accent-diego); text-align:right; padding:0.35rem 0.5rem;">
+              <input type="number" inputmode="numeric" id="directDiegoSalaryInput" value="1214038" step="1" min="0" oninput="onDirectSalaryLiveChange('Diego', this.value)" style="width:140px; font-weight:800; font-size:1.1rem; color:var(--accent-diego); text-align:right; padding:0.35rem 0.5rem;">
               <button type="button" class="btn-primary" onclick="guardarSueldoDirecto('Diego')" style="padding:0.4rem 0.85rem; font-size:0.8rem; background:linear-gradient(135deg, #3B82F6, #1D4ED8);">
                 💾 Guardar
               </button>
@@ -1104,7 +1113,7 @@
             </div>
             <div style="display:flex; align-items:center; gap:0.4rem;">
               <span style="font-weight:800; color:var(--accent-soledad); font-size:1.1rem;">$</span>
-              <input type="number" id="directSoleSalaryInput" value="875000" step="1" min="0" oninput="onDirectSalaryLiveChange('Soledad', this.value)" style="width:140px; font-weight:800; font-size:1.1rem; color:var(--accent-soledad); text-align:right; padding:0.35rem 0.5rem;">
+              <input type="number" inputmode="numeric" id="directSoleSalaryInput" value="875000" step="1" min="0" oninput="onDirectSalaryLiveChange('Soledad', this.value)" style="width:140px; font-weight:800; font-size:1.1rem; color:var(--accent-soledad); text-align:right; padding:0.35rem 0.5rem;">
               <button type="button" class="btn-primary" onclick="guardarSueldoDirecto('Soledad')" style="padding:0.4rem 0.85rem; font-size:0.8rem; background:linear-gradient(135deg, #A855F7, #7C3AED);">
                 💾 Guardar
               </button>
@@ -1185,10 +1194,10 @@
                     <strong style="color:var(--text-main); font-size:0.9rem;">1. <span class="nombre-cuenta-diego">Cuenta Fan</span> (Cuenta Principal & Fijos)</strong>
                     <span class="badge badge-blue" style="font-size:0.68rem; margin-left:0.35rem; padding:0.15rem 0.45rem;">⚡ Auto-calculado</span>
                   </div>
-                  <input type="number" id="inputCofreFan" value="760786" readonly step="1" min="0" title="Calculado automáticamente: Sueldo Diego - (Tenpo + Mach + Mercado Pago + pago de la tarjeta BCI)" style="font-size:0.95rem; font-weight:800; color:#60A5FA; background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.4); border-radius:6px; padding:0.25rem 0.5rem; width:135px; text-align:right; cursor:default;">
+                  <input type="number" inputmode="numeric" id="inputCofreFan" value="760786" readonly step="1" min="0" title="Calculado automáticamente: Sueldo Diego - (Tenpo + Mach + Mercado Pago + pago de la tarjeta BCI)" style="font-size:0.95rem; font-weight:800; color:var(--monto-diego); background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.4); border-radius:6px; padding:0.25rem 0.5rem; width:135px; text-align:right; cursor:default;">
                 </div>
                 <div style="font-size:0.75rem; color:#93C5FD; margin-top:0.35rem; font-weight:600;" id="diegoFanFormulaDesc">
-                  💡 Remanente en <span class="nombre-cuenta-diego">Cuenta Fan</span>: <strong style="color:#60A5FA;">$760.786</strong> <span style="font-size:0.7rem; color:var(--text-muted); font-weight:normal;">(Sueldo Diego − transferencias a cofres)</span>
+                  💡 Remanente en <span class="nombre-cuenta-diego">Cuenta Fan</span>: <strong style="color:var(--monto-diego);">$760.786</strong> <span style="font-size:0.7rem; color:var(--text-muted); font-weight:normal;">(Sueldo Diego − transferencias a cofres)</span>
                 </div>
               </div>
 
@@ -1202,17 +1211,17 @@
                   <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem;">
                     <div style="display:flex; align-items:center; gap:0.35rem;">
                       <span style="font-size:0.68rem; color:var(--text-muted);">Aporte mes:</span>
-                      <input type="number" id="inputCofreTenpo" value="300000" step="1000" min="0" oninput="updateDiegoColchonDisplay()" style="font-size:0.9rem; font-weight:700; color:var(--text-main); background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                      <input type="number" inputmode="numeric" id="inputCofreTenpo" value="300000" step="1000" min="0" oninput="updateDiegoColchonDisplay()" style="font-size:0.9rem; font-weight:700; color:var(--text-main); background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
                     </div>
                     <div style="display:flex; align-items:center; gap:0.35rem;">
                       <span style="font-size:0.68rem; color:#FCD34D; font-weight:600;">Remanente mes pasado:</span>
-                      <input type="number" id="inputRemanenteTenpoDiego" value="0" step="1000" min="0" oninput="updateDiegoColchonDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:var(--text-main); background:rgba(148,163,184,0.1); border:1px dashed rgba(148,163,184,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo que quedó en la tarjeta el mes anterior">
+                      <input type="number" inputmode="numeric" id="inputRemanenteTenpoDiego" value="0" step="1000" min="0" oninput="updateDiegoColchonDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:var(--text-main); background:rgba(148,163,184,0.1); border:1px dashed rgba(148,163,184,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo que quedó en la tarjeta el mes anterior">
                     </div>
                   </div>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; padding:0.35rem 0.65rem; background:rgba(245,158,11,0.08); border-radius:6px; border:1px solid rgba(245,158,11,0.25);">
                   <span style="font-size:0.72rem; color:var(--text-muted);">💰 <strong>Total Fondos Disponibles:</strong></span>
-                  <strong id="displayTotalFondosTenpoDiego" style="font-size:0.95rem; color:#F59E0B; font-family:monospace;">$300.000</strong>
+                  <strong id="displayTotalFondosTenpoDiego" style="font-size:0.95rem; color:var(--monto-aviso); font-family:monospace;">$300.000</strong>
                 </div>
               </div>
 
@@ -1226,11 +1235,11 @@
                   <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem;">
                     <div style="display:flex; align-items:center; gap:0.35rem;">
                       <span style="font-size:0.68rem; color:var(--text-muted);">Cada lunes:</span>
-                      <input type="number" id="inputCofreMach" value="35000" step="1000" min="0" oninput="updateDiegoColchonDisplay()" style="font-size:0.9rem; font-weight:700; color:#06B6D4; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                      <input type="number" inputmode="numeric" id="inputCofreMach" value="35000" step="1000" min="0" oninput="updateDiegoColchonDisplay()" style="font-size:0.9rem; font-weight:700; color:#06B6D4; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
                     </div>
                     <div style="display:flex; align-items:center; gap:0.35rem;">
                       <span style="font-size:0.68rem; color:#67E8F9; font-weight:600;">Remanente mes pasado:</span>
-                      <input type="number" id="inputRemanenteMachDiego" value="0" step="1000" min="0" oninput="updateDiegoColchonDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:#06B6D4; background:rgba(6,182,212,0.1); border:1px dashed rgba(6,182,212,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo que quedó en Mach el mes anterior">
+                      <input type="number" inputmode="numeric" id="inputRemanenteMachDiego" value="0" step="1000" min="0" oninput="updateDiegoColchonDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:#06B6D4; background:rgba(6,182,212,0.1); border:1px dashed rgba(6,182,212,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo que quedó en Mach el mes anterior">
                     </div>
                   </div>
                 </div>
@@ -1240,7 +1249,7 @@
                 </div>
                 <div id="machSemanasDisplay"></div>
                 <div class="mach-ajuste">
-                  <input type="number" id="inputMachSaldoReal" min="0" step="1" placeholder="Saldo real hoy en Mach" aria-label="Saldo real hoy en Mach">
+                  <input type="number" inputmode="numeric" id="inputMachSaldoReal" min="0" step="1" placeholder="Saldo real hoy en Mach" aria-label="Saldo real hoy en Mach">
                   <button type="button" class="btn-secondary" onclick="ajustarSaldoMach()">Ajustar</button>
                 </div>
               </div>
@@ -1255,17 +1264,17 @@
                   <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem;">
                     <div style="display:flex; align-items:center; gap:0.35rem;">
                       <span style="font-size:0.68rem; color:var(--text-muted);">Aporte mes:</span>
-                      <input type="number" id="inputCofreMP" value="130000" step="1000" min="0" oninput="updateDiegoColchonDisplay()" style="font-size:0.9rem; font-weight:700; color:#10B981; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                      <input type="number" inputmode="numeric" id="inputCofreMP" value="130000" step="1000" min="0" oninput="updateDiegoColchonDisplay()" style="font-size:0.9rem; font-weight:700; color:var(--monto-ok); background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
                     </div>
                     <div style="display:flex; align-items:center; gap:0.35rem;">
                       <span style="font-size:0.68rem; color:#6EE7B7; font-weight:600;">Remanente mes pasado:</span>
-                      <input type="number" id="inputRemanenteMPDiego" value="0" step="1000" min="0" oninput="updateDiegoColchonDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:#34D399; background:rgba(16,185,129,0.1); border:1px dashed rgba(16,185,129,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo acumulado que quedó del mes anterior">
+                      <input type="number" inputmode="numeric" id="inputRemanenteMPDiego" value="0" step="1000" min="0" oninput="updateDiegoColchonDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:#34D399; background:rgba(16,185,129,0.1); border:1px dashed rgba(16,185,129,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo acumulado que quedó del mes anterior">
                     </div>
                   </div>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; padding:0.35rem 0.65rem; background:rgba(16,185,129,0.08); border-radius:6px; border:1px solid rgba(16,185,129,0.25);">
                   <span style="font-size:0.72rem; color:var(--text-muted);">💰 <strong>Total Ahorro Acumulado:</strong></span>
-                  <strong id="displayTotalAcumuladoMPDiego" style="font-size:0.95rem; color:#10B981; font-family:monospace;">$130.000</strong>
+                  <strong id="displayTotalAcumuladoMPDiego" style="font-size:0.95rem; color:var(--monto-ok); font-family:monospace;">$130.000</strong>
                 </div>
               </div>
 
@@ -1281,15 +1290,15 @@
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:0.5rem; background:rgba(0,0,0,0.2); padding:0.6rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
                   <div>
                     <label for="inputTcBciCupo" style="font-size:0.68rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Cupo Total Línea:</label>
-                    <input type="number" id="inputTcBciCupo" value="900000" step="10000" min="0" oninput="updateDiegoColchonDisplay(); updateTcBciDisplay();" style="font-size:0.88rem; font-weight:700; color:#38BDF8; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Cupo total otorgado por el banco">
+                    <input type="number" inputmode="numeric" id="inputTcBciCupo" value="900000" step="10000" min="0" oninput="updateDiegoColchonDisplay(); updateTcBciDisplay();" style="font-size:0.88rem; font-weight:700; color:#38BDF8; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Cupo total otorgado por el banco">
                   </div>
                   <div>
                     <label for="inputTcBciPago" style="font-size:0.68rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Pago este mes:</label>
-                    <input type="number" id="inputTcBciPago" value="0" step="1000" min="0" oninput="updateDiegoColchonDisplay(); updateTcBciDisplay();" placeholder="$0" style="font-size:0.88rem; font-weight:700; color:#F43F5E; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Lo que pagas de la tarjeta este mes desde tu cuenta principal; no es un gasto">
+                    <input type="number" inputmode="numeric" id="inputTcBciPago" value="0" step="1000" min="0" oninput="updateDiegoColchonDisplay(); updateTcBciDisplay();" placeholder="$0" style="font-size:0.88rem; font-weight:700; color:#F43F5E; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Lo que pagas de la tarjeta este mes desde tu cuenta principal; no es un gasto">
                   </div>
                   <div>
                     <label for="inputTcBciDeudaPrevia" style="font-size:0.68rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Deuda anterior facturada:</label>
-                    <input type="number" id="inputTcBciDeudaPrevia" value="0" step="1000" min="0" oninput="updateDiegoColchonDisplay(); updateTcBciDisplay();" placeholder="$0" style="font-size:0.88rem; font-weight:700; color:var(--text-main); background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Deuda arrastrada de antes si hubo">
+                    <input type="number" inputmode="numeric" id="inputTcBciDeudaPrevia" value="0" step="1000" min="0" oninput="updateDiegoColchonDisplay(); updateTcBciDisplay();" placeholder="$0" style="font-size:0.88rem; font-weight:700; color:var(--text-main); background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Deuda arrastrada de antes si hubo">
                   </div>
                 </div>
 
@@ -1301,11 +1310,11 @@
                   </div>
                   <div style="background:rgba(245,158,11,0.08); padding:0.35rem 0.5rem; border-radius:6px; border:1px solid rgba(245,158,11,0.2);">
                     <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase;">📉 Deuda actual:</div>
-                    <div id="displayTcBciDeudaActual" style="font-size:0.92rem; font-weight:800; color:#F59E0B; font-family:monospace;">$0</div>
+                    <div id="displayTcBciDeudaActual" style="font-size:0.92rem; font-weight:800; color:var(--monto-aviso); font-family:monospace;">$0</div>
                   </div>
                   <div style="background:rgba(16,185,129,0.08); padding:0.35rem 0.5rem; border-radius:6px; border:1px solid rgba(16,185,129,0.2);">
                     <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase;">💳 Cupo disponible:</div>
-                    <div id="displayTcBciCupoDisponible" style="font-size:0.92rem; font-weight:800; color:#10B981; font-family:monospace;">$900.000</div>
+                    <div id="displayTcBciCupoDisponible" style="font-size:0.92rem; font-weight:800; color:var(--monto-ok); font-family:monospace;">$900.000</div>
                   </div>
                 </div>
 
@@ -1320,7 +1329,7 @@
           <div style="margin-top:1rem; background:rgba(16,185,129,0.08); padding:0.85rem; border-radius:8px; border:1px solid rgba(16,185,129,0.3); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
             <div>
               <span style="font-size:0.8rem; color:var(--text-main); font-weight:600;">💎 Disponible en <span class="nombre-cuenta-diego">Cuenta Fan</span>:</span>
-              <div style="font-size:1.2rem; font-weight:800; color:#10B981;" id="diegoColchonCuentasDisplay">$34.778</div>
+              <div style="font-size:1.2rem; font-weight:800; color:var(--monto-ok);" id="diegoColchonCuentasDisplay">$34.778</div>
               <div style="font-size:0.7rem; color:var(--text-muted);">Fondos del mes menos los gastos registrados en <span class="nombre-cuenta-diego">Cuenta Fan</span></div>
             </div>
             <button type="button" onclick="saveDiegoCofres()" class="btn-primary" style="padding:0.45rem 0.95rem; font-size:0.82rem; background:linear-gradient(135deg, #3B82F6, #1D4ED8); font-weight:700;">
@@ -1350,10 +1359,10 @@
                     <strong style="color:var(--text-main); font-size:0.9rem;">1. Chequera Electrónica (Cuenta Principal Hogar)</strong>
                     <span class="badge badge-purple" style="font-size:0.68rem; margin-left:0.35rem; padding:0.15rem 0.45rem;">⚡ Auto-calculado</span>
                   </div>
-                  <input type="number" id="inputCofreSoleChequera" value="425000" readonly step="1" min="0" title="Calculado automáticamente: Sueldo Soledad - (Tenpo + Mercado Pago + Ahorro)" style="font-size:0.95rem; font-weight:800; color:#C084FC; background:rgba(168,85,247,0.12); border:1px solid rgba(168,85,247,0.4); border-radius:6px; padding:0.25rem 0.5rem; width:135px; text-align:right; cursor:default;">
+                  <input type="number" inputmode="numeric" id="inputCofreSoleChequera" value="425000" readonly step="1" min="0" title="Calculado automáticamente: Sueldo Soledad - (Tenpo + Mercado Pago + Ahorro)" style="font-size:0.95rem; font-weight:800; color:var(--monto-sole); background:rgba(168,85,247,0.12); border:1px solid rgba(168,85,247,0.4); border-radius:6px; padding:0.25rem 0.5rem; width:135px; text-align:right; cursor:default;">
                 </div>
                 <div style="font-size:0.75rem; color:#D8B4FE; margin-top:0.35rem; font-weight:600;" id="soleChequeraFormulaDesc">
-                  💡 Remanente en Chequera: <strong style="color:#C084FC;">$425.000</strong> <span style="font-size:0.7rem; color:var(--text-muted); font-weight:normal;">(Sueldo Soledad − transferencias a cofres)</span>
+                  💡 Remanente en Chequera: <strong style="color:var(--monto-sole);">$425.000</strong> <span style="font-size:0.7rem; color:var(--text-muted); font-weight:normal;">(Sueldo Soledad − transferencias a cofres)</span>
                 </div>
               </div>
 
@@ -1369,19 +1378,19 @@
                 <div style="display:grid; grid-template-columns: repeat(2, 1fr); align-items:end; gap:0.5rem; background:rgba(0,0,0,0.2); padding:0.6rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
                   <div>
                     <label style="font-size:0.68rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Cupo Total Línea:</label>
-                    <input type="number" id="inputSmartVisaCupo" value="500000" step="10000" min="0" oninput="updateSmartVisaDisplay()" style="font-size:0.88rem; font-weight:700; color:#38BDF8; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Cupo total otorgado por el banco">
+                    <input type="number" inputmode="numeric" id="inputSmartVisaCupo" value="500000" step="10000" min="0" oninput="updateSmartVisaDisplay()" style="font-size:0.88rem; font-weight:700; color:#38BDF8; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Cupo total otorgado por el banco">
                   </div>
                   <div>
                     <label style="font-size:0.68rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Cuota deuda antigua (este mes):</label>
-                    <input type="number" id="inputCofreSoleSmart" value="50000" step="1000" min="0" oninput="updateSoleMargenDisplay(); updateSmartVisaDisplay();" style="font-size:0.88rem; font-weight:700; color:#F43F5E; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Cuota que pagas este mes de la deuda antigua (anterior a la app): cuenta como gasto">
+                    <input type="number" inputmode="numeric" id="inputCofreSoleSmart" value="50000" step="1000" min="0" oninput="updateSoleMargenDisplay(); updateSmartVisaDisplay();" style="font-size:0.88rem; font-weight:700; color:#F43F5E; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Cuota que pagas este mes de la deuda antigua (anterior a la app): cuenta como gasto">
                   </div>
                   <div>
                     <label for="inputSmartVisaPagoCompras" style="font-size:0.68rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Pago de compras nuevas:</label>
-                    <input type="number" id="inputSmartVisaPagoCompras" value="0" step="1000" min="0" oninput="updateSoleMargenDisplay(); updateSmartVisaDisplay();" placeholder="$0" style="font-size:0.88rem; font-weight:700; color:#F43F5E; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Lo que pagas de compras hechas con la tarjeta (ya contadas como gasto). No es un gasto: solo mueve plata de la Chequera a la tarjeta.">
+                    <input type="number" inputmode="numeric" id="inputSmartVisaPagoCompras" value="0" step="1000" min="0" oninput="updateSoleMargenDisplay(); updateSmartVisaDisplay();" placeholder="$0" style="font-size:0.88rem; font-weight:700; color:#F43F5E; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Lo que pagas de compras hechas con la tarjeta (ya contadas como gasto). No es un gasto: solo mueve plata de la Chequera a la tarjeta.">
                   </div>
                   <div>
                     <label style="font-size:0.68rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Deuda Anterior Facturada:</label>
-                    <input type="number" id="inputSmartVisaDeudaPrevia" value="0" step="1000" min="0" oninput="updateSmartVisaDisplay()" placeholder="$0" style="font-size:0.88rem; font-weight:700; color:var(--text-main); background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Deuda arrastrada de antes si hubo">
+                    <input type="number" inputmode="numeric" id="inputSmartVisaDeudaPrevia" value="0" step="1000" min="0" oninput="updateSmartVisaDisplay()" placeholder="$0" style="font-size:0.88rem; font-weight:700; color:var(--text-main); background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.45rem; width:100%; text-align:right;" title="Deuda arrastrada de antes si hubo">
                   </div>
                 </div>
 
@@ -1393,11 +1402,11 @@
                   </div>
                   <div style="background:rgba(245,158,11,0.08); padding:0.35rem 0.5rem; border-radius:6px; border:1px solid rgba(245,158,11,0.2);">
                     <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase;">📉 Deuda actual:</div>
-                    <div id="displaySmartVisaDeudaActual" style="font-size:0.92rem; font-weight:800; color:#F59E0B; font-family:monospace;">$0</div>
+                    <div id="displaySmartVisaDeudaActual" style="font-size:0.92rem; font-weight:800; color:var(--monto-aviso); font-family:monospace;">$0</div>
                   </div>
                   <div style="background:rgba(16,185,129,0.08); padding:0.35rem 0.5rem; border-radius:6px; border:1px solid rgba(16,185,129,0.2);">
                     <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase;">💳 Cupo disponible:</div>
-                    <div id="displaySmartVisaCupoDisponible" style="font-size:0.92rem; font-weight:800; color:#10B981; font-family:monospace;">$500.000</div>
+                    <div id="displaySmartVisaCupoDisponible" style="font-size:0.92rem; font-weight:800; color:var(--monto-ok); font-family:monospace;">$500.000</div>
                   </div>
                 </div>
 
@@ -1417,11 +1426,11 @@
                   <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem;">
                     <div style="display:flex; align-items:center; gap:0.35rem;">
                       <span style="font-size:0.68rem; color:var(--text-muted);">Aporte mes:</span>
-                      <input type="number" id="inputCofreSoleTenpo" value="150000" step="1000" min="0" oninput="updateSoleMargenDisplay()" style="font-size:0.9rem; font-weight:700; color:#A855F7; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                      <input type="number" inputmode="numeric" id="inputCofreSoleTenpo" value="150000" step="1000" min="0" oninput="updateSoleMargenDisplay()" style="font-size:0.9rem; font-weight:700; color:#A855F7; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
                     </div>
                     <div style="display:flex; align-items:center; gap:0.35rem;">
                       <span style="font-size:0.68rem; color:#D8B4FE; font-weight:600;">Remanente mes pasado:</span>
-                      <input type="number" id="inputRemanenteTenpoSole" value="0" step="1000" min="0" oninput="updateSoleMargenDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:#C084FC; background:rgba(168,85,247,0.1); border:1px dashed rgba(168,85,247,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo acumulado que quedó en Tenpo el mes anterior">
+                      <input type="number" inputmode="numeric" id="inputRemanenteTenpoSole" value="0" step="1000" min="0" oninput="updateSoleMargenDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:var(--monto-sole); background:rgba(168,85,247,0.1); border:1px dashed rgba(168,85,247,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo acumulado que quedó en Tenpo el mes anterior">
                     </div>
                   </div>
                 </div>
@@ -1441,17 +1450,17 @@
                   <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem;">
                     <div style="display:flex; align-items:center; gap:0.35rem;">
                       <span style="font-size:0.68rem; color:var(--text-muted);">Aporte mes:</span>
-                      <input type="number" id="inputCofreSoleMP" value="150000" step="1000" min="0" oninput="updateSoleMargenDisplay()" style="font-size:0.9rem; font-weight:700; color:#10B981; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                      <input type="number" inputmode="numeric" id="inputCofreSoleMP" value="150000" step="1000" min="0" oninput="updateSoleMargenDisplay()" style="font-size:0.9rem; font-weight:700; color:var(--monto-ok); background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
                     </div>
                     <div style="display:flex; align-items:center; gap:0.35rem;">
                       <span style="font-size:0.68rem; color:#6EE7B7; font-weight:600;">Remanente mes pasado:</span>
-                      <input type="number" id="inputRemanenteMPSole" value="0" step="1000" min="0" oninput="updateSoleMargenDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:#34D399; background:rgba(16,185,129,0.1); border:1px dashed rgba(16,185,129,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo acumulado que quedó del mes anterior">
+                      <input type="number" inputmode="numeric" id="inputRemanenteMPSole" value="0" step="1000" min="0" oninput="updateSoleMargenDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:#34D399; background:rgba(16,185,129,0.1); border:1px dashed rgba(16,185,129,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo acumulado que quedó del mes anterior">
                     </div>
                   </div>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; padding:0.35rem 0.65rem; background:rgba(16,185,129,0.08); border-radius:6px; border:1px solid rgba(16,185,129,0.25);">
                   <span style="font-size:0.72rem; color:var(--text-muted);">💰 <strong>Total Ahorro Acumulado:</strong></span>
-                  <strong id="displayTotalAcumuladoMPSole" style="font-size:0.95rem; color:#10B981; font-family:monospace;">$150.000</strong>
+                  <strong id="displayTotalAcumuladoMPSole" style="font-size:0.95rem; color:var(--monto-ok); font-family:monospace;">$150.000</strong>
                 </div>
               </div>
 
@@ -1465,11 +1474,11 @@
                   <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem;">
                     <div style="display:flex; align-items:center; gap:0.35rem;">
                       <span style="font-size:0.68rem; color:var(--text-muted);">Aporte mes:</span>
-                      <input type="number" id="inputCofreSoleBanco" value="150000" step="1000" min="0" oninput="updateSoleMargenDisplay()" style="font-size:0.9rem; font-weight:700; color:#38BDF8; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
+                      <input type="number" inputmode="numeric" id="inputCofreSoleBanco" value="150000" step="1000" min="0" oninput="updateSoleMargenDisplay()" style="font-size:0.9rem; font-weight:700; color:#38BDF8; background:var(--bg-body); border:1px solid var(--border-color); border-radius:6px; padding:0.25rem 0.5rem; width:115px; text-align:right;">
                     </div>
                     <div style="display:flex; align-items:center; gap:0.35rem;">
                       <span style="font-size:0.68rem; color:#7DD3FC; font-weight:600;">Remanente mes pasado:</span>
-                      <input type="number" id="inputRemanenteBancoSole" value="0" step="1000" min="0" oninput="updateSoleMargenDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:#38BDF8; background:rgba(56,189,248,0.1); border:1px dashed rgba(56,189,248,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo acumulado que quedó del mes anterior">
+                      <input type="number" inputmode="numeric" id="inputRemanenteBancoSole" value="0" step="1000" min="0" oninput="updateSoleMargenDisplay()" placeholder="$0" style="font-size:0.85rem; font-weight:700; color:#38BDF8; background:rgba(56,189,248,0.1); border:1px dashed rgba(56,189,248,0.4); border-radius:6px; padding:0.2rem 0.45rem; width:115px; text-align:right;" title="Saldo acumulado que quedó del mes anterior">
                     </div>
                   </div>
                 </div>
@@ -1485,7 +1494,7 @@
           <div style="margin-top:1rem; background:rgba(168,85,247,0.08); padding:0.85rem; border-radius:8px; border:1px solid rgba(168,85,247,0.3); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
             <div>
               <span style="font-size:0.8rem; color:var(--text-main); font-weight:600;">💜 Disponible en Chequera:</span>
-              <div style="font-size:1.2rem; font-weight:800; color:#10B981;" id="soleMargenCuentasDisplay">$89.000</div>
+              <div style="font-size:1.2rem; font-weight:800; color:var(--monto-ok);" id="soleMargenCuentasDisplay">$89.000</div>
               <div style="font-size:0.7rem; color:var(--text-muted);">Fondos del mes menos los gastos registrados en Chequera</div>
             </div>
             <button type="button" onclick="saveSoleCofres()" class="btn-primary" style="padding:0.45rem 0.95rem; font-size:0.82rem; background:linear-gradient(135deg, #A855F7, #7C3AED); font-weight:700;">
@@ -1544,7 +1553,7 @@
               <h3>Sincronización Automática en Tiempo Real (Nube Firebase)</h3>
               <p>Tu aplicación cuenta con sincronización instantánea en la nube 24/7:</p>
               <ul>
-                <li><strong style="color:#10B981;">🟢 Nube en Vivo Automática:</strong> Cada vez que Diego o Soledad anoten una boleta, modifiquen un sueldo o muevan un cofre, el cambio se refleja en el otro celular en menos de 1 segundo de forma automática.</li>
+                <li><strong style="color:var(--monto-ok);">🟢 Nube en Vivo Automática:</strong> Cada vez que Diego o Soledad anoten una boleta, modifiquen un sueldo o muevan un cofre, el cambio se refleja en el otro celular en menos de 1 segundo de forma automática.</li>
                 <li><strong>Modo Fuera de Línea (Offline):</strong> Si estás sin señal (en el metro o sin cobertura), puedes registrar gastos normalmente; la app los guardará en tu teléfono y los sincronizará solos en cuanto recuperes internet.</li>
                 <li><strong>Respaldo Manual por WhatsApp:</strong> Si alguna vez lo prefieren, el botón superior <strong>☁️ Sincronización</strong> permite generar un enlace comprimido por WhatsApp o descargar una copia de seguridad en archivo .json.</li>
               </ul>
@@ -1596,6 +1605,7 @@
     <div class="app-menu-label">General</div>
     <button type="button" id="menuCuenta" onclick="closeAppMenu(); alternarSesion()">👥 Iniciar sesión con Google</button>
     <button type="button" onclick="closeAppMenu(); abrirRespaldos()">🛡️ Respaldos diarios</button>
+    <button type="button" id="menuYoSoy" onclick="closeAppMenu(); elegirYoSoy()">👥 Este teléfono es de: elijo cada vez</button>
     <button type="button" onclick="closeAppMenu(); openSyncModal()">☁️ Sincronización</button>
     <button type="button" onclick="closeAppMenu(); goToTab('tab-guia')">📘 Guía de uso</button>
     <button type="button" id="menuInstallPwa" onclick="closeAppMenu(); triggerPwaInstall()">📲 Instalar app</button>
@@ -1610,35 +1620,35 @@
     <button type="button" class="bottom-nav-item" data-tab="tab-historico" onclick="goToTab('tab-historico')"><span aria-hidden="true"><svg class="ic ic-save" aria-hidden="true" data-e="💾"><use href="#i-save"></use></svg></span>Historial</button>
   </nav>
 
-  <div id="toast">¡Gasto registrado con éxito!</div>
+  <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <!-- Footer -->
   <footer>
     Hogar Compartido · Diego & Soledad
   </footer>
 
-  <script src="js/01-base.js?v=85"></script>
-  <script src="js/02-presupuesto.js?v=85"></script>
-  <script src="js/03-perfil-cofres.js?v=85"></script>
-  <script src="js/04-graficos-inicio.js?v=85"></script>
-  <script src="js/05-registro.js?v=85"></script>
-  <script src="js/06-checklist.js?v=85"></script>
-  <script src="js/07-pwa-enlace.js?v=85"></script>
-  <script src="js/08-nube.js?v=85"></script>
-  <script src="js/09-gastos.js?v=85"></script>
-  <script src="js/10-sueldos.js?v=85"></script>
-  <script src="js/11-historial-cierre.js?v=85"></script>
-  <script src="js/12-desplegables.js?v=85"></script>
-  <script src="js/13-categorias.js?v=85"></script>
-  <script src="js/14-tarjetas.js?v=85"></script>
-  <script src="js/15-analisis-mes.js?v=85"></script>
-  <script src="js/16-traspasos.js?v=85"></script>
+  <script defer src="js/01-base.js?v=86"></script>
+  <script defer src="js/02-presupuesto.js?v=86"></script>
+  <script defer src="js/03-perfil-cofres.js?v=86"></script>
+  <script defer src="js/04-graficos-inicio.js?v=86"></script>
+  <script defer src="js/05-registro.js?v=86"></script>
+  <script defer src="js/06-checklist.js?v=86"></script>
+  <script defer src="js/07-pwa-enlace.js?v=86"></script>
+  <script defer src="js/08-nube.js?v=86"></script>
+  <script defer src="js/09-gastos.js?v=86"></script>
+  <script defer src="js/10-sueldos.js?v=86"></script>
+  <script defer src="js/11-historial-cierre.js?v=86"></script>
+  <script defer src="js/12-desplegables.js?v=86"></script>
+  <script defer src="js/13-categorias.js?v=86"></script>
+  <script defer src="js/14-tarjetas.js?v=86"></script>
+  <script defer src="js/15-analisis-mes.js?v=86"></script>
+  <script defer src="js/16-traspasos.js?v=86"></script>
   <!-- Modal para Agregar Nuevo Ítem -->
   <div id="modalAddItem" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(4px); z-index:2000; align-items:center; justify-content:center; padding:1rem;">
-    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:var(--radius-md); max-width:520px; width:100%; padding:1.5rem; box-shadow:var(--shadow-card);">
+    <div role="dialog" aria-modal="true" aria-labelledby="tituloAddItem" style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:var(--radius-md); max-width:520px; width:100%; padding:1.5rem; box-shadow:var(--shadow-card);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <h3 style="font-size:1.15rem; font-weight:700;">➕ Agregar Nuevo Ítem de Gasto</h3>
-        <button onclick="closeAddItemModal()" style="background:transparent; border:none; color:var(--text-muted); font-size:1.25rem; cursor:pointer;">✕</button>
+        <h3 id="tituloAddItem" style="font-size:1.15rem; font-weight:700;">➕ Agregar Nuevo Ítem de Gasto</h3>
+        <button type="button" class="sheet-close" onclick="closeAddItemModal()" aria-label="Cerrar">✕</button>
       </div>
       <form onsubmit="handleAddNewItem(event)" style="display:flex; flex-direction:column; gap:0.85rem;">
         <div class="form-group">
@@ -1671,11 +1681,11 @@
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
           <div class="form-group">
             <label>Presupuesto Base ($)</label>
-            <input type="number" id="newItemBase" placeholder="0" min="0" required>
+            <input type="number" inputmode="numeric" id="newItemBase" placeholder="0" min="0" required>
           </div>
           <div class="form-group">
             <label>✏️ Real Pagado ($)</label>
-            <input type="number" id="newItemActual" placeholder="0" min="0" required>
+            <input type="number" inputmode="numeric" id="newItemActual" placeholder="0" min="0" required>
           </div>
         </div>
         <div class="form-group">
@@ -1700,10 +1710,10 @@
 
   <!-- MODAL DE SINCRONIZACIÓN EN PAREJA -->
   <div id="modalRespaldos" class="modal-overlay" onclick="if(event.target === this) cerrarRespaldos()">
-    <div class="modal-card" style="max-width:480px;">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tituloRespaldos" style="max-width:480px;">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem;">
-        <h3 style="font-size:1.1rem; font-weight:800;">🛡️ Respaldos diarios</h3>
-        <button type="button" class="sheet-close" style="display:flex;" onclick="cerrarRespaldos()" aria-label="Cerrar">✕</button>
+        <h3 id="tituloRespaldos" style="font-size:1.1rem; font-weight:800;">🛡️ Respaldos diarios</h3>
+        <button type="button" class="sheet-close" onclick="cerrarRespaldos()" aria-label="Cerrar">✕</button>
       </div>
       <p class="hist-nota" style="margin-top:0.4rem;">La app guarda una copia de todo una vez al día. Restaurar vuelve los datos de ambos teléfonos a esa fecha.</p>
       <div id="respaldosLista"></div>
@@ -1711,16 +1721,16 @@
   </div>
 
   <div id="modalSync" class="modal-overlay" onclick="if(event.target === this) closeSyncModal()">
-    <div class="modal-card" style="max-width:620px;">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tituloSync" style="max-width:620px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
         <div style="display:flex; align-items:center; gap:0.5rem;">
           <span style="font-size:1.4rem;">☁️</span>
           <div>
-            <h3 style="font-size:1.15rem; font-weight:700;">Centro de Sincronización & Nube</h3>
+            <h3 id="tituloSync" style="font-size:1.15rem; font-weight:700;">Centro de Sincronización & Nube</h3>
             <div style="font-size:0.75rem; color:var(--text-muted);">Sincroniza boletas, sueldos y cuentas entre Diego y Soledad</div>
           </div>
         </div>
-        <button onclick="closeSyncModal()" style="background:transparent; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer;">✕</button>
+        <button type="button" class="sheet-close" onclick="closeSyncModal()" aria-label="Cerrar">✕</button>
       </div>
 
       <!-- Pestañas de Métodos de Sincronización -->
@@ -1822,9 +1832,9 @@
   </div>
 
   <div id="modalInstallPwa" class="modal-overlay">
-    <div class="modal-card" style="max-width:480px; text-align:center;">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tituloInstalar" style="max-width:480px; text-align:center;">
       <div style="font-size:3rem; margin-bottom:0.5rem;">📲</div>
-      <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:0.5rem;">Instalar como App en tu Celular</h3>
+      <h3 id="tituloInstalar" style="font-size:1.25rem; font-weight:700; margin-bottom:0.5rem;">Instalar como App en tu Celular</h3>
       <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.25rem; line-height:1.5;">
         Para tener el Panel Financiero como una App nativa con su icono en la pantalla de tu celular:
       </p>
@@ -1850,13 +1860,13 @@
   
   <!-- MODAL PARA MODIFICAR SALARIO (1 NÚMERO DIRECTO) -->
   <div id="modalSalary" class="modal-overlay">
-    <div class="modal-card" style="max-width:440px;">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="salaryModalTitle" style="max-width:440px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
         <div style="display:flex; align-items:center; gap:0.5rem;">
           <span style="font-size:1.3rem;">💰</span>
           <h3 id="salaryModalTitle" style="font-size:1.15rem; font-weight:700;">Modificar Sueldo</h3>
         </div>
-        <button onclick="closeSalaryModal()" style="background:transparent; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer;">✕</button>
+        <button type="button" class="sheet-close" onclick="closeSalaryModal()" aria-label="Cerrar">✕</button>
       </div>
 
       <!-- Quick Switcher Tabs -->
@@ -1876,7 +1886,7 @@
           </label>
           <div style="position:relative; display:flex; align-items:center;">
             <span style="position:absolute; left:1rem; font-size:1.25rem; font-weight:800; color:var(--text-dim);">$</span>
-            <input type="number" id="salaryModalInput" required min="0" step="1" style="width:100%; font-size:1.45rem; font-weight:800; color:#FACC15; padding:0.75rem 5.5rem 0.75rem 2.2rem; background:var(--bg-body); border:2px solid rgba(59,130,246,0.5); border-radius:10px; outline:none; text-align:left;">
+            <input type="number" inputmode="numeric" id="salaryModalInput" required min="0" step="1" style="width:100%; font-size:1.45rem; font-weight:800; color:#FACC15; padding:0.75rem 5.5rem 0.75rem 2.2rem; background:var(--bg-body); border:2px solid rgba(59,130,246,0.5); border-radius:10px; outline:none; text-align:left;">
             <button type="button" onclick="limpiarSalaryModal()" title="Borrar casilla si te equivocaste" style="position:absolute; right:0.75rem; background:rgba(239, 68, 68, 0.15); border:1px solid rgba(239, 68, 68, 0.35); color:#FCA5A5; border-radius:8px; padding:0.35rem 0.65rem; font-size:0.8rem; font-weight:700; cursor:pointer; transition:all 0.2s;">
               🧹 Borrar
             </button>
@@ -1903,16 +1913,16 @@
 
   <!-- MODAL PARA CERRAR MES Y PASAR AL SIGUIENTE -->
   <div id="modalCerrarMes" class="modal-overlay">
-    <div class="modal-card" style="max-width:520px; border:1px solid rgba(245, 158, 11, 0.4); box-shadow:0 12px 40px rgba(0,0,0,0.6);">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tituloCerrarMes" style="max-width:520px; border:1px solid rgba(245, 158, 11, 0.4); box-shadow:0 12px 40px rgba(0,0,0,0.6);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
         <div style="display:flex; align-items:center; gap:0.6rem;">
           <span style="font-size:1.5rem;">⚠️</span>
           <div>
-            <h3 style="font-size:1.15rem; font-weight:800; color:var(--text-main);">Confirmación de Cierre de Mes</h3>
+            <h3 id="tituloCerrarMes" style="font-size:1.15rem; font-weight:800; color:var(--text-main);">Confirmación de Cierre de Mes</h3>
             <div style="font-size:0.75rem; color:var(--text-muted);">Acción de cierre y traspaso al siguiente periodo</div>
           </div>
         </div>
-        <button onclick="cerrarModalCerrarMes()" style="background:transparent; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer;">✕</button>
+        <button type="button" class="sheet-close" onclick="cerrarModalCerrarMes()" aria-label="Cerrar">✕</button>
       </div>
 
       <div style="display:flex; flex-direction:column; gap:1rem;">
@@ -1922,7 +1932,7 @@
             ¿Estás seguro de que quieres realizar el cierre de este mes?
           </div>
           <div style="font-size:0.82rem; color:var(--text-muted); line-height:1.45;">
-            Vas a cerrar el periodo financiero de <strong style="color:#10B981;" id="modalCerrarMesActualNombre">Octubre 2026</strong>. 
+            Vas a cerrar el periodo financiero de <strong style="color:var(--monto-ok);" id="modalCerrarMesActualNombre">Octubre 2026</strong>. 
             Todas las boletas ingresadas se archivarán en la base de datos histórica.
           </div>
           <div style="font-size:0.8rem; color:var(--text-main); margin-top:0.5rem; font-weight:600;" id="modalCerrarMesResumenStats">
@@ -1937,7 +1947,7 @@
             <li>El balance y gastos de <strong><span id="modalSpanMesCierre">Octubre 2026</span></strong> quedarán guardados para siempre en el Historial.</li>
             <li>Avanzaremos automáticamente al mes de <strong><span id="modalSpanMesNuevo" style="color:var(--accent-emerald); font-weight:700;">Noviembre 2026</span></strong>.</li>
             <li>Las boletas de servicios del hogar (Luz, Agua, Gas, etc.) se reiniciarán en $0 para recibirlas en el nuevo mes.</li>
-            <li><span style="color:#60A5FA; font-weight:600;">🛡️ Sistema Antierrores:</span> Si cierras por equivocación, podrás reabrirlo con el botón <em>"↩️ Reabrir Mes Anterior"</em>.</li>
+            <li><span style="color:var(--monto-diego); font-weight:600;">🛡️ Sistema Antierrores:</span> Si cierras por equivocación, podrás reabrirlo con el botón <em>"↩️ Reabrir Mes Anterior"</em>.</li>
           </ul>
         </div>
 
@@ -1962,13 +1972,13 @@
 
   <!-- MODAL PARA VER DETALLE DE MES HISTÓRICO GUARDADO -->
   <div id="modalVerMes" class="modal-overlay">
-    <div class="modal-card" style="max-width:650px;">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalVerMesTitulo" style="max-width:650px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
         <div style="display:flex; align-items:center; gap:0.5rem;">
           <span style="font-size:1.3rem;">📜</span>
           <h3 id="modalVerMesTitulo" style="font-size:1.15rem; font-weight:700;">Detalle de Mes Histórico</h3>
         </div>
-        <button onclick="document.getElementById('modalVerMes').style.display='none'" style="background:transparent; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer;">✕</button>
+        <button type="button" class="sheet-close" onclick="document.getElementById('modalVerMes').style.display='none'" aria-label="Cerrar">✕</button>
       </div>
 
       <div id="modalVerMesContent" style="display:flex; flex-direction:column; gap:1rem; max-height:450px; overflow-y:auto;">
@@ -1986,13 +1996,13 @@
   <!-- MODAL DE EDICIÓN DE GASTO REGISTRADO                           -->
   <!-- ============================================================== -->
   <div id="modalEditExpense" class="modal-overlay">
-    <div class="modal-card" style="max-width:480px; border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 12px 40px rgba(0,0,0,0.6);">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tituloEditarGasto" style="max-width:480px; border:1px solid rgba(59, 130, 246, 0.4); box-shadow:0 12px 40px rgba(0,0,0,0.6);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
         <div style="display:flex; align-items:center; gap:0.5rem;">
           <span style="font-size:1.3rem;">✏️</span>
-          <h3 style="font-size:1.15rem; font-weight:700;">Modificar Gasto Registrado</h3>
+          <h3 id="tituloEditarGasto" style="font-size:1.15rem; font-weight:700;">Modificar Gasto Registrado</h3>
         </div>
-        <button type="button" onclick="closeEditExpenseModal()" style="background:transparent; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer;">✕</button>
+        <button type="button" class="sheet-close" onclick="closeEditExpenseModal()" aria-label="Cerrar">✕</button>
       </div>
 
       <form id="editExpenseForm" onsubmit="saveEditedExpense(event)">
@@ -2000,13 +2010,13 @@
 
         <div style="display:flex; flex-direction:column; gap:0.85rem;">
           <div>
-            <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Fecha:</label>
+            <label for="editExpDate" style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Fecha:</label>
             <input type="date" id="editExpDate" required style="width:100%; padding:0.55rem 0.75rem; font-size:0.85rem; border-radius:8px;">
           </div>
 
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
             <div>
-              <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Pagado Por:</label>
+              <label for="editExpPayer" style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Pagado Por:</label>
               <select id="editExpPayer" required style="width:100%; padding:0.55rem 0.75rem; font-size:0.85rem; border-radius:8px;">
                 <option value="Diego">🔵 Diego</option>
                 <option value="Soledad">🟣 Soledad</option>
@@ -2014,7 +2024,7 @@
               </select>
             </div>
             <div>
-              <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Categoría:</label>
+              <label for="editExpCategory" style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Categoría:</label>
               <select id="editExpCategory" required style="width:100%; padding:0.55rem 0.75rem; font-size:0.85rem; border-radius:8px;">
                 <option value="Supermercado">🛒 Supermercado</option>
                 <option value="Alimentación">🍔 Alimentación</option>
@@ -2038,7 +2048,7 @@
           </div>
 
           <div>
-            <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Detalle o Comercio:</label>
+            <label for="editExpDesc" style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Detalle o Comercio:</label>
             <input type="text" id="editExpDesc" required style="width:100%; padding:0.55rem 0.75rem; font-size:0.85rem; border-radius:8px;" placeholder="Ej: Lider, Copec, Farmacia...">
           </div>
 
@@ -2052,11 +2062,11 @@
 
           <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:0.65rem;">
             <div>
-              <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Monto (CLP):</label>
-              <input type="number" id="editExpAmount" required min="1" step="1" style="width:100%; padding:0.55rem 0.75rem; font-size:0.95rem; font-weight:800; color:#10B981; border-radius:8px;">
+              <label for="editExpAmount" style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Monto (CLP):</label>
+              <input type="number" inputmode="numeric" id="editExpAmount" required min="1" step="1" style="width:100%; padding:0.55rem 0.75rem; font-size:0.95rem; font-weight:800; color:var(--monto-ok); border-radius:8px;">
             </div>
             <div>
-              <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Cuenta / Tarjeta:</label>
+              <label for="editExpAccount" style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Cuenta / Tarjeta:</label>
               <select id="editExpAccount" required style="width:100%; padding:0.55rem 0.75rem; font-size:0.85rem; border-radius:8px;">
                 <option value="Tenpo">Tenpo</option>
                 <option value="Cuenta Fan">Cuenta Fan</option>

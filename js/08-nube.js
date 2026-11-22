@@ -24,7 +24,7 @@
     // ---------- Versión de la app ----------
     // Un teléfono con la app abierta desde antes de una actualización sigue con el código viejo.
     // Si hay una versión nueva publicada, no se registra ni se sube nada hasta actualizar.
-    const VERSION_APP = 85;
+    const VERSION_APP = 86;
     let versionBloqueada = false;
     async function revisarVersionApp() {
       try {
@@ -261,11 +261,15 @@
     // Compara lo sincronizable con lo último acordado con la nube. Se agrupa tras cada escritura en el teléfono
     // (ver el envoltorio de setItem en 01-base.js) y se repite al terminar cada sincronización.
     let revisionPendiente = null;
+    // Hubo una escritura que todavía no se comparó con la base: el sondeo no puede tomar el camino sin cambios
+    let cambioLocalSinRevisar = true;
     function marcarCambioLocal() {
+      cambioLocalSinRevisar = true;
       clearTimeout(revisionPendiente);
       revisionPendiente = setTimeout(revisarPendienteDeSubir, 400);
     }
     function revisarPendienteDeSubir() {
+      cambioLocalSinRevisar = false;
       const base = localStorage.getItem(SYNC_BASE_KEY);
       const antes = pendienteDeSubir;
       pendienteDeSubir = !!base && JSON.stringify(pickSyncState(buildCompleteFamilyPayload())) !== base;
@@ -281,7 +285,8 @@
     function syncExitoso() {
       fallosNubeSeguidos = 0;
       avisoSesionMostrado = false;
-      revisarPendienteDeSubir();
+      // Sin escrituras desde la última comparación no hace falta armar el estado otra vez (la mayoría de los sondeos)
+      if (cambioLocalSinRevisar) revisarPendienteDeSubir();
       updateCloudStatusBadge(true, '🟢 Nube en Vivo');
     }
 
@@ -339,7 +344,6 @@
       if (Array.isArray(data.auditItems) && data.auditItems.length > 0) {
         currentAuditItems = data.auditItems;
         quitarGastosDelPresupuesto(currentAuditItems, data.customAuditItems);
-        localStorage.setItem(`audit_${currentActiveMonth}`, JSON.stringify(currentAuditItems));
         localStorage.setItem(`audit_${month}`, JSON.stringify(currentAuditItems));
       }
 
@@ -385,20 +389,13 @@
         localStorage.removeItem('ultimo_mes_cerrado_backup');
       }
 
-      // 8. RE-RENDERIZADO COMPLETO E INMEDIATO DE LA INTERFAZ
+      // 8. LO QUE SE CALCULA CON LOS DATOS VA AHORA (quien llama guarda enseguida el estado acordado con la nube);
+      // EL DIBUJO SE AGRUPA EN EL PRÓXIMO CUADRO
       if (typeof syncProfileToInputs === 'function') syncProfileToInputs();
-      if (typeof renderExpenses === 'function') renderExpenses();
-      if (typeof renderTraspasos === 'function') renderTraspasos();
-      if (typeof renderAuditTable === 'function') renderAuditTable();
-      if (typeof renderChecklist === 'function') renderChecklist();
+      if (typeof sincronizarRealDesdeGastos === 'function') sincronizarRealDesdeGastos();
+      programarRender('gastos', 'traspasos', 'presupuesto', 'analisis', 'graficos');
       if (typeof updateHeaderSalaries === 'function') updateHeaderSalaries();
       if (typeof populateSalaryModalInputs === 'function') populateSalaryModalInputs();
-      if (typeof updateDiegoColchonDisplay === 'function') updateDiegoColchonDisplay();
-      if (typeof updateSoleMargenDisplay === 'function') updateSoleMargenDisplay();
-      if (typeof updateSmartVisaDisplay === 'function') updateSmartVisaDisplay();
-      if (typeof renderCardAnalysis === 'function') renderCardAnalysis();
-      if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();
-      if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
       if (typeof renderTablaHistorialMesesBD === 'function') renderTablaHistorialMesesBD();
       if (typeof renderDetailedHistoricalTable === 'function') renderDetailedHistoricalTable();
       if (typeof verificarBotonDeshacerCierre === 'function') verificarBotonDeshacerCierre();
@@ -561,11 +558,15 @@
       // Camino rápido: si nadie cambió la nube desde nuestra última sincronización, se sube sin leer antes.
       // Si otro teléfono guardó entremedio, Firestore lo rechaza y se sigue por el camino con combinación.
       const versionConocida = localStorage.getItem(SYNC_VERSION_KEY);
-      const baseConocida = leerJSON(SYNC_BASE_KEY, null);
       const faltaLocal = (estado) => Object.keys(SYNC_SECTIONS).some(s => SYNC_SECTIONS[s] && estado[s] == null);
-      const payloadRapido = versionConocida && baseConocida && JSON.parse(JSON.stringify(buildCompleteFamilyPayload()));
+      // Sin escrituras desde la última comparación con la base (la mayoría de los sondeos): ni se arma ni se serializa el estado
+      const sinCambiosLocales = versionConocida && !cambioLocalSinRevisar && !pendienteDeSubir && !seccionesIlegibles.size && localStorage.getItem(SYNC_BASE_KEY) !== null;
+      const baseConocida = !sinCambiosLocales && versionConocida && leerJSON(SYNC_BASE_KEY, null);
+      const payloadRapido = baseConocida && JSON.parse(JSON.stringify(buildCompleteFamilyPayload()));
+      if (sinCambiosLocales) {
+        if (await versionNube() === versionConocida) return 'idle';
       // Con una sección ilegible en el teléfono hay que leer la nube para recuperarla
-      if (payloadRapido && !faltaLocal(pickSyncState(payloadRapido))) {
+      } else if (payloadRapido && !faltaLocal(pickSyncState(payloadRapido))) {
         if (JSON.stringify(pickSyncState(payloadRapido)) === JSON.stringify(baseConocida)) {
           // Sin cambios locales: se pide solo la versión (<1 KB); el documento completo se baja si el otro teléfono guardó
           if (await versionNube() === versionConocida) return 'idle';
@@ -636,9 +637,27 @@
       return cloudSyncPromise;
     }
 
+    // Sondeo adaptativo: cada 5 s durante 2 minutos después de una escritura de este teléfono o un cambio del otro; luego cada 20 s
+    const SONDEO_RAPIDO_MS = 5000, SONDEO_LENTO_MS = 20000, SONDEO_ACTIVO_MS = 120000;
+    let ultimaActividadNube = 0, sondeoLento = false;
+    function programarSondeo() {
+      clearTimeout(cloudPollInterval);
+      sondeoLento = Date.now() - ultimaActividadNube >= SONDEO_ACTIVO_MS;
+      cloudPollInterval = setTimeout(() => {
+        if (!document.hidden) pullFromFirestore(true);
+        programarSondeo();
+      }, sondeoLento ? SONDEO_LENTO_MS : SONDEO_RAPIDO_MS);
+    }
+    function marcarActividadNube() {
+      ultimaActividadNube = Date.now();
+      // Esperando 20 s: se vuelve al ritmo rápido de inmediato
+      if (sondeoLento || !cloudPollInterval) programarSondeo();
+    }
+
     async function pushToFirestore(isSilent = false) {
       try {
         const result = await syncWithCloud();
+        if (result !== 'idle') marcarActividadNube();
         syncExitoso();
         respaldarSiCorresponde();
         if (!isSilent) showToast('☁️ ¡Guardado en la nube de Firebase con éxito!');
@@ -660,6 +679,7 @@
       try {
         if (!isSilent) showToast('⏳ Descargando datos desde Firebase...');
         const result = await syncWithCloud();
+        if (result !== 'idle') marcarActividadNube();
         syncExitoso();
         respaldarSiCorresponde();
         recordarCuentasPendientes();
@@ -683,6 +703,9 @@
     }
 
     function triggerAutoSyncToCloud(immediate = false) {
+      // Quien llama avisa que cambió algo, aunque no lo haya guardado en el teléfono
+      cambioLocalSinRevisar = true;
+      marcarActividadNube();
       if (autoSyncCloudTimer) clearTimeout(autoSyncCloudTimer);
       autoSyncCloudTimer = null;
       if (immediate) {
@@ -702,10 +725,7 @@
       pullFromFirestore(true);
 
       // El ciclo periódico también reintenta lo que no se pudo subir
-      if (cloudPollInterval) clearInterval(cloudPollInterval);
-      cloudPollInterval = setInterval(() => {
-        if (!document.hidden) pullFromFirestore(true);
-      }, 5000);
+      marcarActividadNube();
 
       window.addEventListener('visibilitychange', () => {
         // Al salir de la app no se puede esperar al temporizador

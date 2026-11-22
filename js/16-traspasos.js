@@ -58,9 +58,8 @@
     // Guarda en el teléfono, vuelve a calcular lo que depende de los saldos y sube a la nube igual que un gasto
     function persistirTraspasos() {
       localStorage.setItem('family_traspasos', JSON.stringify(traspasos));
-      renderTraspasos();
       syncProfileToInputs();
-      renderAuditTable();
+      programarRender('traspasos', 'presupuesto');
       triggerAutoSyncToCloud(true);
     }
 

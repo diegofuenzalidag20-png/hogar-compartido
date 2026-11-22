@@ -1,5 +1,6 @@
 // Lista de gastos, edición y borrado, avisos (showToast) y CSV.
 // Parte de index.html: se carga como script clásico, en orden; comparte el ámbito global con los demás módulos.
+    mobileLayout.addEventListener('change', () => { if (!mobileLayout.matches) programarRender('gastos'); });
     function renderExpenses() {
 // 1. Totales generales consolidados para Badges y Mini-Cards
       let totalCount = expenses.length;
@@ -70,8 +71,8 @@
             : a._origIndex - b._origIndex;
         });
 
-            // 3. Renderizar tabla desktop (#quickExpensesTableBody) y tarjetas móviles (#quickExpensesMobileCards)
-      const quickTbody = document.getElementById('quickExpensesTableBody');
+      // 3. Tabla de escritorio y tarjetas del teléfono. En el teléfono la tabla está oculta: se arma al pasar a escritorio
+      const quickTbody = mobileLayout.matches ? null : document.getElementById('quickExpensesTableBody');
       const mobileCards = document.getElementById('quickExpensesMobileCards');
 
       if (mobileCards) mobileCards.innerHTML = '';
@@ -103,11 +104,11 @@
           let payerHtml = '';
           let payerMobileHtml = '';
           if (item.payer === 'Diego') {
-            payerHtml = `<span class="pill-partner pill-diego" style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.25rem 0.65rem; border-radius:999px; font-weight:700; font-size:0.75rem; background:rgba(59, 130, 246, 0.2); color:#60A5FA; border:1px solid rgba(59, 130, 246, 0.4);">🔵 Diego</span>`;
-            payerMobileHtml = `<span style="font-weight:700; font-size:0.75rem; color:#60A5FA; background:rgba(59,130,246,0.18); padding:0.2rem 0.5rem; border-radius:6px; border:1px solid rgba(59,130,246,0.35);">🔵 Diego</span>`;
+            payerHtml = `<span class="pill-partner pill-diego" style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.25rem 0.65rem; border-radius:999px; font-weight:700; font-size:0.75rem; background:rgba(59, 130, 246, 0.2); color:var(--monto-diego); border:1px solid rgba(59, 130, 246, 0.4);">🔵 Diego</span>`;
+            payerMobileHtml = `<span style="font-weight:700; font-size:0.75rem; color:var(--monto-diego); background:rgba(59,130,246,0.18); padding:0.2rem 0.5rem; border-radius:6px; border:1px solid rgba(59,130,246,0.35);">🔵 Diego</span>`;
           } else if (item.payer === 'Soledad') {
-            payerHtml = `<span class="pill-partner pill-soledad" style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.25rem 0.65rem; border-radius:999px; font-weight:700; font-size:0.75rem; background:rgba(168, 85, 247, 0.2); color:#C084FC; border:1px solid rgba(168, 85, 247, 0.4);">🟣 Soledad</span>`;
-            payerMobileHtml = `<span style="font-weight:700; font-size:0.75rem; color:#C084FC; background:rgba(168,85,247,0.18); padding:0.2rem 0.5rem; border-radius:6px; border:1px solid rgba(168,85,247,0.35);">🟣 Soledad</span>`;
+            payerHtml = `<span class="pill-partner pill-soledad" style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.25rem 0.65rem; border-radius:999px; font-weight:700; font-size:0.75rem; background:rgba(168, 85, 247, 0.2); color:var(--monto-sole); border:1px solid rgba(168, 85, 247, 0.4);">🟣 Soledad</span>`;
+            payerMobileHtml = `<span style="font-weight:700; font-size:0.75rem; color:var(--monto-sole); background:rgba(168,85,247,0.18); padding:0.2rem 0.5rem; border-radius:6px; border:1px solid rgba(168,85,247,0.35);">🟣 Soledad</span>`;
           } else {
             payerHtml = `<span class="pill-partner" style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.25rem 0.65rem; border-radius:999px; font-weight:700; font-size:0.75rem; background:rgba(16, 185, 129, 0.2); color:#34D399; border:1px solid rgba(16, 185, 129, 0.4);">🤝 Ambos</span>`;
             payerMobileHtml = `<span style="font-weight:700; font-size:0.75rem; color:#34D399; background:rgba(16,185,129,0.18); padding:0.2rem 0.5rem; border-radius:6px; border:1px solid rgba(16,185,129,0.35);">🤝 Ambos</span>`;
@@ -117,6 +118,9 @@
             payerHtml += tagLugar;
             payerMobileHtml += tagLugar;
           }
+
+          const nombre = escapeHtml(item.desc || item.category || '');
+          const botones = `<button type="button" class="btn-gasto btn-gasto-editar" onclick="openEditExpenseModal(${item._origIndex})" aria-label="Editar gasto: ${nombre}" title="Editar">✏️</button><button type="button" class="btn-gasto btn-gasto-borrar" onclick="deleteExpense(${item._origIndex})" aria-label="Eliminar gasto: ${nombre}" title="Eliminar">🗑️</button>`;
 
           // 1. Desktop TR
           if (quickTbody) {
@@ -128,10 +132,7 @@
               <td><strong style="font-size:0.88rem; color:var(--text-main);">${escapeHtml(item.desc || '-')}</strong></td>
               <td><span style="font-size:0.78rem; color:var(--text-muted); background:rgba(255,255,255,0.05); padding:0.2rem 0.5rem; border-radius:6px; border:1px solid rgba(255,255,255,0.08);">${escapeHtml(item.account || 'Efectivo/Otro')}</span></td>
               <td style="font-weight:800; font-size:0.95rem; text-align:right; color:var(--text-main); font-variant-numeric:tabular-nums;">${formatCLP(item.amount)}</td>
-              <td style="text-align:center; white-space:nowrap;">
-                <button type="button" onclick="openEditExpenseModal(${item._origIndex})" style="background:rgba(59, 130, 246, 0.15); border:1px solid rgba(59, 130, 246, 0.35); color:#93C5FD; border-radius:8px; padding:0.3rem 0.55rem; cursor:pointer; font-size:0.85rem; transition:all 0.2s; margin-right:0.3rem;" title="Editar este gasto">✏️</button>
-                <button type="button" onclick="deleteExpense(${item._origIndex})" style="background:rgba(239, 68, 68, 0.12); border:1px solid rgba(239, 68, 68, 0.3); color:#FCA5A5; border-radius:8px; padding:0.3rem 0.55rem; cursor:pointer; font-size:0.85rem; transition:all 0.2s;" title="Eliminar este gasto">🗑️</button>
-              </td>
+              <td style="text-align:center; white-space:nowrap;"><div class="gasto-acciones">${botones}</div></td>
             `;
             quickTbody.appendChild(tr);
           }
@@ -165,10 +166,7 @@
                     </span>
                   </div>
                 </div>
-                <div style="display:flex; gap:0.35rem; flex-shrink:0;">
-                  <button type="button" onclick="openEditExpenseModal(${item._origIndex})" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); color:#93C5FD; border-radius:8px; padding:0.45rem 0.7rem; font-size:0.85rem; cursor:pointer;" title="Editar">✏️</button>
-                  <button type="button" onclick="deleteExpense(${item._origIndex})" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#FCA5A5; border-radius:8px; padding:0.45rem 0.7rem; font-size:0.85rem; cursor:pointer;" title="Eliminar">🗑️</button>
-                </div>
+                <div class="gasto-acciones">${botones}</div>
               </div>
             `;
             mobileCards.appendChild(card);
@@ -187,37 +185,8 @@
         }
       }
 
-      const legacyTbody = document.getElementById('expensesBody');
-      if (legacyTbody) {
-        legacyTbody.innerHTML = '';
-        expenses.forEach((item, index) => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${escapeHtml(item.date)}</td>
-            <td><span class="pill-partner ${item.payer === 'Diego' ? 'pill-diego' : 'pill-soledad'}" style="display:inline-flex;">${escapeHtml(item.payer)}</span></td>
-            <td>${escapeHtml(item.category)}</td>
-            <td>${escapeHtml(item.desc)}</td>
-            <td>${escapeHtml(item.account)}</td>
-            <td style="font-weight:700; text-align:right;">${formatCLP(item.amount)}</td>
-            <td>
-              <button onclick="deleteExpense(${index})" style="background:transparent; border:none; color:var(--accent-rose); cursor:pointer; font-size:1rem;" title="Eliminar">🗑️</button>
-            </td>
-          `;
-          legacyTbody.appendChild(tr);
-        });
-      }
-
-      // Sincronizar automáticamente los gráficos de la pestaña Mes Actual
-      if (typeof renderAnalisisMesActual === 'function') {
-        renderAnalisisMesActual();
-      }
-      if (typeof renderCardAnalysis === 'function') {
-        renderCardAnalysis();
-      }
-      if (typeof updateSmartVisaDisplay === 'function') {
-        syncProfileToInputs();
-      }
-      if (typeof renderProyeccionMes === 'function') renderProyeccionMes();
+      // El análisis, los saldos de cuentas (Smart Visa) y la proyección dependen de los gastos
+      programarRender('analisis', 'perfil', 'proyeccion');
     }
 
     
@@ -310,7 +279,7 @@
       if (modal) modal.style.display = 'none';
     }
 
-    function saveEditedExpense(e) {
+    async function saveEditedExpense(e) {
       e.preventDefault();
       if (versionBloqueada) { avisarVersionAntigua(); return; }
       if (recargarSiOtraCopiaSincronizo()) return;
@@ -338,6 +307,14 @@
         alert('Por favor ingresa un monto válido.');
         return;
       }
+      // Aviso suave si al editar el pagador o la cuenta quedan de personas distintas (p. ej. pagó Diego con la Chequera de Soledad)
+      const dueno = duenoDeCuenta(account), antes = expenses[idx];
+      if ((payer === 'Diego' || payer === 'Soledad') && dueno && dueno !== payer && (antes.payer !== payer || antes.account !== account)) {
+        if (!(await confirmar(`"${account}" es una cuenta de ${dueno}, pero el gasto dice que pagó ${payer}. ¿Guardar igual?`, 'Sí, guardar'))) return;
+        // Mientras la ventana estaba abierta el otro teléfono pudo cambiar la lista
+        idx = expenses.findIndex(g => g === antes || (editingExpenseId && g.id === editingExpenseId));
+        if (idx < 0) { closeEditExpenseModal(); return; }
+      }
 
       const boletaEditada = itemDeGasto(expenses[idx]);
       expenses[idx] = {
@@ -359,10 +336,9 @@
 
       localStorage.setItem('family_expenses', JSON.stringify(expenses));
 
-      renderExpenses();
-      if (typeof initOrUpdateMonthAnalysis === 'function') initOrUpdateMonthAnalysis();
-      if (typeof renderCardAnalysisSection === 'function') renderCardAnalysisSection();
-      if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
+      // El Real de las cuentas sale de los gastos: antes de subir, no al dibujar
+      sincronizarRealDesdeGastos();
+      programarRender('gastos', 'presupuesto', 'graficos');
       triggerAutoSyncToCloud();
 
       closeEditExpenseModal();
@@ -378,9 +354,7 @@
     function persistirBoletasActivas() {
       const datos = JSON.stringify(currentAuditItems);
       localStorage.setItem(`audit_${getMonthCode(currentActiveMonth)}`, datos);
-      localStorage.setItem(`audit_${currentActiveMonth}`, datos);
-      renderAuditTable();
-      renderChecklist();
+      programarRender('presupuesto');
     }
 
     async function deleteExpense(idx) {
@@ -393,8 +367,9 @@
       idx = expenses.indexOf(target);
       if (idx < 0) idx = expenses.findIndex(g => g.id && g.id === target.id);
       if (idx < 0) return;
-      {
-        const boleta = itemDeGasto(target);
+      const boleta = itemDeGasto(target);
+      // Para deshacer: el gasto vuelve con su mismo id a su lugar, y su cuenta del presupuesto a como estaba
+      const cuentaAntes = boleta ? { item: JSON.parse(JSON.stringify(boleta)), pos: currentAuditItems.indexOf(boleta) } : null;
       const deleted = expenses.splice(idx, 1)[0];
       borrarDelDiario(deleted?.id);
       if (boleta) {
@@ -402,12 +377,30 @@
         else if (target.auditBefore) Object.assign(boleta, target.auditBefore);
         persistirBoletasActivas();
       }
-        localStorage.setItem('family_expenses', JSON.stringify(expenses));
-        renderExpenses();
-        if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();
-        triggerAutoSyncToCloud();
-        showToast(`🗑️ Gasto "${deleted?.desc || ''}" eliminado`);
+      localStorage.setItem('family_expenses', JSON.stringify(expenses));
+      sincronizarRealDesdeGastos();
+      programarRender('gastos', 'presupuesto');
+      triggerAutoSyncToCloud();
+      showToast(`🗑️ Gasto "${deleted?.desc || ''}" eliminado`, { label: 'Deshacer', onClick: () => deshacerBorrado(deleted, idx, cuentaAntes) });
+    }
+
+    function deshacerBorrado(gasto, pos, cuentaAntes) {
+      if (versionBloqueada) { avisarVersionAntigua(); return; }
+      if (recargarSiOtraCopiaSincronizo()) return;
+      if (expenses.some(g => g.id === gasto.id)) return;
+      expenses.splice(Math.min(pos, expenses.length), 0, gasto);
+      anotarEnDiario(gasto);
+      if (cuentaAntes) {
+        const actual = currentAuditItems.find(it => it.id === cuentaAntes.item.id);
+        if (actual) actual.actual = cuentaAntes.item.actual;
+        else currentAuditItems.splice(Math.min(cuentaAntes.pos, currentAuditItems.length), 0, cuentaAntes.item);
+        persistirBoletasActivas();
       }
+      localStorage.setItem('family_expenses', JSON.stringify(expenses));
+      sincronizarRealDesdeGastos();
+      programarRender('gastos', 'presupuesto');
+      triggerAutoSyncToCloud(true);
+      showToast(`↩️ Gasto "${gasto.desc || ''}" restaurado`);
     }
 
     let toastTimer = null;

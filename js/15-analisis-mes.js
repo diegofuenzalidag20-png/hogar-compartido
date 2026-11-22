@@ -166,7 +166,7 @@
 
       const subTituloEl = document.getElementById('analisisMesSubtitulo');
       if (subTituloEl) {
-        subTituloEl.innerHTML = `Métricas y gráficos vinculados en vivo a los <strong style="color:#10B981;">${expenses.length} gastos</strong> registrados en la tabla del mes`;
+        subTituloEl.innerHTML = `Métricas y gráficos vinculados en vivo a los <strong style="color:var(--monto-ok);">${expenses.length} gastos</strong> registrados en la tabla del mes`;
       }
 
       const kpiIng = document.getElementById('kpiMesIngresos');
@@ -184,7 +184,7 @@
       const kpiDesvIcon = document.getElementById('kpiMesDesvioIcon');
       if (kpiDesv) {
         kpiDesv.textContent = (netDiff >= 0 ? '+' : '') + formatCLP(netDiff);
-        kpiDesv.style.color = netDiff <= 0 ? '#10B981' : (netDiff < 15000 ? '#F59E0B' : '#F43F5E');
+        kpiDesv.style.color = netDiff <= 0 ? 'var(--monto-ok)' : (netDiff < 15000 ? 'var(--monto-aviso)' : 'var(--monto-mal)');
       }
       if (kpiDesvSub) {
         kpiDesvSub.textContent = totalGastos <= totalMeta 
@@ -199,7 +199,7 @@
       const kpiSupSub = document.getElementById('kpiMesSuperavitSub');
       if (kpiSup) {
         kpiSup.textContent = (superavit >= 0 ? '+' : '-') + formatCLP(Math.abs(superavit));
-        kpiSup.style.color = superavit >= 0 ? '#10B981' : '#F43F5E';
+        kpiSup.style.color = superavit >= 0 ? 'var(--monto-ok)' : 'var(--monto-mal)';
       }
       if (kpiSupSub) {
         kpiSupSub.textContent = `${tasaAhorro}% de ingresos disponibles tras gastos registrados`;
@@ -407,7 +407,7 @@
           rowSummary.style.cssText = 'background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:8px; padding:0.55rem 0.75rem; font-size:0.82rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.4rem; min-width:0; max-width:100%; box-sizing:border-box;';
           rowSummary.innerHTML = `
             <span style="flex:1 1 200px; min-width:0;">📊 <strong>Ejecución mensual:</strong> Se han registrado ${formatCLP(totalGastos)} en la tabla (${pctSpent}% de la meta de ${formatCLP(totalMeta)})</span>
-            <span style="font-weight:700; color:#60A5FA; margin-left:auto; white-space:nowrap;">${expenses.length} gastos</span>
+            <span style="font-weight:700; color:var(--monto-diego); margin-left:auto; white-space:nowrap;">${expenses.length} gastos</span>
           `;
           alertContainer.appendChild(rowSummary);
 
@@ -432,7 +432,7 @@
           const solePct = totalGastos > 0 ? (100 - diegoPct) : 50;
           rowBalance.innerHTML = `
             <span style="flex:1 1 200px; min-width:0;">⚖️ <strong>Aporte en tabla:</strong> Diego pagó el ${diegoPct}% (${formatCLP(diegoDesembolso)}) y Soledad el ${solePct}% (${formatCLP(soleDesembolso)})</span>
-            <span style="font-weight:700; color:#10B981; margin-left:auto; white-space:nowrap;">Equilibrio Hogar</span>
+            <span style="font-weight:700; color:var(--monto-ok); margin-left:auto; white-space:nowrap;">Equilibrio Hogar</span>
           `;
           alertContainer.appendChild(rowBalance);
         }
@@ -482,7 +482,7 @@
               </div>
               <div style="display:flex; align-items:center; gap:0.5rem; margin-left:auto; flex-shrink:0;">
                 ${payerBadge}
-                <strong style="color:#10B981; font-family:monospace; font-size:0.95rem;">${formatCLP(it.amount)}</strong>
+                <strong style="color:var(--monto-ok); font-family:monospace; font-size:0.95rem;">${formatCLP(it.amount)}</strong>
               </div>
             `;
             topContainer.appendChild(row);
@@ -491,9 +491,7 @@
       }
 
       // Actualizar análisis de tarjetas (siempre sincronizado)
-      if (typeof renderCardAnalysis === 'function') {
-        renderCardAnalysis();
-      }
+      programarRender('tarjetas');
     }
 
     // ==============================================================
@@ -557,8 +555,13 @@
       loadCustomItems();
       loadUserProfile();
       actualizarSelectPeriodo();
+      podarClavesAudit(); // antes de leer: pasa la clave antigua del mes a la de código
       loadCurrentMonthAudit();
       initAllGlassSelects();
+      actualizarMenuYoSoy();
+      prellenarPagador();
+      // En escritorio el registro no se abre: se pregunta al empezar a llenarlo
+      document.getElementById('quickBillForm')?.addEventListener('focusin', preguntarYoSoySiFalta);
       
       updateHipotecarioCoAporte();
       checkIncomingSync();
@@ -588,8 +591,12 @@
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=85').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=86').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }
+
+      // Toques en botones antes de que cargaran los scripts (ver index.html)
+      window.appLista = true;
+      (window.toquesTempranos || []).splice(0).forEach(b => b.click());
     });

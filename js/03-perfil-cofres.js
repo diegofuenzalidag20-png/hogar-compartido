@@ -261,7 +261,7 @@
 
       const elDesc = document.getElementById('diegoFanFormulaDesc');
       if (elDesc) {
-        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, Mach: ${formatCLP(mach)}, MP: ${formatCLP(mp)})${pagoBci > 0 ? ` · Pago tarjeta BCI: ${formatCLP(pagoBci)}` : ''}<br>💰 <strong>Saldo disponible restante en ${nombreCuenta}:</strong> <strong style="color:#60A5FA;">${formatCLP(remanenteFan)}</strong>${overAssignWarning(totalTransferencias + pagoBci, salary)}`;
+        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, Mach: ${formatCLP(mach)}, MP: ${formatCLP(mp)})${pagoBci > 0 ? ` · Pago tarjeta BCI: ${formatCLP(pagoBci)}` : ''}<br>💰 <strong>Saldo disponible restante en ${nombreCuenta}:</strong> <strong style="color:var(--monto-diego);">${formatCLP(remanenteFan)}</strong>${overAssignWarning(totalTransferencias + pagoBci, salary)}`;
       }
 
       const colchon = getCuentaPrincipalDisponible('Diego');
@@ -269,13 +269,13 @@
       const elColchon = document.getElementById('diegoColchonCuentasDisplay');
       if (elColchon) {
         elColchon.textContent = (colchon >= 0 ? '+' : '-') + formatCLP(Math.abs(colchon));
-        elColchon.style.color = colchon >= 0 ? '#10B981' : '#F43F5E';
+        elColchon.style.color = colchon >= 0 ? 'var(--monto-ok)' : 'var(--monto-mal)';
       }
 
       // Auto-guardado en localStorage silencioso
       localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
 
-      if (typeof updateChartsWithNewSalary === 'function') updateChartsWithNewSalary();
+      programarRender('graficosSueldo');
     }
 
     // CÁLCULO AUTOMÁTICO EN TIEMPO REAL: REMANENTE CHEQUERA & SALDO LIBRE SOLEDAD
@@ -326,7 +326,7 @@
 
       const elDesc = document.getElementById('soleChequeraFormulaDesc');
       if (elDesc) {
-        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, MP: ${formatCLP(mp)}, Reserva: ${formatCLP(banco)}, Smart Visa: ${formatCLP(smartReserva)}${pagoCompras > 0 ? `, Pago compras Smart: ${formatCLP(pagoCompras)}` : ''})<br>💰 <strong>Saldo disponible restante en Chequera:</strong> <strong style="color:#C084FC;">${formatCLP(remanenteChequera)}</strong>${overAssignWarning(totalTransferencias, salary)}`;
+        elDesc.innerHTML = `🔁 <strong>Transferido a cofres secundarios:</strong> -${formatCLP(totalTransferencias)} (Tenpo: ${formatCLP(tenpo)}, MP: ${formatCLP(mp)}, Reserva: ${formatCLP(banco)}, Smart Visa: ${formatCLP(smartReserva)}${pagoCompras > 0 ? `, Pago compras Smart: ${formatCLP(pagoCompras)}` : ''})<br>💰 <strong>Saldo disponible restante en Chequera:</strong> <strong style="color:var(--monto-sole);">${formatCLP(remanenteChequera)}</strong>${overAssignWarning(totalTransferencias, salary)}`;
       }
 
       const remanenteLibre = getCuentaPrincipalDisponible('Soledad');
@@ -334,13 +334,13 @@
       const elMargen = document.getElementById('soleMargenCuentasDisplay');
       if (elMargen) {
         elMargen.textContent = (remanenteLibre >= 0 ? '+' : '-') + formatCLP(Math.abs(remanenteLibre));
-        elMargen.style.color = remanenteLibre >= 0 ? '#10B981' : '#F43F5E';
+        elMargen.style.color = remanenteLibre >= 0 ? 'var(--monto-ok)' : 'var(--monto-mal)';
       }
 
       // Auto-guardado en localStorage silencioso
       localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
 
-      if (typeof updateChartsWithNewSalary === 'function') updateChartsWithNewSalary();
+      programarRender('graficosSueldo');
     }
 
     // CÁLCULO Y CONTROL EN TIEMPO REAL: TARJETA SMART VISA (BANCOESTADO)
@@ -546,10 +546,7 @@
       }
 
       // Sincronizar también las donas individuales de tarjetas en la sección de análisis
-      if (!cardAnalysisQueued) {
-        cardAnalysisQueued = true;
-        setTimeout(() => { cardAnalysisQueued = false; renderCardAnalysis(); }, 0);
-      }
+      programarRender('tarjetas');
     }
 
     // Funciones inline para cambiar sueldos directamente desde las tarjetas de Control Mensual
