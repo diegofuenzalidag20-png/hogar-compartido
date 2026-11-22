@@ -5,6 +5,10 @@
       try { return JSON.parse(texto) ?? respaldo; } catch (e) { return respaldo; }
     }
     function leerJSON(clave, respaldo) { return parseSeguro(localStorage.getItem(clave), respaldo); }
+    // Texto para las reglas de clasificación: sin mayúsculas ni tildes, así \b corta bien en "termómetro" o "crédito"
+    function textoRegla(s) {
+      return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
 
     const storageSetItemOriginal = Storage.prototype.setItem;
     let avisoMemoriaLlena = false;

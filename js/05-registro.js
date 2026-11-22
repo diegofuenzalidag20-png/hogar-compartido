@@ -500,18 +500,6 @@
       }
     }
 
-    function limpiarGastoDiario() {
-      const elAmt = document.getElementById('exp-amount');
-      const elDesc = document.getElementById('exp-desc');
-      if (elAmt) elAmt.value = '';
-      if (elDesc) elDesc.value = '';
-      const elDate = document.getElementById('exp-date');
-      if (elDate) elDate.value = getLocalDateISO();
-      if (elAmt) elAmt.focus();
-      syncAllGlassSelects();
-      showToast('🧹 Casillas de gasto diario limpiadas');
-    }
-
     function limpiarSalaryModal() {
       const el = document.getElementById('salaryModalInput');
       if (el) {

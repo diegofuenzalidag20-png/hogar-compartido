@@ -12,19 +12,19 @@
 
     // Normalizador de categorías para vincular la tabla de gastos a los gráficos
     const CATEGORIAS_GASTO = [
-      { nombre: 'Dividendo y créditos', patron: /hipotec|vivienda|smart visa|cr[eé]dito|dividendo|mantenci[oó]n cuenta/, incluye: 'Dividendo hipotecario y cuota de la tarjeta Smart Visa.' },
+      { nombre: 'Dividendo y créditos', patron: /hipotec|vivienda|smart visa|administraci[oó]n tarjeta|cr[eé]dito (hipotecario|de consumo)|dividendo|mantenci[oó]n cuenta/, incluye: 'Dividendo hipotecario y cuota de la tarjeta Smart Visa.' },
       { nombre: 'Mascotas (Michis)', patron: /michi|mascota|\bgatos?\b|arena|veterin/, incluye: 'Comida, arena y veterinario de los michis.' },
-      { nombre: 'Huasco y traslados', patron: /huasco|pasaje|\bbus\b|arriendo habitaci|turno|uber|colectivo|traslado|metro|moviliz|operaciones/, incluye: 'Arriendo y servicios en Huasco, pasajes, Uber, metro y comida de turno.' },
+      { nombre: 'Huasco y traslados', patron: /huasco|pasaje|\bbus\b|arriendo habitaci|\bturno\b|\buber\b(?! eats)|colectivo|traslado|\bmetro\b|moviliz|operaciones/, incluye: 'Arriendo y servicios en Huasco, pasajes, Uber, metro y comida de turno.' },
       // Antes que Alimentación: una salida que no es comida (paseo, entrada, terapia) no infla lo que se gasta en comer
       { nombre: 'Salidas y panoramas', patron: /panorama|ocio/, incluye: 'Salidas y panoramas que no son comida: paseos, entradas, actividades.' },
-      { nombre: 'Alimentación', patron: /supermercado|s[uú]per\b|lider|mayorista|aliment|feria|verdul|\bpan\b|delivery|comida|salida|almuerzo|desayuno/, incluye: 'Supermercado, feria y comidas fuera de casa.' },
+      { nombre: 'Alimentación', patron: /supermercado|s[uú]per\b|lider|mayorista|aliment|feria|verdul|\bpan\b|delivery|uber eats|comida|salida|almuerzo|desayuno/, incluye: 'Supermercado, feria y comidas fuera de casa.' },
       { nombre: 'Salud y remedios', patron: /salud|farmacia|m[eé]dic|dental|consulta|eutirox|rupatadina|waldorf|curso/, incluye: 'Farmacia, remedios (Eutirox, Rupatadina) y consultas médicas.' },
       { nombre: 'Personales y suscripciones', patron: /streaming|netflix|spotify|crunchyroll|bolsillo|gastos propios|ahorro|transferencia|tercero/, incluye: 'Gastos personales, suscripciones (streaming) y transferencias a terceros.' },
-      { nombre: 'Cuentas de la casa', patron: /\bluz\b|chilquinta|\bagua\b|esval|\bgas\b|com[uú]n|condominio|\bclaro\b|entel|internet|aseo|servicios hogar|gastos hogar|imprevist|limache/, incluye: 'Cuentas de la casa: luz, agua, gas, gasto común, internet, telefonía, aseo e imprevistos del hogar.' }
+      { nombre: 'Cuentas de la casa', patron: /\bluz\b|chilquinta|\bagua\b|esval|\bgas\b|com[uú]n|condominio|\bclaro\b|entel|internet|\baseo\b|servicios hogar|gastos hogar|imprevist|limache/, incluye: 'Cuentas de la casa: luz, agua, gas, gasto común, internet, telefonía, aseo e imprevistos del hogar.' }
     ];
 
     function normalizeExpenseCategory(categoryName, descName) {
-      const texto = `${categoryName || ''} ${descName || ''}`.toLowerCase();
+      const texto = textoRegla(`${categoryName || ''} ${descName || ''}`);
       // El orden importa: "Supermercado (... Limache)" es comida, no una cuenta de la casa
       const regla = CATEGORIAS_GASTO.find(c => c.patron.test(texto));
       return regla ? regla.nombre : 'Personales y suscripciones';

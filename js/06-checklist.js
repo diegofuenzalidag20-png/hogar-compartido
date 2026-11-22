@@ -18,9 +18,9 @@
       'item-20b': { p: /entel/ },
       // Solo la cuota mensual; una compra pagada con la tarjeta no es la cuota
       'item-23': { p: /cuota.*(smart|tarjeta)|(smart|tarjeta).*cuota/, d: true },
-      'item-24': { p: /aseo/ },
+      'item-24': { p: /\baseo\b/ },
       // Premios y comida húmeda son gustos aparte: no cuentan como la compra de comida del mes
-      'item-5': { p: /comida michis/, no: /h[uú]meda|premio|snack|golosina|churu/, gasto: /michi.*(h[uú]meda|premio|snack|golosina|churu)|(h[uú]meda|premio|churu).*michi/ },
+      'item-5': { p: /comida michis/, no: /h[uú]meda|premio|snack|golosina|churu/, gasto: /michi.*(h[uú]meda|premio|snack|golosina|churu)|(h[uú]meda|premio|snack|golosina|churu).*michi/ },
       'item-6': { p: /arena/ },
       'item-7': { p: /netflix/, d: true },
       // Se cobra cerca del día 19: antes de eso no está pendiente
@@ -34,8 +34,10 @@
     const REGLAS_VARIABLES = {
       'item-26': { p: /veterin|vacuna/ },
       'item-11': { p: /pasaje/, conHuasco: true },
-      'item-14': { p: /snack|turno/, conHuasco: true },
-      'item-12': { p: /uber|colectivo|traslado/, conHuasco: true },
+      // Un snack de los michis es de su comida (item-5), no del turno
+      'item-14': { p: /snack|\bturno\b/, no: /michi/, conHuasco: true },
+      // "Uber Eats" es comida (item-27), no traslado
+      'item-12': { p: /\buber\b(?! eats)|colectivo|traslado/, conHuasco: true },
       'item-13': { p: /\bmetro\b|\befe\b/, conHuasco: true },
       'item-22': { p: /supermercado|lider|mayorista|unimarc|santa isabel/ },
       'item-30': { p: /consulta|dental/ },
@@ -43,7 +45,7 @@
       'item-28': { p: /imprevist|gastos hogar/ },
       // Antes que comida fuera: "Salidas / Panoramas / Ocio" también dice "salidas"
       'item-31': { p: /panorama|ocio/ },
-      'item-27': { p: /comida fuera|salida|delivery|almuerzo|desayuno|comida viaje|^alimentaci/ }
+      'item-27': { p: /comida fuera|salida|delivery|uber eats|almuerzo|desayuno|comida viaje|^alimentaci/ }
     };
 
     // Plata que se mueve a cuentas propias (fondo de emergencia, bolsillo semanal de Mach): no es gasto.
@@ -59,7 +61,7 @@
     function itemIdPorReglas(g) {
       const ids = [...Object.keys(CHECKLIST_FIJOS), ...Object.keys(REGLAS_VARIABLES)];
       const existe = (id) => currentAuditItems.some(it => it.id === id);
-      const texto = `${g.category || ''} ${g.desc || ''}`.toLowerCase();
+      const texto = textoRegla(`${g.category || ''} ${g.desc || ''}`);
       // "gasto": suma al Real de la cuenta sin contar como su pago del mes (ej. premios de los michis)
       return ids.find(id => existe(id) && gastoEsDeCuentaFija(id, g))
         || Object.keys(CHECKLIST_FIJOS).find(id => existe(id) && CHECKLIST_FIJOS[id].gasto?.test(texto)) || null;
@@ -86,17 +88,25 @@
       });
     }
 
+    // Cuentas cuyo Real lo pone sincronizarRealDesdeGastos: escribirlo a mano se perdería al redibujar
+    function idsConRealCalculado() {
+      return new Set([...Object.keys(CHECKLIST_FIJOS), ...Object.keys(REGLAS_VARIABLES), ...expenses.map(itemIdDeGasto).filter(Boolean)]);
+    }
+
     function gastoEsDeCuentaFija(itemId, g) {
       const regla = CHECKLIST_FIJOS[itemId] || REGLAS_VARIABLES[itemId];
       if (!regla) return false;
-      const t = (regla.d ? `${g.desc || ''}` : `${g.category || ''} ${g.desc || ''}`).toLowerCase();
+      const t = textoRegla(regla.d ? `${g.desc || ''}` : `${g.category || ''} ${g.desc || ''}`);
       return regla.p.test(t) && (regla.conHuasco || !/huasco/.test(t)) && !(regla.no && regla.no.test(t));
     }
 
     // Propone presupuestos con lo pagado este mes: fijas = lo pagado; variables = lo gastado, proyectado si el mes no termina
     function propuestaDePresupuestos(hoy = new Date()) {
       sincronizarRealDesdeGastos();
-      const [anio, mes] = (expenses.map(g => g.date).filter(Boolean).sort().pop() || getLocalDateISO()).split('-').map(Number);
+      // El mes es el activo, no la fecha más alta de los gastos (un gasto con fecha futura lo cambiaba)
+      const [nombreMes, anioMes] = String(currentActiveMonth).trim().split(/\s+/);
+      const mes = monthNamesList.findIndex(m => m.toLowerCase() === String(nombreMes).toLowerCase()) + 1;
+      const anio = parseInt(anioMes, 10);
       const diasMes = new Date(anio, mes, 0).getDate();
       const mesEnCurso = hoy.getFullYear() === anio && hoy.getMonth() + 1 === mes;
       const avance = mesEnCurso ? Math.min(1, hoy.getDate() / diasMes) : 1;

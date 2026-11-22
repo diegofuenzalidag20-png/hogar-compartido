@@ -27,8 +27,8 @@
 
 | Módulo | Contenido |
 |---|---|
-| `js/01-base.js` | Utilidades, ventanas propias (`dialogo`, `confirmar`), pestañas, menú, tema |
-| `js/02-presupuesto.js` | Cuentas del presupuesto (`masterAuditItems`), tabla de auditoría, KPIs, paneles de liquidez |
+| `js/01-base.js` | Utilidades (`textoRegla`: texto sin tildes para toda regla de clasificación), ventanas propias (`dialogo`, `confirmar`), pestañas, menú, tema |
+| `js/02-presupuesto.js` | Cuentas del presupuesto (`masterAuditItems`), tabla de auditoría, KPIs (`gastoRealDelMes`: única fuente del superávit), paneles de liquidez |
 | `js/03-perfil-cofres.js` | `PERFIL_INICIAL`/`userProfile`, sueldos, cofres, Smart Visa |
 | `js/04-graficos-inicio.js` | Gráficos del inicio y co-aporte del hipotecario |
 | `js/05-registro.js` | Registro rápido de gastos, íconos de trazo, selector Limache/Huasco |

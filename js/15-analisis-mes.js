@@ -142,7 +142,7 @@
       const grupoPorItem = {};
       expenses.forEach(g => { const id = itemIdDeGasto(g); if (id) grupoPorItem[id] = normalizeExpenseCategory(g.category, g.desc); });
       const grupoDeItem = (it) => grupoPorItem[it.id]
-        || CATEGORIAS_GASTO.find(c => c.patron.test(String(it.name || '').toLowerCase()))?.nombre
+        || CATEGORIAS_GASTO.find(c => c.patron.test(textoRegla(it.name)))?.nombre
         || normalizeExpenseCategory(it.cat, it.name);
 
       let totalMeta = 0;
@@ -500,6 +500,8 @@
     // PROYECCIÓN DE FIN DE MES (solo el mes en curso)
     // ==============================================================
     // Lo gastado hasta hoy + el ritmo diario de lo variable por los días que faltan + las cuentas fijas que aún no se pagan.
+    // La primera semana el ritmo de pocos días engaña (un súper grande el día 1 lo multiplicaba por 30): se mezcla con lo que queda del
+    // presupuesto variable, con peso del ritmo = días transcurridos / 7.
     // Sin ahorro propio (fondo de emergencia, bolsillo Mach) y sin traspasos: ninguno es gasto. Devuelve null si el mes activo no es el de hoy.
     function proyeccionFinDeMes(hoy = new Date()) {
       const [nombreMes, anioMes] = String(currentActiveMonth).trim().split(/\s+/);
@@ -516,13 +518,17 @@
       const gastado = suma(gastos);
       const variable = suma(gastos.filter(g => !isExpenseFijo(g.category, g.desc) && (!g.date || g.date <= hoyISO)));
       const porDia = variable / transcurridos;
+      const peso = Math.min(1, transcurridos / 7);
+      const presupuestoVariable = currentAuditItems.filter(it => !CHECKLIST_FIJOS[it.id] && !esAhorroPropio(it)).reduce((s, it) => s + (Number(it.base) || 0), 0);
+      const variableRestante = peso * porDia * restantes + (1 - peso) * Math.max(0, presupuestoVariable - variable);
       // Las cuentas fijas que faltan salen de la misma regla del recordatorio, mirando hasta el último día del mes (cobros del día 19, compras cada 45 días)
       const fijosPendientes = cuentasFijasPendientes(new Date(anio, mes, diasMes, 23, 59, 59)).reduce((s, it) => s + (Number(it.base) || 0), 0);
 
-      const proyeccion = Math.round(gastado + porDia * restantes + fijosPendientes);
+      const proyeccion = Math.round(gastado + variableRestante + fijosPendientes);
       const meta = getMetaMensual();
       const ingresos = (userProfile.diegoSalary || 0) + (userProfile.soledadSalary || 0);
-      return { proyeccion, gastado, porDia, restantes, fijosPendientes, meta, ingresos, nivel: proyeccion > ingresos ? 'rojo' : proyeccion > meta ? 'ambar' : 'verde' };
+      return { proyeccion, gastado, porDia, restantes, fijosPendientes, meta, ingresos, nivel: proyeccion > ingresos ? 'rojo' : proyeccion > meta ? 'ambar' : 'verde',
+        ...(peso < 1 && { mezcla: { variableRestante: Math.round(variableRestante), presupuestoVariable } }) };
     }
 
     function renderProyeccionMes(hoy = new Date()) {
@@ -536,7 +542,10 @@
       poner('proyeccionMonto', formatCLP(p.proyeccion));
       poner('proyeccionMeta', `Meta del mes <strong>${formatCLP(p.meta)}</strong> · ${p.proyeccion > p.meta ? `la pasas por ${formatCLP(p.proyeccion - p.meta)}` : `${formatCLP(p.meta - p.proyeccion)} bajo la meta`}`);
       poner('proyeccionIngresos', `Ingresos del hogar <strong>${formatCLP(p.ingresos)}</strong> · ${p.proyeccion > p.ingresos ? `los pasas por ${formatCLP(p.proyeccion - p.ingresos)}` : `quedan ${formatCLP(p.ingresos - p.proyeccion)}`}`);
-      poner('proyeccionNota', `Gastado ${formatCLP(p.gastado)} + ritmo variable de ${formatCLP(p.porDia)} al día × ${p.restantes} ${p.restantes === 1 ? 'día' : 'días'} que faltan + ${formatCLP(p.fijosPendientes)} de cuentas fijas por pagar.`);
+      const variable = p.mezcla
+        ? `${formatCLP(p.mezcla.variableRestante)} de lo variable que falta (la primera semana mezcla el ritmo de ${formatCLP(p.porDia)} al día con lo que queda del presupuesto variable de ${formatCLP(p.mezcla.presupuestoVariable)})`
+        : `ritmo variable de ${formatCLP(p.porDia)} al día × ${p.restantes} ${p.restantes === 1 ? 'día' : 'días'} que faltan`;
+      poner('proyeccionNota', `Gastado ${formatCLP(p.gastado)} + ${variable} + ${formatCLP(p.fijosPendientes)} de cuentas fijas por pagar.`);
     }
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -579,7 +588,7 @@
 
       // Register PWA Service Worker con actualización forzada v26
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=84').then((reg) => {
+        navigator.serviceWorker.register('sw.js?v=85').then((reg) => {
           reg.update().catch(() => {});
         }).catch(() => {});
       }

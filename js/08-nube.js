@@ -24,7 +24,7 @@
     // ---------- Versión de la app ----------
     // Un teléfono con la app abierta desde antes de una actualización sigue con el código viejo.
     // Si hay una versión nueva publicada, no se registra ni se sube nada hasta actualizar.
-    const VERSION_APP = 84;
+    const VERSION_APP = 85;
     let versionBloqueada = false;
     async function revisarVersionApp() {
       try {
@@ -361,6 +361,7 @@
       if (data.userProfile && typeof data.userProfile === 'object') {
         // Al restaurar un respaldo lo que falta toma el valor inicial, no el de ahora
         userProfile = Object.assign(reemplazarPerfil ? JSON.parse(JSON.stringify(PERFIL_INICIAL)) : (userProfile || {}), data.userProfile);
+        sanearSueldos();
         localStorage.setItem('finanzas_user_profile', JSON.stringify(userProfile));
         if (userProfile.diegoSalary) localStorage.setItem('diego_salary', userProfile.diegoSalary);
         if (userProfile.soledadSalary) localStorage.setItem('soledad_salary', userProfile.soledadSalary);

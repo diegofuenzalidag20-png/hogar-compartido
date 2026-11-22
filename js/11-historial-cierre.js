@@ -9,17 +9,13 @@
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
+    // null si la etiqueta no es "Mes AAAA": antes inventaba "Noviembre 2026" (o el año 2026) y el cierre saltaba a ese mes
     function getNextMonthLabel(currentLabel) {
-      const parts = currentLabel.split(' ');
-      const mName = parts[0];
-      let year = parseInt(parts[1], 10) || 2026;
-      const mIndex = monthNamesList.indexOf(mName);
-      if (mIndex === -1) return "Noviembre 2026";
-      if (mIndex === 11) {
-        return `Enero ${year + 1}`;
-      } else {
-        return `${monthNamesList[mIndex + 1]} ${year}`;
-      }
+      const [mName, anio] = String(currentLabel || '').trim().split(/\s+/);
+      const mIndex = monthNamesList.findIndex(m => m.toLowerCase() === String(mName).toLowerCase());
+      if (mIndex === -1 || !/^\d{4}$/.test(anio || '')) return null;
+      const year = parseInt(anio, 10);
+      return mIndex === 11 ? `Enero ${year + 1}` : `${monthNamesList[mIndex + 1]} ${year}`;
     }
 
 function getMonthCode(monthLabel) {
@@ -355,7 +351,7 @@ function getMonthCode(monthLabel) {
             const totalHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
             const fijosDiego = currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
             const totalIng = (userProfile?.diegoSalary || PERFIL_INICIAL.diegoSalary) + (userProfile?.soledadSalary || PERFIL_INICIAL.soledadSalary);
-            const superavit = totalIng - (totalHogar + fijosDiego);
+            const superavit = totalIng - gastoRealDelMes();
 
             list.unshift({
               id: 'mes-nov-26',
@@ -867,8 +863,7 @@ function getMonthCode(monthLabel) {
       mes.soleSal = userProfile.soledadSalary;
       mes.totalIng = mes.diegoSal + mes.soleSal;
       mes.gastosHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
-      const fijosDiego = currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
-      mes.superavit = mes.totalIng - (mes.gastosHogar + fijosDiego);
+      mes.superavit = mes.totalIng - gastoRealDelMes();
       mes.items = currentAuditItems;
       mes.gastosDiarios = expenses;
       mes.traspasos = traspasos;
@@ -956,7 +951,7 @@ tr.innerHTML = `
       const totalHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
       const fijosDiego = currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
       const totalIng = (userProfile?.diegoSalary || PERFIL_INICIAL.diegoSalary) + (userProfile?.soledadSalary || PERFIL_INICIAL.soledadSalary);
-      const superavit = totalIng - (totalHogar + fijosDiego);
+      const superavit = totalIng - gastoRealDelMes();
       const code = getMonthCode(mesNombre);
 
       const snapshot = {
@@ -1021,7 +1016,7 @@ tr.innerHTML = `
       const totalHogar = currentAuditItems.filter(isHouseholdBill).reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
       const fijosDiego = currentAuditItems.filter(it => it.resp === 'Diego').reduce((acc, it) => acc + (it.actual || it.base || 0), 0);
       const totalIng = (userProfile?.diegoSalary || PERFIL_INICIAL.diegoSalary) + (userProfile?.soledadSalary || PERFIL_INICIAL.soledadSalary);
-      const superavit = totalIng - (totalHogar + fijosDiego);
+      const superavit = totalIng - gastoRealDelMes();
 
       const activeRecord = {
         id: 'mes-' + code.toLowerCase(),
@@ -1083,7 +1078,7 @@ tr.innerHTML = `
 
       if (spanActual) spanActual.textContent = currentActiveMonth;
       if (spanCierre) spanCierre.textContent = currentActiveMonth;
-      if (spanNuevo) spanNuevo.textContent = next;
+      if (spanNuevo) spanNuevo.textContent = next || '(mes no reconocido)';
       if (stats) stats.textContent = `• Ingresos totales: ${formatCLP(totalIng)} | Gastos hogar auditados: ${formatCLP(totalHogar)}`;
 
       // Reiniciar checkbox de confirmación
@@ -1166,6 +1161,7 @@ tr.innerHTML = `
       }
       if (currentActiveMonth !== oldMonth) { avisar(`El otro teléfono ya cerró ${oldMonth}. Ahora el mes en curso es ${currentActiveMonth}.`); return; }
       const nextMonth = getNextMonthLabel(currentActiveMonth);
+      if (!nextMonth) { avisar(`No se reconoce el mes en curso ("${currentActiveMonth}"), así que no se cerró nada.`); return; }
 
       const cerrado = enTransaccionLocal(() => {
         // 1. Guardar el mes que se cierra con estado "Cerrado" y todas sus boletas/gastos reales

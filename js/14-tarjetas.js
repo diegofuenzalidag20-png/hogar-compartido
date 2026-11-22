@@ -106,9 +106,10 @@ let currentCardAnalysisFilter = 'all';
     function getCompromisosPorPersona() {
       const total = { diego: 0, soledad: 0 };
       currentAuditItems.forEach(item => {
+        if (esAhorroPropio(item)) return;
         const monto = item.actual > 0 ? item.actual : item.base;
         if (item.resp === 'Soledad') total.soledad += monto;
-        else if (!item.name.includes('Bolsillo') && !item.name.includes('Ahorro')) total.diego += monto;
+        else total.diego += monto;
       });
       return total;
     }
@@ -231,21 +232,21 @@ let currentCardAnalysisFilter = 'all';
     }
 
     function normalizeAccountKey(acc) {
-      const a = (acc || '').toLowerCase().trim();
-      if (a.includes('tenpo') && (a.includes('diego') || a.includes('huasco') || (!a.includes('soledad') && !a.includes('sole')))) return 'tenpoDiego';
-      if (a.includes('tenpo') && (a.includes('soledad') || a.includes('sole'))) return 'tenpoSoledad';
+      // Palabras completas: "mp" dentro de "Compartida" o "rut" dentro de "Frutería" no son esas cuentas
+      const a = textoRegla(acc).trim();
+      const sole = /\bsole(dad)?\b/.test(a);
+      if (a.includes('tenpo') && (a.includes('diego') || a.includes('huasco') || !sole)) return 'tenpoDiego';
+      if (a.includes('tenpo') && sole) return 'tenpoSoledad';
       if (a.includes('mach')) return 'machDiego';
-      if (a.includes('mercado') || a.includes('mp')) {
-        if (a.includes('soledad') || a.includes('sole')) return 'mpSoledad';
-        return 'mpDiego';
-      }
-      if (a.includes('bci') && (a.includes('créd') || a.includes('cred') || a.includes('tarjeta'))) return 'tcBciDiego';
+      if (/\bmp\b|mercado ?pago/.test(a)) return sole ? 'mpSoledad' : 'mpDiego';
+      if (a.includes('bci') && (a.includes('cred') || a.includes('tarjeta'))) return 'tcBciDiego';
       // La cuenta corriente BCI forma parte del fondo principal de Diego, junto con la Cuenta Fan
       if (a.includes('bci')) return 'fanDiego';
       if (a.includes('fan') || a.includes('chile')) return 'fanDiego';
-      if (a.includes('smart') || a.includes('visa')) return 'smartVisaSole';
+      // Solo la Smart Visa de Soledad: otra tarjeta Visa no es suya
+      if (a.includes('smart')) return 'smartVisaSole';
       if (a.includes('reserva') || (a.includes('ahorro') && a.includes('bancoestado'))) return 'reservaSole';
-      if (a.includes('chequera') || a.includes('bancoestado') || a.includes('rut') || a.includes('limache')) return 'chequeraSole';
+      if (a.includes('chequera') || a.includes('bancoestado') || /\brut\b/.test(a) || a.includes('limache')) return 'chequeraSole';
       if (a.includes('efectivo') || a.includes('cash')) return 'efectivo';
       return 'otra';
     }

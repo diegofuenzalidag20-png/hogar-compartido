@@ -44,6 +44,11 @@
     });
     let userProfile = JSON.parse(JSON.stringify(PERFIL_INICIAL));
 
+    // Un sueldo ilegible (memoria o nube) dejaba NaN en todos los totales: vuelve al sueldo inicial
+    function sanearSueldos() {
+      ['diegoSalary', 'soledadSalary'].forEach(k => { const n = parseInt(userProfile[k], 10); userProfile[k] = Number.isFinite(n) ? n : PERFIL_INICIAL[k]; });
+    }
+
     function loadUserProfile() {
       const saved = localStorage.getItem('finanzas_user_profile');
       if (saved) {
@@ -64,6 +69,7 @@
       if (savedDiego) userProfile.diegoSalary = parseInt(savedDiego, 10);
       const savedSole = localStorage.getItem('soledad_salary');
       if (savedSole) userProfile.soledadSalary = parseInt(savedSole, 10);
+      sanearSueldos();
 
       syncProfileToInputs();
     }

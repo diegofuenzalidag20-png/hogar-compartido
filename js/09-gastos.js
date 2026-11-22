@@ -220,27 +220,6 @@
       if (typeof renderProyeccionMes === 'function') renderProyeccionMes();
     }
 
-    function addExpense(e) {
-      e.preventDefault();
-      const newExp = {
-        date: document.getElementById('exp-date').value,
-        payer: document.getElementById('exp-payer').value,
-        category: document.getElementById('exp-category').value,
-        desc: document.getElementById('exp-desc').value,
-        account: document.getElementById('exp-account').value,
-        amount: parseFloat(document.getElementById('exp-amount').value)
-      };
-
-      expenses.unshift(newExp);
-      localStorage.setItem('family_expenses', JSON.stringify(expenses));
-      renderExpenses();
-      if (typeof renderAnalisisMesActual === 'function') renderAnalisisMesActual();
-      triggerAutoSyncToCloud();
-      document.getElementById('expenseForm').reset();
-      const expDateEl = document.getElementById('exp-date'); if (expDateEl) expDateEl.valueAsDate = new Date();
-      showToast('¡Gasto registrado con éxito!');
-    }
-
     
     // ==============================================================
     // MODIFICAR Y EDITAR GASTO REGISTRADO

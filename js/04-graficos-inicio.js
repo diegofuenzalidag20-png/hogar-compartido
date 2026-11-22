@@ -135,9 +135,13 @@
     }
     
     // --- Co-Aporte Hipotecario en UF Logic ---
+    // El aporte fijo de Diego es el presupuesto de su cuenta (item-1); $365.000 solo si no hay uno
+    function aporteFijoDiego() {
+      return Number(currentAuditItems.find(it => it.id === 'item-1')?.base) || 365000;
+    }
     function updateHipotecarioCoAporte() {
       const total = parseInt(document.getElementById('hipoTotalInput').value, 10) || 0;
-      const diegoFijo = 365000;
+      const diegoFijo = aporteFijoDiego();
       const diff = Math.max(0, total - diegoFijo);
 
       const elDiff = document.getElementById('hipoSoledadDiffDisplay');
@@ -151,7 +155,7 @@
 
     function applyHipotecarioToAudit() {
       const total = parseInt(document.getElementById('hipoTotalInput').value, 10) || 375000;
-      const diegoFijo = 365000;
+      const diegoFijo = aporteFijoDiego();
       const soledadDiff = Math.max(0, total - diegoFijo);
 
       // 1. Actualizar en la tabla de auditoría fija
@@ -168,10 +172,12 @@
       }
 
       // 2. Crear o actualizar inteligentemente en la Tabla de Gastos Registrados Diarios
-      const today = getLocalDateISO();
-      const dateStr = currentActiveMonth && currentActiveMonth.includes('-') ? `${currentActiveMonth}-05` : today;
+      // El dividendo es del mes activo (día 1), no del día en que se aprieta el botón
+      const [nombreMes, anioMes] = String(currentActiveMonth).trim().split(/\s+/);
+      const nMes = monthNamesList.findIndex(m => m.toLowerCase() === String(nombreMes).toLowerCase());
+      const dateStr = nMes >= 0 && /^\d{4}$/.test(anioMes || '') ? `${anioMes}-${String(nMes + 1).padStart(2, '0')}-01` : getLocalDateISO();
 
-      // Gasto Diego ($365.000)
+      // Gasto Diego (aporte fijo)
       let expDiego = expenses.find(e => e.id === 'hipo-diego' || (e.category === 'Crédito Hipotecario' && e.payer === 'Diego'));
       if (expDiego) {
         expDiego.amount = diegoFijo;
@@ -226,5 +232,5 @@
       // 5. Sincronizar automáticamente en la nube de Firebase
       triggerAutoSyncToCloud();
 
-      showToast(`🤝 ¡Dividendo Hipotecario ($${total.toLocaleString('es-CL')}) aplicado: Diego $365k + Soledad $${soledadDiff.toLocaleString('es-CL')} sincronizados en la tabla!`);
+      showToast(`🤝 ¡Dividendo Hipotecario ($${total.toLocaleString('es-CL')}) aplicado: Diego ${formatCLP(diegoFijo)} + Soledad $${soledadDiff.toLocaleString('es-CL')} sincronizados en la tabla!`);
     }

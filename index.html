@@ -23,7 +23,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <!-- Firebase Cloud Sync Engine (REST Directo ultra-rápido sin dependencias pesadas) -->
-  <link rel="stylesheet" href="css/app.css?v=84">
+  <link rel="stylesheet" href="css/app.css?v=85">
   <script>
     // Carga estable (v83): sin restaurar el desplazamiento al recargar (dejaba la página 22-34 px más abajo, con la cabecera cortada)
     // y el contenido espera a que la app lo dibuje; a los 3 s se muestra pase lo que pase.
@@ -608,37 +608,6 @@
             <select id="audit-month-select" style="padding:0.4rem 0.8rem; font-weight:600; flex:1; min-width:0; max-width:100%;" onchange="onAuditMonthChange()">
               <optgroup label="🌟 Periodo Presente (Mes Activo)">
                 <option value="Oct-26" selected>Octubre 2026 (Mes Actual en Curso)</option>
-              </optgroup>
-              <optgroup label="📅 Histórico 2026 (Criterio Mes de Pago Real)">
-                <option value="Sep-26">Septiembre 2026 (Pagado: Hipotecario $374.2k, Smart $110k, Michis $42.9k)</option>
-                <option value="Ago-26">Agosto 2026 (Pagado: Hipotecario $372.6k, Smart $110k, Luz $27.6k, Gas $27.6k)</option>
-                <option value="Jul-26">Julio 2026 (Pagado: Luz $54.6k, Hipotecario $372.3k, Supermercado $119.8k)</option>
-                <option value="Jun-26">Junio 2026 (Pagado: Luz $49.7k, Hipotecario $372k, Smart $147.2k, Aseo $28.5k)</option>
-                <option value="May-26">Mayo 2026 (Pagado: Hipotecario $370.4k, Smart $92.1k, Vacuna Michis $55k, Luz $36.2k)</option>
-                <option value="Abr-26">Abril 2026 (Pagado: Hipotecario $365.8k, Michis $78k, Smart $77.5k, Agua x2 $15.4k)</option>
-                <option value="Mar-26">Marzo 2026 (Pagado: Hipotecario $363.3k, Súper $164k, Michis $40k, Arena $29k)</option>
-                <option value="Feb-26">Febrero 2026 (Pagado: Hipotecario $362.8k, Comedor $128.6k, Smart $80k, Michis $40k)</option>
-                <option value="Ene-26">Enero 2026 (Pagado: Hipotecario $362k, Comedor $128.6k, Med. Sía $30k, Conducir $21.7k)</option>
-              </optgroup>
-              <optgroup label="📅 Histórico 2025 (Criterio Mes de Pago Real)">
-                <option value="Dic-25">Diciembre 2025 (Pagado: Hipotecario $362.4k, Comedor $128.6k, Michis $60k, Smart $62.9k)</option>
-                <option value="Nov-25">Noviembre 2025 (Pagado: Hipotecario $361.5k, Smart Visa $151.3k, Arena $21k)</option>
-                <option value="Oct-25">Octubre 2025 (Pagado: Hipotecario $361.1k, Gas $25.5k, Michis $25k, Smart $50k)</option>
-                <option value="Sep-25">Septiembre 2025 (Pagado: Hipotecario $359.4k, Luz $28.1k, Gas $30.3k)</option>
-                <option value="Ago-25">Agosto 2025 (Pagado: Luz Invierno $40.6k, Hipotecario $357.4k)</option>
-                <option value="Jul-25">Julio 2025 (Pagado: Hipotecario $358.3k, Súper $109.8k, Smart $23.8k)</option>
-                <option value="Jun-25">Junio 2025 (Pagado: Hipotecario $357.6k, Súper $153k, Luz $17.6k)</option>
-                <option value="May-25">Mayo 2025 (Pagado: Hipotecario $356.7k, Súper $126k, Aseo $13.6k)</option>
-                <option value="Abr-25">Abril 2025 (Pagado: Hipotecario $354.9k, Smart Visa $54.6k)</option>
-                <option value="Mar-25">Marzo 2025 (Pagado: Hipotecario $352.7k, Gasto Común $58.7k)</option>
-                <option value="Feb-25">Febrero 2025 (Pagado: Hipotecario $350.3k, Michis $46k, Proyector $50k)</option>
-                <option value="Ene-25">Enero 2025 (Pagado: Hipotecario $348.1k, Proyector $50k, Arena $28k)</option>
-              </optgroup>
-              <optgroup label="📅 Histórico 2024 (Criterio Mes de Pago Real)">
-                <option value="Dic-24">Diciembre 2024 (Pagado: Hipotecario $346.5k, Luz $14.1k, Michis $40k)</option>
-                <option value="Nov-24">Noviembre 2024 (Pagado: Gasto Común $52.7k, Gas $19.9k, Proyector $47k)</option>
-                <option value="Oct-24">Octubre 2024 (Pagado: Luz $22.5k, Gas $19.5k, Waldorf $50k, Vacuna $45k)</option>
-                <option value="Sep-24">Septiembre 2024 (Pagado: Luz Invierno $53.3k, Gas $28.6k, Waldorf $50k)</option>
               </optgroup>
             </select>
       </div>
@@ -1648,22 +1617,22 @@
     Hogar Compartido · Diego & Soledad
   </footer>
 
-  <script src="js/01-base.js?v=84"></script>
-  <script src="js/02-presupuesto.js?v=84"></script>
-  <script src="js/03-perfil-cofres.js?v=84"></script>
-  <script src="js/04-graficos-inicio.js?v=84"></script>
-  <script src="js/05-registro.js?v=84"></script>
-  <script src="js/06-checklist.js?v=84"></script>
-  <script src="js/07-pwa-enlace.js?v=84"></script>
-  <script src="js/08-nube.js?v=84"></script>
-  <script src="js/09-gastos.js?v=84"></script>
-  <script src="js/10-sueldos.js?v=84"></script>
-  <script src="js/11-historial-cierre.js?v=84"></script>
-  <script src="js/12-desplegables.js?v=84"></script>
-  <script src="js/13-categorias.js?v=84"></script>
-  <script src="js/14-tarjetas.js?v=84"></script>
-  <script src="js/15-analisis-mes.js?v=84"></script>
-  <script src="js/16-traspasos.js?v=84"></script>
+  <script src="js/01-base.js?v=85"></script>
+  <script src="js/02-presupuesto.js?v=85"></script>
+  <script src="js/03-perfil-cofres.js?v=85"></script>
+  <script src="js/04-graficos-inicio.js?v=85"></script>
+  <script src="js/05-registro.js?v=85"></script>
+  <script src="js/06-checklist.js?v=85"></script>
+  <script src="js/07-pwa-enlace.js?v=85"></script>
+  <script src="js/08-nube.js?v=85"></script>
+  <script src="js/09-gastos.js?v=85"></script>
+  <script src="js/10-sueldos.js?v=85"></script>
+  <script src="js/11-historial-cierre.js?v=85"></script>
+  <script src="js/12-desplegables.js?v=85"></script>
+  <script src="js/13-categorias.js?v=85"></script>
+  <script src="js/14-tarjetas.js?v=85"></script>
+  <script src="js/15-analisis-mes.js?v=85"></script>
+  <script src="js/16-traspasos.js?v=85"></script>
   <!-- Modal para Agregar Nuevo Ítem -->
   <div id="modalAddItem" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(4px); z-index:2000; align-items:center; justify-content:center; padding:1rem;">
     <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:var(--radius-md); max-width:520px; width:100%; padding:1.5rem; box-shadow:var(--shadow-card);">
