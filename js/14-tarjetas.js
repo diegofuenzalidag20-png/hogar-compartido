@@ -239,8 +239,8 @@ let currentCardAnalysisFilter = 'all';
       if (a.includes('mach')) return 'machDiego';
       if (/\bmp\b|mercado ?pago/.test(a)) return sole ? 'mpSoledad' : 'mpDiego';
       if (a.includes('bci') && (a.includes('cred') || a.includes('tarjeta'))) return 'tcBciDiego';
-      // La cuenta corriente BCI forma parte del fondo principal de Diego, junto con la Cuenta Fan
-      if (a.includes('bci')) return 'fanDiego';
+      // Hasta noviembre 2026 la cuenta corriente BCI tiene su propio saldo (solo recibe traspasos); desde diciembre es el fondo principal, junto con la Cuenta Fan
+      if (a.includes('bci')) return bciEsPrincipal() ? 'fanDiego' : 'bciDiego';
       if (a.includes('fan') || a.includes('chile')) return 'fanDiego';
       // Solo la Smart Visa de Soledad: otra tarjeta Visa no es suya
       if (a.includes('smart')) return 'smartVisaSole';
@@ -322,6 +322,21 @@ let currentCardAnalysisFilter = 'all';
         getTotalTransfersOut: () => (userProfile.cofresDiego?.tenpoHuasco ?? PERFIL_INICIAL.cofresDiego.tenpoHuasco) + getMachSemanal().liberado + (userProfile.cofresDiego?.mpAhorro ?? PERFIL_INICIAL.cofresDiego.mpAhorro) + (userProfile.tcBciConfig?.pagoMes ?? 0),
         getRemanente: () => userProfile.remanentes?.fanDiego ?? 0,
         color: '#3B82F6',
+        badgeClass: 'badge-blue',
+        icon: '🏦'
+      },
+      {
+        // Solo hasta noviembre 2026: después sus gastos y traspasos van al fondo principal (fanDiego) y este cofre queda en $0, oculto
+        key: 'bciDiego',
+        name: 'Cuenta Corriente BCI',
+        desc: 'Cuenta nueva de Diego: por ahora solo tiene lo que le traspasas. Desde diciembre recibe el sueldo.',
+        owner: 'Diego',
+        isPrimary: false,
+        soloSi: () => !bciEsPrincipal(),
+        sourceAccount: 'Traspasos',
+        getBudget: () => 0,
+        getRemanente: () => 0,
+        color: '#0EA5E9',
         badgeClass: 'badge-blue',
         icon: '🏦'
       },
@@ -433,6 +448,7 @@ let currentCardAnalysisFilter = 'all';
 
       // Filtrar según botón activo
       const visibleConfigs = CARDS_ANALYSIS_CONFIG.filter(cfg => {
+        if (cfg.soloSi && !cfg.soloSi()) return false;
         if (currentCardAnalysisFilter === 'diego' && cfg.owner !== 'Diego') return false;
         if (currentCardAnalysisFilter === 'soledad' && cfg.owner !== 'Soledad') return false;
         return true;

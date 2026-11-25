@@ -193,6 +193,11 @@ sequenceDiagram
 
 > Esta sección es un registro acumulativo. **Cada intervención del agente de IA debe agregar una nueva entrada al inicio de esta lista.**
 
+### [2026-11-25] — Cuenta corriente BCI con saldo propio en noviembre (v87)
+* **Problema:** `normalizeAccountKey` mandaba "BCI Cuenta Corriente" a `fanDiego`, así que un traspaso Cuenta Fan → BCI sumaba y restaba en la misma cuenta (no bajaba Fan) y un traspaso Mach → BCI subía la Cuenta Fan. Tampoco había cofre BCI donde ver el saldo antes de comprar.
+* **Arreglo:** hasta noviembre 2026 BCI tiene su clave `bciDiego` (cofre "Cuenta Corriente BCI": sin sueldo, solo traspasos menos sus gastos). Desde diciembre (`bciEsPrincipal()`) vuelve a `fanDiego` y el cofre se oculta (`soloSi`). El saldo BCI que quede en noviembre no se arrastra aparte (la cuenta principal parte con remanente 0, como siempre).
+* **Pruebas:** nueva prueba "BCI en noviembre…" (Fan baja, BCI sube, liquidez total igual, compra con BCI descuenta de BCI, cofre oculto en diciembre) y ajuste de "BCI: tarjeta de crédito…".
+
 ### [2026-11-22] — Uso diario y rendimiento: registrar dibuja una vez, Atrás de Android cierra ventanas, deshacer al borrar, "yo soy", accesibilidad y cabecera fija (v86)
 * **Motivo:** una revisión midió que registrar un gasto hacía ~22 dibujos (renderExpenses x2, renderAnalisisMesActual x3, renderCardAnalysis x7, el colchón de Diego x3…) y bloqueaba ~1 a 2 s con CPU 4x; las donas por cuenta se destruían y creaban en cada dibujo; Chart.js y Firebase bloqueaban la carga; el sondeo a Firestore armaba y serializaba todo el estado cada 5 s. En el uso diario: el botón Atrás de Android cerraba la app con la hoja de registro o una ventana abierta (se perdía lo escrito), borrar un gasto no se podía deshacer, los botones editar/borrar eran chicos y pegados, la validación del registro eran ventanas seguidas, varios montos no se leían en el tema claro y la cabecera nunca quedaba fija.
 * **Cambios:**

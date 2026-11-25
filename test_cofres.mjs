@@ -7,14 +7,17 @@ import { readdirSync } from 'node:fs';
 // El código vive en index.html y en los módulos de js/
 const html = [new URL('./index.html', import.meta.url), ...readdirSync(new URL('./js/', import.meta.url)).sort().map((m) => new URL(`./js/${m}`, import.meta.url))].map((u) => readFileSync(u, 'utf8')).join('\n');
 const fn = (name) => html.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n {4}}\\r?\\n`))[0];
-const names = ['textoRegla', 'normalizeAccountKey', 'netoTraspasos', 'getSmartCuotaPagada', 'getSmartCuotaDelMes', 'getSmartReservaChequera', 'getCuentaPrincipalDisponible', 'getMetaMensual', 'esAhorroPropio'];
-const app = (expenses, cuota = 50000, traspasos = []) => new Function('expenses', 'userProfile', 'CARDS_ANALYSIS_CONFIG', 'currentAuditItems', 'traspasos',
+const names = ['textoRegla', 'normalizeAccountKey', 'netoTraspasos', 'getSmartCuotaPagada', 'getSmartCuotaDelMes', 'getSmartReservaChequera', 'getCuentaPrincipalDisponible', 'getMetaMensual', 'esAhorroPropio', 'bciEsPrincipal'];
+const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+const app = (expenses, cuota = 50000, traspasos = [], mes = 'Noviembre 2026') => new Function('expenses', 'userProfile', 'CARDS_ANALYSIS_CONFIG', 'currentAuditItems', 'traspasos', 'currentActiveMonth', 'monthNamesList',
   `${names.map(fn).join('\n')}\nreturn { ${names.join(', ')} };`)(
   expenses,
   { cofresSoledad: { smartVisa: cuota } },
   [{ key: 'chequeraSole', getRemanente: () => 0, getBudget: () => 1000 }, { key: 'fanDiego', getRemanente: () => 10, getBudget: () => 2000 }],
   [{ base: 300 }, { base: 700 }],
   traspasos,
+  mes,
+  meses,
 );
 const gasto = (account, amount, category = 'Otros', desc = 'x') => ({ account, amount, category, desc });
 
@@ -42,13 +45,16 @@ assert.equal(a.getMetaMensual(), 1000);
 // Traspasos entre cuentas propias: no son gasto, pero la cuenta de origen baja y la de destino sube
 const tras = (from, to, amount, date = '2026-11-10') => ({ from, to, amount, date });
 const t = app([], 50000, [tras('Mach', 'BCI Cuenta Corriente', 3270), tras('Cuenta Fan', 'Chequera BancoEstado', 1000)]);
-assert.equal(t.netoTraspasos('fanDiego'), 3270 - 1000); // la cuenta corriente BCI es el fondo principal de Diego, igual que la Fan
+assert.equal(t.netoTraspasos('fanDiego'), -1000); // en noviembre la cuenta corriente BCI tiene saldo propio
+assert.equal(t.netoTraspasos('bciDiego'), 3270);
+assert.equal(app([], 50000, [tras('Mach', 'BCI Cuenta Corriente', 3270)], 'Diciembre 2026').netoTraspasos('fanDiego'), 3270); // desde diciembre es el fondo principal
+assert.equal(app([], 50000, [tras('Cuenta Fan', 'BCI Cuenta Corriente', 5000)]).netoTraspasos('fanDiego'), -5000);
 assert.equal(t.netoTraspasos('machDiego'), -3270);
 assert.equal(t.netoTraspasos('chequeraSole'), 1000);
 assert.equal(t.netoTraspasos('tenpoDiego'), 0);
 assert.equal(t.netoTraspasos('fanDiego', '2026-11-10'), 0); // solo cuenta los de días anteriores
-assert.equal(t.netoTraspasos('fanDiego', '2026-11-11'), 2270);
-assert.equal(t.getCuentaPrincipalDisponible('Diego'), 2010 + 2270);
+assert.equal(t.netoTraspasos('fanDiego', '2026-11-11'), -1000);
+assert.equal(t.getCuentaPrincipalDisponible('Diego'), 2010 - 1000);
 assert.equal(t.getCuentaPrincipalDisponible('Soledad'), 1000 + 1000);
 assert.equal(t.getMetaMensual(), 1000); // la meta no se mueve
 assert.equal(app([]).netoTraspasos('fanDiego'), 0);
@@ -66,7 +72,7 @@ assert.equal(items[0].fromQuickBill, true);
 
 // Mach: cada lunes se transfiere solo si Cuenta Fan tenía fondos
 const mach = (salario, gastos, cfg = {}, rem = 22725, pagoBci = 0, traspasos = []) => new Function('expenses', 'userProfile', 'currentActiveMonth', 'getLocalDateISO', 'traspasos',
-  `${fn('textoRegla')}\n${fn('normalizeAccountKey')}\n${fn('netoTraspasos')}\n${fn('getMachSemanal')}\nreturn getMachSemanal();`)(
+  `${fn('textoRegla')}\n${fn('normalizeAccountKey')}\n${fn('netoTraspasos')}\n${fn('getMachSemanal')}\nconst bciEsPrincipal = () => false;\nreturn getMachSemanal();`)(
   gastos, { diegoSalary: salario, cofresDiego: { tenpoHuasco: 0, mpAhorro: 0 }, remanentes: { machDiego: rem }, machSemanal: cfg, tcBciConfig: { pagoMes: pagoBci } }, 'Noviembre 2026', () => '2026-11-09', traspasos,
 );
 const fan = (date, amount) => ({ account: 'Cuenta Fan', date, amount });
@@ -100,7 +106,7 @@ assert.equal(mach(500000, [fan('2026-11-05', 400000)], {}, 22725, 0, [tras('Cuen
 
 // v85: cada cuenta real va a su cofre y un texto que solo contiene "mp", "rut", "visa" o "sole" dentro de otra palabra no se cuela
 const cuentas = { 'Tenpo Diego': 'tenpoDiego', 'Tenpo': 'tenpoDiego', 'Tenpo Soledad': 'tenpoSoledad', 'Mach': 'machDiego', 'Mercado Pago Diego': 'mpDiego', 'Mercado Pago': 'mpDiego',
-  'Mercado Pago Soledad': 'mpSoledad', 'MP Sole': 'mpSoledad', 'Tarjeta Smart Visa': 'smartVisaSole', 'Tarjeta de Crédito BCI': 'tcBciDiego', 'BCI Cuenta Corriente': 'fanDiego',
+  'Mercado Pago Soledad': 'mpSoledad', 'MP Sole': 'mpSoledad', 'Tarjeta Smart Visa': 'smartVisaSole', 'Tarjeta de Crédito BCI': 'tcBciDiego', 'BCI Cuenta Corriente': 'bciDiego',
   'Cuenta Fan': 'fanDiego', 'Chequera BancoEstado': 'chequeraSole', 'BancoEstado': 'chequeraSole', 'Cuenta RUT': 'chequeraSole', 'Efectivo': 'efectivo',
   'Cuenta Compartida': 'otra', 'Comprobante': 'otra', 'Tempo': 'otra', 'Frutería': 'otra', 'Visa Débito Santander': 'otra', 'Consolidado': 'otra', 'Tenpo Asoleado': 'tenpoDiego' };
 const { normalizeAccountKey } = app([]);
